@@ -1,23 +1,5 @@
 #include "bruter.h"
 
-// bools
-
-char is_true(Value value, char __type)
-{
-    if (__type == TYPE_NUMBER)
-    {
-        return (round(value.number) != 0);
-    }
-    else if (__type == TYPE_NIL)
-    {
-        return 0;
-    }
-    else
-    {
-        return 1;
-    }
-}
-
 //string functions
 
 char* str_duplicate(const char *str)
@@ -590,16 +572,6 @@ void free_var(VirtualMachine *vm, Int index)
         }
         stack_free(*((IntList*)vm->stack->data[index].pointer));
     }
-    #ifndef ARDUINO
-    else if (vm->typestack->data[index] == TYPE_PROCESS)
-    {
-        process_destroy(vm->stack->data[index].process);
-        char* temp = str_format("# (process.receive @%d)", index);
-        eval(vm, temp);
-        free(temp);
-        free(vm->stack->data[index].process);
-    }
-    #endif
     
     stack_remove(*vm->stack, index);
     stack_remove(*vm->typestack, index);
@@ -650,23 +622,6 @@ void unuse_var(VirtualMachine *vm, Int index)
     {
         free(vm->stack->data[index].pointer);
     }
-    #ifndef ARDUINO
-    else if (vm->typestack->data[index] == TYPE_PROCESS)
-    {
-        //close pipes
-        process_destroy(vm->stack->data[index].process);
-        char* temp = str_format("# (process.receive @%d)", index);
-        eval(vm, temp);
-        free(temp);
-        free(vm->stack->data[index].process);
-    }
-    else if (vm->typestack->data[index] == TYPE_THREAD)
-    {
-        //close pipes
-        thread_destroy(vm->stack->data[index].pointer);
-        free(vm->stack->data[index].pointer);
-    }
-    #endif
     else if (vm->typestack->data[index] == TYPE_LIST)
     {
         while (((IntList*)vm->stack->data[index].pointer)->size > 0)

@@ -173,8 +173,8 @@ Int std_mem_edit(VirtualMachine *vm, IntList *args)
     {
         if(vm->typestack->data[variable] == TYPE_STRING ||
            vm->typestack->data[variable] == TYPE_LIST ||
-           vm->typestack->data[variable] == TYPE_PROCESS ||
-           vm->typestack->data[variable] == TYPE_FUNCTION)
+           vm->typestack->data[variable] == TYPE_FUNCTION || 
+           vm->typestack->data[variable] == TYPE_OTHER)
         {
             
             if (vm->typestack->data[variable] == TYPE_STRING)
@@ -185,13 +185,6 @@ Int std_mem_edit(VirtualMachine *vm, IntList *args)
             {
                 stack_free(*((IntList*)vm->stack->data[variable].pointer));
             }
-            #ifndef ARDUINO
-            else if (vm->typestack->data[variable] == TYPE_PROCESS)
-            {
-                process_destroy(vm->stack->data[variable].process);
-                free(vm->stack->data[variable].process);
-            }
-            #endif
             else
             {
                 free(vm->stack->data[variable].pointer);
@@ -269,14 +262,6 @@ void print_element(VirtualMachine *vm, int index)
         {
             printf("]");
         }
-    }
-    else if (_type == TYPE_PROCESS)
-    {
-        printf("{process} %p", temp.process);
-    }
-    else if (_type == TYPE_THREAD)
-    {
-        printf("{thread} %p", temp.pointer);
     }
     else if (_type == TYPE_OTHER)
     {
@@ -1083,8 +1068,8 @@ Int std_loop_while(VirtualMachine *vm, IntList *args)
     Int _do_str = stack_shift(*args);
     Int condition_result = eval(vm, vm->stack->data[condition_str].string);
     while (is_true(vm->stack->data[condition_result], vm->typestack->data[condition_result]))
-    {
-        condition_result = eval(vm, vm->stack->data[condition_str].string);
+    {   
+        condition_result = eval(vm, vm->stack->data[_do_str].string);
     }
     return -1;
 }
@@ -1214,7 +1199,7 @@ Int std_prototype_equals(VirtualMachine *vm, IntList *args)
 
 // inits
 
-void init_std(VirtualMachine *vm)
+void init_basics(VirtualMachine *vm)
 {
     
     hold_var(vm,spawn_builtin(vm, "#", std_ignore));
@@ -1236,7 +1221,6 @@ void init_type(VirtualMachine *vm)
     hold_var(vm,spawn_number(vm, "type.number", TYPE_NUMBER));
     hold_var(vm,spawn_number(vm, "type.string", TYPE_STRING));
     hold_var(vm,spawn_number(vm, "type.builtin", TYPE_BUILTIN));
-    hold_var(vm,spawn_number(vm, "type.process", TYPE_PROCESS));
     hold_var(vm,spawn_number(vm, "type.function", TYPE_FUNCTION));
 
     // type functions
@@ -1348,21 +1332,17 @@ void init_default_vars(VirtualMachine *vm)
 }
 
 // std init presets
-void preset_all(VirtualMachine *vm)
+void init_std(VirtualMachine *vm)
 {
-    init_std(vm);
-    #ifndef ARDUINO
-    init_std_os(vm);
-    init_pthreads(vm);
-    #endif
+    init_basics(vm);
+    init_type(vm);
+    init_loop(vm);
+    init_hash(vm);
+    init_manual_memory(vm);
+    init_prototype(vm);
     init_math(vm);
     init_list(vm);
-    init_type(vm);
-    init_hash(vm);
-    init_loop(vm);
     init_string(vm);
     init_condition(vm);
-    init_prototype(vm);
-    init_manual_memory(vm);
     init_default_vars(vm);
 }
