@@ -20,14 +20,12 @@
 #endif
 #endif
 
-#define VERSION "0.5.8b"
+#define VERSION "0.5.9"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
 #define TYPE_STRING 2
-#define TYPE_LIST 3
 #define TYPE_BUILTIN 4
-#define TYPE_FUNCTION 5
 #define TYPE_OTHER 8
 
 
@@ -66,8 +64,8 @@
 #define Stack(T) struct \
 { \
     T *data; \
-    int size; \
-    int capacity; \
+    Int size; \
+    Int capacity; \
 }
 
 #define stack_init(s) do \
@@ -90,7 +88,7 @@
         (s).capacity = (s).capacity == 0 ? 1 : (s).capacity * 2; \
         (s).data = realloc((s).data, (s).capacity * sizeof(*(s).data)); \
     } \
-    for (int i = (s).size; i > 0; i--) { \
+    for (Int i = (s).size; i > 0; i--) { \
         (s).data[i] = (s).data[i - 1]; \
     } \
     (s).data[0] = (v); \
@@ -101,7 +99,7 @@
 
 #define stack_shift(s) ({ \
     typeof((s).data[0]) ret = (s).data[0]; \
-    for (int i = 0; i < (s).size - 1; i++) { \
+    for (Int i = 0; i < (s).size - 1; i++) { \
         (s).data[i] = (s).data[i + 1]; \
     } \
     (s).size--; \
@@ -123,7 +121,7 @@
         (s).capacity = (s).capacity == 0 ? 1 : (s).capacity * 2; \
         (s).data = realloc((s).data, (s).capacity * sizeof(*(s).data)); \
     } \
-    for (int j = (s).size; j > i; j--) { \
+    for (Int j = (s).size; j > i; j--) { \
         (s).data[j] = (s).data[j - 1]; \
     } \
     (s).data[i] = (v); \
@@ -133,7 +131,7 @@
 //remove element at index i and return it
 #define stack_remove(s, i) ({ \
     typeof((s).data[i]) ret = (s).data[i]; \
-    for (int j = i; j < (s).size - 1; j++) { \
+    for (Int j = i; j < (s).size - 1; j++) { \
         (s).data[j] = (s).data[j + 1]; \
     } \
     (s).size--; \
@@ -147,6 +145,7 @@ typedef union
     Int integer;
     char* string;
     void* pointer;
+    char bytes[sizeof(Float)];
 } Value;
 
 //Hash
@@ -207,8 +206,6 @@ void unuse_var(VirtualMachine *vm, Int index);
 Int new_number(VirtualMachine *vm, Float number);
 Int new_string(VirtualMachine *vm, char *str);
 Int new_builtin(VirtualMachine *vm, Function function);
-Int new_function(VirtualMachine *vm, char* script);
-Int new_list(VirtualMachine *vm);
 Int new_var(VirtualMachine *vm);
 
 void hold_var(VirtualMachine *vm, Int index);
@@ -220,11 +217,8 @@ Int spawn_var(VirtualMachine *vm, char* varname);
 Int spawn_string(VirtualMachine *vm, char* varname, char* string);
 Int spawn_number(VirtualMachine *vm, char* varname, Float number);
 Int spawn_builtin(VirtualMachine *vm, char* varname, Function function);
-Int spawn_function(VirtualMachine *vm, char* varname, char* script);
-Int spawn_list(VirtualMachine *vm, char* varname);
 
 void registerBuiltin(VirtualMachine *vm, char* name, Function function);
-void registerFunction(VirtualMachine *vm, char* name, char* script);
 void registerNumber(VirtualMachine *vm, char* name, Float number);
 void registerString(VirtualMachine *vm, char* name, char* string);
 void registerList(VirtualMachine *vm, char* name);
