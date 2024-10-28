@@ -1,175 +1,5 @@
 #include "bruter.h"
 
-Int std_mem_clear(VirtualMachine *vm, IntList *args)
-{
-    while (vm->temp->size > 0)
-    {
-        unuse_var(vm, stack_shift(*vm->temp));
-    }
-
-    return -1;
-}
-
-Int std_mem_hold(VirtualMachine *vm, IntList *args)
-{
-    Int index = stack_shift(*args);
-    if (args->size > 0)
-    {
-        Int as = stack_shift(*args);
-        Int _type = vm->typestack->data[index];
-    }
-    hold_var(vm, index);
-    return -1;
-}
-
-Int std_mem_keep(VirtualMachine *vm, IntList *args)
-{
-    Int index = stack_shift(*args);
-    if (args->size > 0)
-    {
-        Int as = stack_shift(*args);
-        Int _type = vm->typestack->data[index];
-    }
-    hold_var(vm, index);
-    return index;
-}
-
-Int std_mem_unhold(VirtualMachine *vm, IntList *args)
-{
-    Int index = stack_shift(*args);
-    unhold_var(vm, index);
-    return -1;
-}
-
-Int std_mem_rebase(VirtualMachine *vm, IntList *args)
-{
-    Int index = vm->stack->size - 1;
-    while (vm->unused->size > 0)
-    {
-        index = stack_pop(*vm->unused);
-        // removes
-        for (Int i = 0; i < vm->hashes->size; i++)
-        {
-            if (vm->hashes->data[i].index == index)
-            {
-                free(vm->hashes->data[i].key);
-                stack_remove(*vm->hashes, i);
-            }
-        }
-        for (Int i = 0; i < vm->unused->size; i++)
-        {
-            if (vm->unused->data[i] == index)
-            {
-                stack_remove(*vm->unused, i);
-            }
-        }
-        for (Int i = 0; i < vm->temp->size; i++)
-        {
-            if (vm->temp->data[i] == index)
-            {
-                stack_remove(*vm->temp, i);
-            }
-        }
-
-        // updates
-        for (Int i = 0; i < vm->temp->size; i++)
-        {
-            if (vm->temp->data[i] == index)
-            {
-                vm->temp->data[i] = -1;
-            }
-            else if (vm->temp->data[i] > index)
-            {
-                vm->temp->data[i]--;
-            }
-        }
-        for (Int i = 0; i < vm->unused->size; i++)
-        {
-            if (vm->unused->data[i] == index)
-            {
-                vm->unused->data[i] = -1;
-            }
-            else if (vm->unused->data[i] > index)
-            {
-                vm->unused->data[i]--;
-            }
-        }
-        for (Int i = 0; i < vm->hashes->size; i++)
-        {
-            if (vm->hashes->data[i].index == index)
-            {
-                vm->hashes->data[i].index = -1;
-            }
-            else if (vm->hashes->data[i].index > index)
-            {
-                vm->hashes->data[i].index--;
-            }
-        }
-
-        stack_remove(*vm->stack, index);
-        stack_remove(*vm->typestack, index);
-    }
-
-    return -1;
-}
-
-Int std_mem_collect(VirtualMachine *vm, IntList *args)
-{
-    collect_garbage(vm);
-    return -1;
-}
-
-Int std_mem_edit(VirtualMachine *vm, IntList *args)
-{
-    Int variable = stack_shift(*args);
-    Int value = stack_shift(*args);
-    
-    if (variable >= 0 && variable < vm->stack->size)
-    {
-        if(vm->typestack->data[variable] == TYPE_STRING)
-        {
-            free(vm->stack->data[variable].string);
-        }
-
-        if (value >= 0 && value < vm->stack->size)
-        {
-            vm->stack->data[variable] = vm->stack->data[value];
-            vm->typestack->data[variable] = vm->typestack->data[value];
-        }
-    }
-    
-    return -1;
-}
-
-Int std_mem_copy(VirtualMachine *vm, IntList *args)
-{
-    Int variable = stack_shift(*args);
-    Int value = stack_shift(*args);
-    Int newvar = new_var(vm);
-    
-    if (variable >= 0 && variable < vm->stack->size)
-    {
-        if (value >= 0 && value < vm->stack->size)
-        {
-            vm->stack->data[newvar] = value_duplicate(vm->stack->data[value], vm->typestack->data[value]);
-            vm->typestack->data[newvar] = vm->typestack->data[value];
-        }
-    }
-    
-    return newvar;
-}
-
-Int std_mem_get(VirtualMachine *vm, IntList *args)
-{
-    Int index = (Int)stack_shift(*args);
-    if (index >= 0 && index < vm->stack->size)
-    {
-        return index;
-    }
-    
-    return -1;
-}
-
 Int std_hash_set(VirtualMachine *vm, IntList *args)
 {
     Int varname = stack_shift(*args);
@@ -210,7 +40,7 @@ Int std_type_set(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-void print_element(VirtualMachine *vm, int index)
+void print_element(VirtualMachine *vm, Int index)
 {
     if (index < 0 || index >= vm->stack->size)
     {
@@ -241,6 +71,23 @@ void print_element(VirtualMachine *vm, int index)
     {
         printf("%s", temp.string);
     }
+    else if (_type == TYPE_LIST)
+    {
+        printf("[");
+        IntList *list = (IntList*)temp.pointer;
+        for (Int i = 0; i < (list->size-1); i++)
+        {
+            printf("%d, ", list->data[i]);
+        }
+        if (list->size > 0)
+        {
+            printf("%d]", list->data[list->size-1]);
+        }
+        else
+        {
+            printf("]");
+        }
+    }
     else if (_type == TYPE_OTHER)
     {
         printf("{other} %p", temp.pointer);
@@ -251,7 +98,7 @@ void print_element(VirtualMachine *vm, int index)
     }
     else
     {
-        printf("{unknown}");
+        printf("{unknown} %d", temp.integer);
     }
 }
 
@@ -278,14 +125,34 @@ Int std_io_print(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_io_ls_all(VirtualMachine *vm, IntList *args)
+Int std_io_ls(VirtualMachine *vm, IntList *args)
 {
-    for (Int i = 0; i < vm->stack->size; i++)
+    Int _var = -1;
+    if (args->size > 0)
     {
-        printf("[%ld]: ", i);
-        print_element(vm, i);
-        printf("\n");
+        _var = stack_shift(*args);
     }
+
+    if (_var > -1 && vm->typestack->data[_var] == TYPE_LIST)
+    {
+        IntList *list = (IntList*)vm->stack->data[(Int)vm->stack->data[_var].number].pointer;
+        for (Int i = 0; i < list->size; i++)
+        {
+            printf("%d[%d]: ", (Int)vm->stack->data[_var].number, i);
+            print_element(vm, list->data[i]);
+            printf("\n");
+        }
+    }
+    else 
+    {
+        for (Int i = 0; i < vm->stack->size; i++)
+        {
+            printf("[%ld]: ", i);
+            print_element(vm, i);
+            printf("\n");
+        }
+    }
+
     return -1;
 }
 
@@ -339,14 +206,20 @@ Int std_eval(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_mem_delete(VirtualMachine *vm, IntList *args)
+Int std_do(VirtualMachine *vm, IntList *args)
 {
+    Int str = stack_shift(*args);
+    char* _str = vm->stack->data[str].string;
+    Int _args = new_list(vm);
     while (args->size > 0)
     {
-        unuse_var(vm, stack_shift(*args));
+        stack_push(*((IntList*)vm->stack->data[_args].pointer), stack_shift(*args));
     }
-    return -1;
+    hash_set(vm, "args", _args);
+    Int result = eval(vm, _str);
+    return result;
 }
+
 
 Int std_ignore(VirtualMachine *vm, IntList *args)
 {
@@ -369,10 +242,6 @@ Int std_type_get(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_mem_length(VirtualMachine *vm, IntList *args)
-{
-    return new_number(vm, vm->stack->size);
-}
 
 // math functions
 // math functions
@@ -492,6 +361,161 @@ Int std_math_decrement(VirtualMachine *vm, IntList *args)
     return a;
 }
 
+// list functions
+// list functions
+// list functions
+// list functions
+
+Int std_list_new(VirtualMachine *vm, IntList *args) 
+{
+    Int index = new_list(vm);
+    IntList *list = (IntList*)vm->stack->data[index].pointer;
+    while (args->size > 0)
+    {
+        Int var = stack_shift(*args);
+        Int tmp = new_var(vm);
+        vm->stack->data[tmp] = value_duplicate(vm->stack->data[var], vm->typestack->data[var]);
+        vm->typestack->data[tmp] = vm->typestack->data[var];
+        stack_push(*list, tmp);
+    }
+    return index;
+}
+Int std_list_insert(VirtualMachine *vm, IntList *args)
+{
+    Int list = stack_shift(*args);
+    Int index = stack_shift(*args);
+    Int value = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        stack_insert(*lst, (Int)vm->stack->data[index].number, value);
+    }
+    return -1;
+}
+Int std_list_push(VirtualMachine *vm, IntList *args)
+{
+    Int list = stack_shift(*args);
+    Int value = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        stack_push(*lst, value);
+    }
+    return -1;
+}
+Int std_list_unshift(VirtualMachine *vm, IntList *args) 
+{
+    Int list = stack_shift(*args);
+    Int value = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        stack_unshift(*lst, value);
+    }
+    return -1;   
+}
+Int std_list_remove(VirtualMachine *vm, IntList *args)// returns the removed element
+{
+    Int list = stack_shift(*args);
+    Int index = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        Int result = stack_remove(*lst, (Int)vm->stack->data[index].number);
+        return result;
+    }
+    return -1;
+}
+
+Int std_list_pop(VirtualMachine *vm, IntList *args)// returns the removed element
+{
+    Int list = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        Int result = stack_pop(*lst);
+        return result;
+    }
+    return -1;
+}
+
+Int std_list_shift(VirtualMachine *vm, IntList *args)// returns the removed element
+{
+    Int list = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        Int result = stack_shift(*lst);
+        return result;
+    }
+    return -1;
+}
+
+Int std_list_concat(VirtualMachine *vm, IntList *args)
+{
+    Int list1 = stack_shift(*args);
+    Int list2 = stack_shift(*args);
+    Int _newlist = new_list(vm);
+    IntList *newlist = (IntList*)vm->stack->data[_newlist].pointer;
+    if (vm->typestack->data[list1] == TYPE_LIST && vm->typestack->data[list2] == TYPE_LIST)
+    {
+        IntList *lst1 = (IntList*)vm->stack->data[list1].pointer;
+        IntList *lst2 = (IntList*)vm->stack->data[list2].pointer;
+        for (Int i = 0; i < lst1->size; i++)
+        {
+            stack_push(*newlist, lst1->data[i]);
+        }
+        for (Int i = 0; i < lst2->size; i++)
+        {
+            stack_push(*newlist, lst2->data[i]);
+        }
+    }
+    return _newlist;
+}
+Int std_list_find(VirtualMachine *vm, IntList *args)
+{
+    Int list = stack_shift(*args);
+    Int value = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        for (Int i = 0; i < lst->size; i++)
+        {
+            if (lst->data[i] == list)
+            {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+Int std_list_get(VirtualMachine *vm, IntList *args)
+{
+    Int list = stack_shift(*args);
+    Int index = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        if (vm->typestack->data[index] == TYPE_NUMBER)
+        {
+            if (vm->stack->data[index].number >= 0 && vm->stack->data[index].number < lst->size)
+            {
+                return lst->data[(Int)vm->stack->data[index].number];
+            }
+        }
+    }
+    return -1;
+}
+Int std_list_length(VirtualMachine *vm, IntList *args)
+{
+    Int list = stack_shift(*args);
+    if (vm->typestack->data[list] == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)vm->stack->data[list].pointer;
+        return new_number(vm, lst->size);
+    }
+    return -1;
+}
 
 
 // std string
@@ -648,14 +672,35 @@ Int std_string_format(VirtualMachine *vm, IntList *args)
                 free(_str);
                 _str = _newstr;
             }
+            else if (_str[i+1] == 'f')
+            {
+                Int value = stack_shift(*args);
+                char* _value = str_format("%f", vm->stack->data[value].number);
+                char* _newstr = str_replace(_str, "%f", _value);
+                free(_value);
+                free(_str);
+                _str = _newstr;
+            }
+            else if (_str[i+1] == 'p')
+            {
+                Int value = stack_shift(*args);
+                char* _value = str_format("%p", vm->stack->data[value].pointer);
+                char* _newstr = str_replace(_str, "%p", _value);
+                free(_value);
+                free(_str);
+                _str = _newstr;
+            }
         }
     }
+    result = new_var(vm);
+    vm->stack->data[result].string = _str;
+    vm->typestack->data[result] = TYPE_STRING;
     return result;
 }
-// std conditions
-// std conditions
-// std conditions
 
+// std conditions
+// std conditions
+// std conditions
 Int std_condition_equals(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
@@ -786,7 +831,7 @@ Int std_condition_or(VirtualMachine *vm, IntList *args)
     if (is_true(vm->stack->data[a], vm->typestack->data[a]))
     {
         Int index = new_var(vm);
-        if (vm->typestack->data[a] == TYPE_STRING)
+        if (vm->typestack->data[b] == TYPE_LIST || vm->typestack->data[a] == TYPE_STRING)
         {
             vm->stack->data[index] = vm->stack->data[a];
             
@@ -803,7 +848,7 @@ Int std_condition_or(VirtualMachine *vm, IntList *args)
     else
     {
         Int index = new_var(vm);
-        if (vm->typestack->data[b] == TYPE_STRING)
+        if (vm->typestack->data[b] == TYPE_LIST || vm->typestack->data[b] == TYPE_STRING)
         {
             vm->stack->data[index] = vm->stack->data[b];
         }
@@ -839,8 +884,8 @@ Int std_condition_if(VirtualMachine *vm, IntList *args)
 {
     Int condition = stack_shift(*args);
     Int _then = stack_shift(*args);
-    Int result = -1;
-    if (is_true(vm->stack->data[condition], vm->typestack->data[condition]))
+    Int result = eval(vm, vm->stack->data[condition].string);
+    if (is_true(vm->stack->data[result], vm->typestack->data[result]))
     {
         result = eval(vm, vm->stack->data[_then].string);
     }
@@ -852,8 +897,8 @@ Int std_condition_ifelse(VirtualMachine *vm, IntList *args)
     Int condition = stack_shift(*args);
     Int _then = stack_shift(*args);
     Int _else = stack_shift(*args);
-    Int result = -1;
-    if (is_true(vm->stack->data[condition], vm->typestack->data[condition]))
+    Int result = eval(vm, vm->stack->data[condition].string);
+    if (is_true(vm->stack->data[result], vm->typestack->data[result]))
     {
         result = eval(vm, vm->stack->data[_then].string);
     }
@@ -872,10 +917,11 @@ Int std_loop_while(VirtualMachine *vm, IntList *args)
 {
     Int condition_str = stack_shift(*args);
     Int _do_str = stack_shift(*args);
-    Int condition_result = eval(vm, vm->stack->data[condition_str].string);
-    while (is_true(vm->stack->data[condition_result], vm->typestack->data[condition_result]))
-    {   
-        condition_result = eval(vm, vm->stack->data[_do_str].string);
+    Int condition = eval(vm, vm->stack->data[condition_str].string);
+    while (is_true(vm->stack->data[condition], vm->typestack->data[condition]))
+    {
+        eval(vm, vm->stack->data[_do_str].string);
+        condition = eval(vm, vm->stack->data[condition_str].string);
     }
     return -1;
 }
@@ -897,9 +943,10 @@ void init_basics(VirtualMachine *vm)
     
     registerBuiltin(vm, "#", std_ignore);
     registerBuiltin(vm, "eval", std_eval);
+    registerBuiltin(vm, "do", std_do);
     registerBuiltin(vm, "return", std_return);
 #ifndef ARDUINO
-    registerBuiltin(vm, "ls", std_io_ls_all);
+    registerBuiltin(vm, "ls", std_io_ls);
     registerBuiltin(vm, "ls.type", std_io_ls_types);
     registerBuiltin(vm, "ls.hash", std_io_ls_hashes);
     registerBuiltin(vm, "ls.temp", std_io_ls_temp);
@@ -916,6 +963,7 @@ void init_type(VirtualMachine *vm)
     registerNumber(vm, "type.number", TYPE_NUMBER);
     registerNumber(vm, "type.string", TYPE_STRING);
     registerNumber(vm, "type.builtin", TYPE_BUILTIN);
+    registerNumber(vm, "type.list", TYPE_LIST);
 
     // type functions
     registerBuiltin(vm, "type.get", std_type_get);
@@ -933,21 +981,6 @@ void init_hash(VirtualMachine *vm)
     registerBuiltin(vm, "hash.set", std_hash_set);
     registerBuiltin(vm, "hash.delete", std_hash_delete);
     registerBuiltin(vm, "hash.rename", std_hash_rename);
-}
-
-void init_manual_memory(VirtualMachine *vm)
-{
-    registerBuiltin(vm, "mem.get", std_mem_get);
-    registerBuiltin(vm, "mem.hold", std_mem_hold);
-    registerBuiltin(vm, "mem.keep", std_mem_keep);
-    registerBuiltin(vm, "mem.edit", std_mem_edit);
-    registerBuiltin(vm, "mem.copy", std_mem_copy);
-    registerBuiltin(vm, "mem.len", std_mem_length);
-    registerBuiltin(vm, "mem.clear", std_mem_clear);
-    registerBuiltin(vm, "mem.rebase", std_mem_rebase);
-    registerBuiltin(vm, "mem.unhold", std_mem_unhold);
-    registerBuiltin(vm, "mem.delete", std_mem_delete);
-    registerBuiltin(vm, "mem.collect", std_mem_collect);
 }
 
 void init_math(VirtualMachine *vm)
@@ -997,6 +1030,21 @@ void init_condition(VirtualMachine *vm)
     registerBuiltin(vm, ">=", std_condition_greater_equals);
 }
 
+void init_list(VirtualMachine *vm)
+{
+    registerBuiltin(vm, "list.new", std_list_new);
+    registerBuiltin(vm, "list.pop", std_list_pop);
+    registerBuiltin(vm, "list.get", std_list_get);
+    registerBuiltin(vm, "list.len", std_list_length);
+    registerBuiltin(vm, "list.push", std_list_push);
+    registerBuiltin(vm, "list.find", std_list_find);
+    registerBuiltin(vm, "list.shift", std_list_shift);
+    registerBuiltin(vm, "list.insert", std_list_insert);
+    registerBuiltin(vm, "list.remove", std_list_remove);
+    registerBuiltin(vm, "list.concat", std_list_concat);
+    registerBuiltin(vm, "list.unshift", std_list_unshift);
+}
+
 void init_default_vars(VirtualMachine *vm)
 {
     hold_var(vm,spawn_string(vm, "VERSION", VERSION));// version
@@ -1009,7 +1057,7 @@ void init_std(VirtualMachine *vm)
     init_type(vm);
     init_loop(vm);
     init_hash(vm);
-    init_manual_memory(vm);
+    init_list(vm);
     init_math(vm);
     init_string(vm);
     init_condition(vm);

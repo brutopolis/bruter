@@ -3,13 +3,12 @@
 
 rm -rf build
 mkdir build
-
 mkdir build/lib
 mkdir build/include
 mkdir build/example
 cp ./src/main.c build/include/main.c
-cp ./lib/* build/lib/
-cp ./include/* build/include/
+cp ./lib/* build/lib/ -r
+cp ./include/* build/include/ -r
 cp ./example/* build/example/ -r
 cd build
 
@@ -38,3 +37,4 @@ gcc ./include/main.c lib/* -o bruter -O3 -lm
 rm -rf *.o
 rm -rf lib/*.c
 rm -rf lib/*.o
+rm -rf include/*.c

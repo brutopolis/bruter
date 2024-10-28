@@ -8,8 +8,8 @@ mkdir build/lib
 mkdir build/include
 mkdir build/example
 cp ./src/main.c build/include/main.c
-cp ./lib/* build/lib/
-cp ./include/* build/include/
+cp ./lib/* build/lib/ -r
+cp ./include/* build/include/ -r
 cp ./example/* build/example/ -r
 cd build
 
@@ -37,13 +37,18 @@ gcc ./include/main.c lib/* -o bruter -O3 -lm -g
 
 rm -rf *.o
 rm -rf lib/*.c
+rm -rf include/*.c
 rm -rf lib/*.o
+
+valgrind --tool=massif --stacks=yes --detailed-freq=1 --verbose  ./bruter ../example/list.br 
+ms_print massif.out.* > massif-out.txt
+rm -rf massif.out.*
 
 valgrind \
     --leak-check=full \
     --show-leak-kinds=all \
     --track-origins=yes \
     --log-file=valgrind-out.txt \
-    --verbose ./bruter ../example/array.br
+    --verbose ./bruter ../example/list.br
 
 #valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=valgrind-out.txt --verbose build/bruter example/threads.br
