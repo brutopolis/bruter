@@ -631,6 +631,11 @@ void unuse_var(VirtualMachine *vm, Int index)
     stack_push(*vm->unused, index);
 }
 
+void use_var(VirtualMachine *vm, Int index)
+{
+    stack_remove(*vm->unused, index);
+}
+
 void hold_var(VirtualMachine *vm, Int index)
 {
     for (Int i = 0; i < vm->temp->size; i++)
@@ -659,7 +664,67 @@ IntList* parse(VirtualMachine *vm, char *cmd)
         char* str = stack_shift(*splited);
         if (str[0] == '@') 
         {
-            stack_push(*result, atoi(str + 1));
+            if (strchr(str, ':') != NULL)
+            {
+                StringList *splited = splitString(str, ":");
+                char* s_left =  splited->data[0] + 1;
+                char* s_right = splited->data[1];
+
+                Int n_left = atoi(s_left);
+                Int n_right = atoi(s_right);
+                
+                if (n_left == 0 && strlen(s_left) > 0)
+                {
+                    n_left = hash_find(vm, s_left);
+                    
+                }
+
+                if (n_right == 0 && strlen(s_right) > 0)
+                {
+                    n_right = hash_find(vm, s_right);
+                    
+                }
+                
+                if (n_right == -1)
+                {
+                    n_right = vm->stack->size;
+                }
+
+                if (n_left == -1)
+                {
+                    n_left = 0;
+                }
+                
+                if (n_left < n_right)
+                {
+                    for (Int i = n_left; i <= n_right; i++)
+                    {
+                        stack_push(*result, i);
+                    }
+                }
+                else if (n_left > n_right)
+                {
+                    for (Int i = n_left; i >= n_right; i--)
+                    {
+                        stack_push(*result, i);
+                    }
+                }
+                else 
+                {
+                    stack_push(*result, n_left);
+                }
+
+                while (splited->size > 0)
+                {
+                    free(stack_shift(*splited));
+                }
+
+                stack_free(*splited);
+            }
+            else
+            {
+                stack_push(*result, atoi(str + 1));
+            }
         }
         else if (str[0] == '(')
         {

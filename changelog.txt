@@ -1,4 +1,53 @@
-(27/10/2024) - version 0.6
+(31/10/2024) - version 0.6.2a
+
+- some byte related fixes;
+
+(31/10/2024) - version 0.6.2
+
+- removed std_eval, use std_do instead;
+- removed std_loop_repeat, use std_do instead;
+- removed std_loop_while, use std_do instead;
+- hash.set now does auto hold the value;
+- @ operator changed a bit;
+- math functions now can receive endless amount arguments;
+- string functions now can receive endless arguments;
+- list functions now can receive endless arguments;
+- new function mem_swap;
+- new function mem_sector_swap;
+- new type TYPE_RAW;
+- pointers as printed as integer now instead of hex;
+- std_string_split fixed;
+- std_string_format extended;
+- added configurable EXCLUDE to build.sh and build-debug.sh;
+- new lib raw.c;
+- new function raw_byte_set;
+- new function raw_byte_get;
+- new function raw_byte_add;
+- new function raw_byte_sub;
+- new function raw_integer_add;
+- new function raw_integer_sub;
+- new function raw_integer_mul;
+- new function raw_integer_div;
+- new function raw_integer_mod;
+- new function raw_from_float;
+- new function raw_to_float;
+- new function raw_from_string;
+- new function raw_to_string;
+- new function raw_from_bytes;
+
+(28/10/2024) - version 0.6.1
+
+- @ operator can now be used to get a segment of the stack, @: will get the whole stack, @:5 will get the first 5 elements, @5: will get all elements from the 5th to the end, @5:10 will get all elements from the 5th to the 10th;
+- some fixes;
+- new function use_var;
+- new function mem_use;
+- new function mem_unuse;
+- new function mem_segment_new;
+- new function mem_segment_copy;
+- fixed repl end message;
+- renamed mem_edit to mem_set;
+
+(27/10/2024) - version 0.6.0
 
 - some README updates;
 - no more prototypes;

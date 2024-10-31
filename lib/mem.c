@@ -3,9 +3,13 @@
 
 Int mem_clear(VirtualMachine *vm, IntList *args)
 {
-    while (vm->temp->size > 0)
+    while (args->size > 0)
     {
-        unuse_var(vm, stack_shift(*vm->temp));
+        Int index = stack_shift(*args);
+        if (stack_find(*vm->temp, index) >= 0)
+        {
+            unuse_var(vm, index);
+        }
     }
 
     return -1;
@@ -13,32 +17,37 @@ Int mem_clear(VirtualMachine *vm, IntList *args)
 
 Int mem_hold(VirtualMachine *vm, IntList *args)
 {
-    Int index = stack_shift(*args);
-    if (args->size > 0)
+    Int index;
+    while (args->size > 0)
     {
-        Int as = stack_shift(*args);
-        Int _type = vm->typestack->data[index];
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            hold_var(vm, index);
+        } 
     }
-    hold_var(vm, index);
+    
     return -1;
 }
 
 Int mem_keep(VirtualMachine *vm, IntList *args)
 {
     Int index = stack_shift(*args);
-    if (args->size > 0)
-    {
-        Int as = stack_shift(*args);
-        Int _type = vm->typestack->data[index];
-    }
     hold_var(vm, index);
     return index;
 }
 
 Int mem_unhold(VirtualMachine *vm, IntList *args)
 {
-    Int index = stack_shift(*args);
-    unhold_var(vm, index);
+    Int index;
+    while (args->size > 0)
+    {
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            unhold_var(vm, index);
+        }
+    }
     return -1;
 }
 
@@ -138,7 +147,23 @@ Int mem_collect(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int mem_edit(VirtualMachine *vm, IntList *args)
+Int mem_swap(VirtualMachine *vm, IntList *args)
+{
+    Int a = stack_shift(*args);
+    Int b = stack_shift(*args);
+    if (a >= 0 && a < vm->stack->size && b >= 0 && b < vm->stack->size)
+    {
+        Value temp = vm->stack->data[a];
+        char type = vm->typestack->data[a];
+        vm->stack->data[a] = vm->stack->data[b];
+        vm->typestack->data[a] = vm->typestack->data[b];
+        vm->stack->data[b] = temp;
+        vm->typestack->data[b] = type;
+    }
+    return -1;
+}
+
+Int mem_set(VirtualMachine *vm, IntList *args)
 {
     Int variable = stack_shift(*args);
     Int value = stack_shift(*args);
@@ -161,6 +186,34 @@ Int mem_edit(VirtualMachine *vm, IntList *args)
         }
     }
     
+    return -1;
+}
+
+Int mem_use(VirtualMachine *vm, IntList *args)
+{
+    Int index;
+    while (args->size > 0)
+    {
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            use_var(vm, index);
+        }
+    }
+    return -1;
+}
+
+Int mem_unuse(VirtualMachine *vm, IntList *args)
+{
+    Int index;
+    while (args->size > 0)
+    {
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            unuse_var(vm, index);
+        }
+    }
     return -1;
 }
 
@@ -209,41 +262,79 @@ Int mem_length(VirtualMachine *vm, IntList *args)
     return new_number(vm, vm->stack->size);
 }
 
-Int byte_set(VirtualMachine *vm, IntList *args)
+Int mem_sector_new(VirtualMachine *vm, IntList *args)
 {
-    Int value = stack_shift(*args);
-    Int index = 0;
-    while (args->size > 0 && index < sizeof(Float))
+    Int _size = stack_shift(*args);
+    Int index = new_var(vm);
+    while ((vm->stack->data[_size].number - 1) > 0)
     {
-        vm->stack->data[value].bytes[index] = stack_shift(*args);
+        new_var(vm);
+        vm->stack->data[_size].number--;
+    }
+    return index;
+}
+
+Int mem_sector_copy(VirtualMachine *vm, IntList *args)
+{
+    Int origin = stack_shift(*args);
+    Int destination = stack_shift(*args);
+    Int _size = stack_shift(*args);
+    while (vm->stack->data[_size].number > 0)
+    {
+        if (origin >= 0 && origin < vm->stack->size)
+        {
+            if (destination >= 0 && destination < vm->stack->size)
+            {
+                vm->stack->data[destination] = value_duplicate(vm->stack->data[origin], vm->typestack->data[origin]);
+                vm->typestack->data[destination] = vm->typestack->data[origin];
+            }
+        }
+        origin++;
+        destination++;
+        vm->stack->data[_size].number--;
     }
     return -1;
 }
 
-Int byte_get(VirtualMachine *vm, IntList *args)
+Int mem_sector_swap(VirtualMachine *vm, IntList *args)
 {
-    Int value = stack_shift(*args);
-    Int index = stack_shift(*args);
-    if (index >= 0 && index < sizeof(Float))
+    Int a = stack_shift(*args);
+    Int b = stack_shift(*args);
+    Int _size = stack_shift(*args);
+    while (vm->stack->data[_size].number > 0)
     {
-        return vm->stack->data[value].bytes[index];
+        if (a >= 0 && a < vm->stack->size && b >= 0 && b < vm->stack->size)
+        {
+            Value temp = vm->stack->data[a];
+            char type = vm->typestack->data[a];
+            vm->stack->data[a] = vm->stack->data[b];
+            vm->typestack->data[a] = vm->typestack->data[b];
+            vm->stack->data[b] = temp;
+            vm->typestack->data[b] = type;
+        }
+        a++;
+        b++;
+        vm->stack->data[_size].number--;
     }
     return -1;
 }
 
-void init_byte(VirtualMachine *vm)
+void init_sector(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "byte.set", byte_set);
-    registerBuiltin(vm, "byte.get", byte_get);
+    registerBuiltin(vm, "sector.new", mem_sector_new);
+    registerBuiltin(vm, "sector.copy", mem_sector_copy);
+    registerBuiltin(vm, "sector.swap", mem_sector_swap);
 }
 
 void init_mem(VirtualMachine *vm)
 {
     registerNumber(vm, "mem.size", sizeof(Float));
+    registerBuiltin(vm, "mem.use", mem_use);
+    registerBuiltin(vm, "mem.unuse", mem_unuse);
     registerBuiltin(vm, "mem.get", mem_get);
     registerBuiltin(vm, "mem.hold", mem_hold);
     registerBuiltin(vm, "mem.keep", mem_keep);
-    registerBuiltin(vm, "mem.edit", mem_edit);
+    registerBuiltin(vm, "mem.set", mem_set);
     registerBuiltin(vm, "mem.copy", mem_copy);
     registerBuiltin(vm, "mem.len", mem_length);
     registerBuiltin(vm, "mem.clear", mem_clear);
@@ -251,6 +342,7 @@ void init_mem(VirtualMachine *vm)
     registerBuiltin(vm, "mem.unhold", mem_unhold);
     registerBuiltin(vm, "mem.delete", mem_delete);
     registerBuiltin(vm, "mem.collect", mem_collect);
+    registerBuiltin(vm, "mem.swap", mem_swap);
 
-    init_byte(vm);
+    init_sector(vm);
 }

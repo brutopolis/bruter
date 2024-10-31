@@ -20,13 +20,14 @@
 #endif
 #endif
 
-#define VERSION "0.6.0"
+#define VERSION "0.6.2a"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
 #define TYPE_STRING 2
 #define TYPE_LIST 3
 #define TYPE_BUILTIN 4
+#define TYPE_RAW 5
 #define TYPE_OTHER 8
 
 
@@ -139,6 +140,14 @@
     ret; \
 })
 
+#define stack_find(s, v) ({ \
+    Int i = 0; \
+    while (i < (s).size && (s).data[i] != (v)) { \
+        i++; \
+    } \
+    i == (s).size ? -1 : i; \
+})
+
 //Value
 typedef union 
 {
@@ -146,7 +155,7 @@ typedef union
     Int integer;
     char* string;
     void* pointer;
-    char bytes[sizeof(Float)];
+    unsigned char byte[sizeof(Float)];
 } Value;
 
 //Hash
@@ -203,6 +212,7 @@ VirtualMachine* make_vm();
 void free_vm(VirtualMachine *vm);
 void free_var(VirtualMachine *vm, Int index);
 void unuse_var(VirtualMachine *vm, Int index);
+void use_var(VirtualMachine *vm, Int index);
 
 Int new_number(VirtualMachine *vm, Float number);
 Int new_string(VirtualMachine *vm, char *str);

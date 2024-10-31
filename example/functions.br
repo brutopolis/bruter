@@ -1,12 +1,8 @@
 hash.set "_index" 0;
 hash.set "_size" 10;
-mem.hold _size;
-mem.hold _index;
-
 hash.set "cond" "< _index _size";
-hash.set "code" "print _index";
-mem.hold cond;
-mem.hold code;
-hash.set "script" "print (list.shift args)";
+hash.set "code" "print _index;incr _index;";
+
+hash.set "script" "do 'print _index;incr _index;' while '< _index _size';print (list.pop args)";
 do script 444 555 777;
 return 4;
