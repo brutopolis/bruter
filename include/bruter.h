@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 #include <stdarg.h>
+#include <time.h>
 
 #ifndef ARDUINO
 #include <poll.h>
@@ -20,7 +21,7 @@
 #endif
 #endif
 
-#define VERSION "0.6.2b"
+#define VERSION "0.6.2d"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
@@ -28,6 +29,7 @@
 #define TYPE_LIST 3
 #define TYPE_BUILTIN 4
 #define TYPE_RAW 5
+#define TYPE_INTEGER 6
 #define TYPE_OTHER 8
 
 
