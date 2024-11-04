@@ -5,9 +5,21 @@ Int raw_byte_set(VirtualMachine *vm, IntList *args)
     Int _block = stack_shift(*args);
     Int index = (Int)vm->stack->data[stack_shift(*args)].number;
     Int value = stack_shift(*args);
-    if (index >= 0 && index < sizeof(Float))
+    vm->stack->data[_block].byte[index] = (unsigned char)vm->stack->data[value].number;
+    return -1;
+}
+
+Int raw_bytes_set(VirtualMachine *vm, IntList *args)
+{
+    Int _block = stack_shift(*args);
+    for (Int i = 0; i < args->size; i++)
     {
-        vm->stack->data[_block].byte[index] = (unsigned char)vm->stack->data[value].number;
+        vm->stack->data[_block].byte[i] = (unsigned char)vm->stack->data[stack_shift(*args)].number;
+
+        if(i >= sizeof(Float))
+        {
+            break;
+        }
     }
     return -1;
 }
@@ -174,6 +186,8 @@ void init_raw(VirtualMachine *vm)
     registerBuiltin(vm, "byte.get", raw_byte_get);
     registerBuiltin(vm, "byte.add", raw_byte_add);
     registerBuiltin(vm, "byte.sub", raw_byte_sub);
+
+    registerBuiltin(vm, "bytes.set", raw_bytes_set);
 
     registerBuiltin(vm, "int.add", raw_integer_add);
     registerBuiltin(vm, "int.sub", raw_integer_sub);
