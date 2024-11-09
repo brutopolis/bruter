@@ -21,7 +21,7 @@
 #endif
 #endif
 
-#define VERSION "0.6.3"
+#define VERSION "0.6.4"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
@@ -193,7 +193,8 @@ Int str_find(const char *str, const char *substr);
 char* str_replace(const char *str, const char *substr, const char *replacement);
 char* str_replace_all(const char *str, const char *substr, const char *replacement);
 
-StringList* splitString(char *str, char *delim);
+StringList* split_string(char *str, char *delim);
+StringList* split_string_by_char(char *str, char delim);
 StringList* special_space_split(char *str);
 StringList* special_split(char *str, char delim);
 
@@ -246,6 +247,10 @@ void hash_unset(VirtualMachine *vm, char *key);
 Int eval(VirtualMachine *vm, char *cmd);
 Int interpret(VirtualMachine *vm, char* cmd);
 IntList* parse(VirtualMachine *vm, char *cmd);
+Int direct_parser(VirtualMachine *vm, char *cmd);
+Int direct_byte_parser(VirtualMachine *vm, char *cmd);
+Int direct_bit_parser(VirtualMachine *vm, char *cmd);
+
 void collect_garbage(VirtualMachine *vm);
 
 //print
@@ -257,6 +262,8 @@ void print_element(VirtualMachine *vm, Int index);
 
 char* readfile(char *filename);
 void writefile(char *filename, char *content);
+Int repl(VirtualMachine *vm);
+void print_element(VirtualMachine *vm, Int index);
 #endif
 
 #endif
