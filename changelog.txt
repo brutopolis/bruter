@@ -1,3 +1,9 @@
+(09/11/2024) - version 0.6.4a
+
+- some README updates;
+- print functions for bytes and bits added, (..p index) and (...p index);
+- removed vscode-extension, it will be moved to other repository;
+
 (09/11/2024) - version 0.6.4
 
 - direct commands (.a args...) are now a thing, they are faster than libs and are hardcoded in the interpreter, can only work with integers;
