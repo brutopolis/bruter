@@ -1,0 +1,21 @@
+hash.set "state" (tcc.new);
+tcc.add.path state "./include/";
+tcc.compile state 
+(.
+    #include "bruter.h"
+
+    Int teste(VirtualMachine *vm, Args args)
+    {
+        for (int i = 0; i < 100000; i++)
+        {
+            printf("%d\n", i);
+        }
+        return -1;
+    }
+);
+tcc.relocate state;
+hash.set "teste.func" (tcc.get.symbol state "teste");
+print teste.func;
+teste.func;
+print '1234';
+ls;

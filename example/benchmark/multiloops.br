@@ -1,8 +1,0 @@
-process.fork 'proc1';
-process.send proc1 
-'
-    # (.= 1 50000) (.R 50000 (., (.p 1),(.+ 1 1)));
-';
-# (.= 1 0) (.R 50000 (., (.p 1),(.+ 1 1)));
-process.destroy proc1;
-return 0;
