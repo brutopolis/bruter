@@ -1,3 +1,8 @@
+(22/11/2024) - version 0.6.5a
+
+- some examples updated;
+- new function tcc.add.symbol;
+
 (22/11/2024) - version 0.6.5
 
 - no more direct commands, everything in bruter must be optional, so hardcoded commands are not a thing anymore;
