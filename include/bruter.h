@@ -8,16 +8,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-#ifndef ARDUINO
-#ifdef _WIN32
-#include <windows.h>
-
-#else // Linux
-#include <unistd.h>
-#endif
-#endif
-
-#define VERSION "0.6.5a"
+#define VERSION "0.6.7"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
@@ -29,28 +20,12 @@
 #define TYPE_OTHER 8
 
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__aarch64__) || defined(__LP64__) || defined(_WIN64) || defined(__amd64__) || defined(__x86_64) || defined(__x86_64__) || defined(__x86_64)
+#if __SIZEOF_POINTER__ == 8
     #define Int long
     #define Float double
-#elif defined(__i386__) || defined(_M_IX86) || defined(__ARM_ARCH_7__)
-    #define Int int
-    #define Float float
-#elif defined(__AVR__)
-    #define Int short
-    // maybe i should implement a 16-bit float in far future
-    #define Float float 
-#elif defined(ESP8266) || defined(ESP32)
-    #define Int int
-    #define Float float
 #else
     #define Int int
     #define Float float
-#endif
-
-#define Nil -1
-
-#ifndef __null
-#define __null 0
 #endif
 
 #ifndef NULL
@@ -168,8 +143,6 @@ typedef Stack(char*) StringList;
 typedef Stack(Int) IntList;
 typedef Stack(char) CharList;
 
-#define Args IntList*
-
 typedef struct
 {
     ValueList *stack;
@@ -232,10 +205,10 @@ extern Int spawn_builtin(VirtualMachine *vm, char* varname, Function function);
 extern Int spawn_list(VirtualMachine *vm, char* varname);
 
 
-extern void registerBuiltin(VirtualMachine *vm, char* name, Function function);
-extern void registerNumber(VirtualMachine *vm, char* name, Float number);
-extern void registerString(VirtualMachine *vm, char* name, char* string);
-extern void registerList(VirtualMachine *vm, char* name);
+extern void register_builtin(VirtualMachine *vm, char* name, Function function);
+extern void register_number(VirtualMachine *vm, char* name, Float number);
+extern void register_string(VirtualMachine *vm, char* name, char* string);
+extern void register_list(VirtualMachine *vm, char* name);
 
 
 extern Int hash_find(VirtualMachine *vm, char *key);
@@ -249,13 +222,6 @@ extern IntList* parse(VirtualMachine *vm, char *cmd);
 
 extern void collect_garbage(VirtualMachine *vm);
 
-//print
-extern void print_element(VirtualMachine *vm, Int index);
-
-// Declarações das funções disponíveis no programa mestre
-extern int multiply(int a, int b);
-extern double divide(double a, double b);
-
 // <libraries header>
 
 #ifndef ARDUINO
@@ -264,57 +230,7 @@ extern char* readfile(char *filename);
 extern void writefile(char *filename, char *content);
 extern Int repl(VirtualMachine *vm);
 extern void print_element(VirtualMachine *vm, Int index);
+
 #endif
 
 #endif
-/*
-char* func_names[] = {
-    "str_duplicate",
-    "str_nduplicate",
-    "str_format",
-    "str_sub",
-    "str_concat",
-    "str_find",
-    "str_replace",
-    "str_replace_all",
-    "split_string",
-    "split_string_by_char",
-    "special_space_split",
-    "special_split",
-    "is_true",
-    "is_space",
-    "make_value_list",
-    "make_int_list",
-    "make_string_list",
-    "make_char_list",
-    "make_vm",
-    "free_vm",
-    "free_var",
-    "unuse_var",
-    "use_var",
-    "new_number",
-    "new_string",
-    "new_builtin",
-    "new_var",
-    "new_list",
-    "hold_var",
-    "unhold_var",
-    "value_duplicate",
-    "spawn_var",
-    "spawn_string",
-    "spawn_number",
-    "spawn_builtin",
-    "spawn_list",
-    "registerBuiltin",
-    "registerNumber",
-    "registerString",
-    "registerList",
-    "hash_find",
-    "hash_set",
-    "hash_unset",
-    "eval",
-    "interpret",
-    "parse",
-    "collect_garbage",
-    "print_element"
-};*/

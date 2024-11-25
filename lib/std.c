@@ -1,6 +1,128 @@
 #include "bruter.h"
 
-Int std_hash_set(VirtualMachine *vm, IntList *args)
+#ifndef ARDUINO
+
+#include <poll.h>
+#include <errno.h>
+#include <fcntl.h>
+
+
+#include <sys/wait.h>
+
+Int brl_os_file_read(VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    char *code = readfile(vm->stack->data[filename].string);
+    Int index = -1;
+    if (code != NULL)
+    {
+        index = new_var(vm);
+        vm->stack->data[index].string = code;
+        vm->typestack->data[index] = TYPE_STRING;
+    }
+    return index;
+}
+
+Int brl_os_file_write(VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    Int code = stack_shift(*args);
+    writefile(vm->stack->data[filename].string, vm->stack->data[code].string);
+    return -1;
+}
+
+Int brl_os_file_delete(VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    remove(vm->stack->data[filename].string);
+    return -1;
+}
+
+Int brl_os_repl(VirtualMachine *vm, IntList *args)
+{
+    return repl(vm);
+}
+
+Int brl_os_dofile(VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    char *code = readfile(vm->stack->data[filename].string);
+    Int result = -1;
+    if (code != NULL)
+    {
+        result = eval(vm, code);
+        free(code);
+    }
+    else 
+    {
+        printf("Error: file %s not found\n", vm->stack->data[filename].string);
+    }
+    return result;
+}
+
+Int brl_os_file_exists(VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    FILE *file = fopen(vm->stack->data[filename].string, "r");
+    Int result = new_number(vm, file != NULL);
+    if (file != NULL)
+    {
+        fclose(file);
+    }
+    return result;
+}
+
+Int brl_os_file_rename(VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    Int newname = stack_shift(*args);
+    rename(vm->stack->data[filename].string, vm->stack->data[newname].string);
+    return -1;
+}
+
+Int brl_os_file_copy(VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    Int newname = stack_shift(*args);
+    FILE *file = fopen(vm->stack->data[filename].string, "r");
+    if (file == NULL)
+    {
+        return -1;
+    }
+    fclose(file);
+    char *code = readfile(vm->stack->data[filename].string);
+    writefile(vm->stack->data[newname].string, code);
+    free(code);
+    return -1;
+}
+
+Int brl_os_file_size (VirtualMachine *vm, IntList *args)
+{
+    Int filename = stack_shift(*args);
+    FILE *file = fopen(vm->stack->data[filename].string, "r");
+    if (file == NULL)
+    {
+        return -1;
+    }
+    fseek(file, 0, SEEK_END);
+    Int result = new_number(vm, ftell(file));
+    fclose(file);
+    return result;
+}
+
+Int brl_os_time_now(VirtualMachine *vm, IntList *args)
+{
+    return new_number(vm, time(NULL));
+}
+
+Int brl_os_time_clock(VirtualMachine *vm, IntList *args)
+{
+    return new_number(vm, clock());
+}
+
+#endif
+
+Int brl_std_hash_set(VirtualMachine *vm, IntList *args)
 {
     Int varname = stack_shift(*args);
     Int value = stack_shift(*args);
@@ -11,7 +133,7 @@ Int std_hash_set(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_hash_get(VirtualMachine *vm, IntList *args)
+Int brl_std_hash_get(VirtualMachine *vm, IntList *args)
 {
     Int varname = stack_shift(*args);
     Int index = hash_find(vm, vm->stack->data[varname].string);
@@ -22,14 +144,14 @@ Int std_hash_get(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_hash_delete(VirtualMachine *vm, IntList *args)
+Int brl_std_hash_delete(VirtualMachine *vm, IntList *args)
 {
     Int varname = stack_shift(*args);
     hash_unset(vm, vm->stack->data[varname].string);
     return -1;
 }
 
-Int std_hash_rename(VirtualMachine *vm, IntList *args)
+Int brl_std_hash_rename(VirtualMachine *vm, IntList *args)
 {
     Int varname = stack_shift(*args);
     Int newname = stack_shift(*args);
@@ -42,7 +164,7 @@ Int std_hash_rename(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_type_set(VirtualMachine *vm, IntList *args)
+Int brl_std_type_set(VirtualMachine *vm, IntList *args)
 {
     Int var = stack_shift(*args);
     Int type = stack_shift(*args);
@@ -52,7 +174,7 @@ Int std_type_set(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_io_print(VirtualMachine *vm, IntList *args)
+Int brl_std_io_print(VirtualMachine *vm, IntList *args)
 {
     while (args->size > 0)
     {
@@ -75,7 +197,7 @@ Int std_io_print(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_io_ls(VirtualMachine *vm, IntList *args)
+Int brl_std_io_ls(VirtualMachine *vm, IntList *args)
 {
     Int _var = -1;
     if (args->size > 0)
@@ -106,7 +228,7 @@ Int std_io_ls(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_io_ls_types(VirtualMachine *vm, IntList *args)
+Int brl_std_io_ls_types(VirtualMachine *vm, IntList *args)
 {
     for (Int i = 0; i < vm->stack->size; i++)
     {
@@ -115,7 +237,7 @@ Int std_io_ls_types(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_io_ls_hashes(VirtualMachine *vm, IntList *args)
+Int brl_std_io_ls_hashes(VirtualMachine *vm, IntList *args)
 {
     for (Int i = 0; i < vm->hashes->size; i++)
     {
@@ -126,7 +248,7 @@ Int std_io_ls_hashes(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_io_ls_temp(VirtualMachine *vm, IntList *args)
+Int brl_std_io_ls_temp(VirtualMachine *vm, IntList *args)
 {
     for (Int i = 0; i < vm->temp->size; i++)
     {
@@ -137,7 +259,7 @@ Int std_io_ls_temp(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_io_ls_unused(VirtualMachine *vm, IntList *args)
+Int brl_std_io_ls_unused(VirtualMachine *vm, IntList *args)
 {
     for (Int i = 0; i < vm->unused->size; i++)
     {
@@ -148,7 +270,7 @@ Int std_io_ls_unused(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_loop_each(VirtualMachine *vm, IntList *args)
+Int brl_std_loop_each(VirtualMachine *vm, IntList *args)
 {
     Int _list = stack_shift(*args);
     Int _varname = stack_shift(*args);
@@ -162,7 +284,7 @@ Int std_loop_each(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_do(VirtualMachine *vm, IntList *args)
+Int brl_std_do(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     char* _str = vm->stack->data[str].string;
@@ -181,7 +303,7 @@ Int std_do(VirtualMachine *vm, IntList *args)
 }
 
 
-Int std_ignore(VirtualMachine *vm, IntList *args)
+Int brl_std_ignore(VirtualMachine *vm, IntList *args)
 {
     while (args->size > 0)
     {
@@ -190,18 +312,18 @@ Int std_ignore(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_return(VirtualMachine *vm, IntList *args)
+Int brl_std_return(VirtualMachine *vm, IntList *args)
 {
     return stack_shift(*args);
 }
 
-Int std_gindex(VirtualMachine *vm, IntList *args)
+Int brl_std_gindex(VirtualMachine *vm, IntList *args)
 {
     Int var = stack_shift(*args);
     return new_number(vm, var);
 }
 
-Int std_type_get(VirtualMachine *vm, IntList *args)
+Int brl_std_type_get(VirtualMachine *vm, IntList *args)
 {
     Int var = stack_shift(*args);
     Int result = new_number(vm, vm->typestack->data[var]);
@@ -215,7 +337,7 @@ Int std_type_get(VirtualMachine *vm, IntList *args)
 // math functions
 
 
-Int std_math_add(VirtualMachine *vm, IntList *args)
+Int brl_std_math_add(VirtualMachine *vm, IntList *args)
 {
     Int result = stack_shift(*args);
     while (args->size > 0)
@@ -225,7 +347,7 @@ Int std_math_add(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_math_sub(VirtualMachine *vm, IntList *args)
+Int brl_std_math_sub(VirtualMachine *vm, IntList *args)
 {
     Int result = stack_shift(*args);
     while (args->size > 0)
@@ -235,7 +357,7 @@ Int std_math_sub(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_math_mul(VirtualMachine *vm, IntList *args)
+Int brl_std_math_mul(VirtualMachine *vm, IntList *args)
 {
     Int result = stack_shift(*args);
     while (args->size > 0)
@@ -245,7 +367,7 @@ Int std_math_mul(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_math_div(VirtualMachine *vm, IntList *args)
+Int brl_std_math_div(VirtualMachine *vm, IntList *args)
 {
     Int result = stack_shift(*args);
     while (args->size > 0)
@@ -255,7 +377,7 @@ Int std_math_div(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_math_mod(VirtualMachine *vm, IntList *args)
+Int brl_std_math_mod(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -263,7 +385,7 @@ Int std_math_mod(VirtualMachine *vm, IntList *args)
     return a;
 }
 
-Int std_math_pow(VirtualMachine *vm, IntList *args)
+Int brl_std_math_pow(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -271,21 +393,21 @@ Int std_math_pow(VirtualMachine *vm, IntList *args)
     return a;
 }
 
-Int std_math_sqrt(VirtualMachine *vm, IntList *args)
+Int brl_std_math_sqrt(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     vm->stack->data[a].number = sqrt(vm->stack->data[a].number);
     return a;
 }
 
-Int std_math_abs(VirtualMachine *vm, IntList *args)
+Int brl_std_math_abs(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     vm->stack->data[a].number = fabs(vm->stack->data[a].number);
     return a;
 }
 
-Int std_math_random(VirtualMachine *vm, IntList *args)
+Int brl_std_math_random(VirtualMachine *vm, IntList *args)
 {
     Int ___min = stack_shift(*args);
     Int ___max = stack_shift(*args);
@@ -293,14 +415,14 @@ Int std_math_random(VirtualMachine *vm, IntList *args)
     return ___min;
 }
 
-Int std_math_seed(VirtualMachine *vm, IntList *args)
+Int brl_std_math_seed(VirtualMachine *vm, IntList *args)
 {
     Int seed = stack_shift(*args);
     srand((Int)vm->stack->data[seed].number);
     return -1;
 }
 
-Int std_math_floor(VirtualMachine *vm, IntList *args)
+Int brl_std_math_floor(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     vm->stack->data[a].number = floor(vm->stack->data[a].number);
@@ -312,7 +434,7 @@ Int std_math_floor(VirtualMachine *vm, IntList *args)
     return a;
 }
 
-Int std_math_ceil(VirtualMachine *vm, IntList *args)
+Int brl_std_math_ceil(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     vm->stack->data[a].number = ceil(vm->stack->data[a].number);
@@ -324,7 +446,7 @@ Int std_math_ceil(VirtualMachine *vm, IntList *args)
     return a;
 }
 
-Int std_math_round(VirtualMachine *vm, IntList *args)
+Int brl_std_math_round(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     vm->stack->data[a].number = round(vm->stack->data[a].number);
@@ -336,7 +458,7 @@ Int std_math_round(VirtualMachine *vm, IntList *args)
     return a;
 }
 
-Int std_math_increment(VirtualMachine *vm, IntList *args)
+Int brl_std_math_increment(VirtualMachine *vm, IntList *args)
 {
     while (args->size > 0)
     {
@@ -346,7 +468,7 @@ Int std_math_increment(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_math_decrement(VirtualMachine *vm, IntList *args)
+Int brl_std_math_decrement(VirtualMachine *vm, IntList *args)
 {
     while (args->size > 0)
     {
@@ -378,7 +500,7 @@ Int int_to_float(VirtualMachine *vm, IntList *args)
 // list functions
 // list functions
 
-Int std_list_new(VirtualMachine *vm, IntList *args) 
+Int brl_std_list_new(VirtualMachine *vm, IntList *args) 
 {
     Int index = new_list(vm);
     IntList *list = (IntList*)vm->stack->data[index].pointer;
@@ -392,7 +514,7 @@ Int std_list_new(VirtualMachine *vm, IntList *args)
     }
     return index;
 }
-Int std_list_insert(VirtualMachine *vm, IntList *args)
+Int brl_std_list_insert(VirtualMachine *vm, IntList *args)
 {
     Int list = stack_shift(*args);
     Int index = stack_shift(*args);
@@ -408,7 +530,7 @@ Int std_list_insert(VirtualMachine *vm, IntList *args)
     }
     return -1;
 }
-Int std_list_push(VirtualMachine *vm, IntList *args)
+Int brl_std_list_push(VirtualMachine *vm, IntList *args)
 {
     Int list = stack_shift(*args);
     Int value;
@@ -423,7 +545,7 @@ Int std_list_push(VirtualMachine *vm, IntList *args)
     }
     return -1;
 }
-Int std_list_unshift(VirtualMachine *vm, IntList *args) 
+Int brl_std_list_unshift(VirtualMachine *vm, IntList *args) 
 {
     Int list = stack_shift(*args);
     Int value;
@@ -438,7 +560,7 @@ Int std_list_unshift(VirtualMachine *vm, IntList *args)
     }
     return -1;   
 }
-Int std_list_remove(VirtualMachine *vm, IntList *args)// returns the removed element
+Int brl_std_list_remove(VirtualMachine *vm, IntList *args)// returns the removed element
 {
     Int list = stack_shift(*args);
     Int index = stack_shift(*args);
@@ -451,7 +573,7 @@ Int std_list_remove(VirtualMachine *vm, IntList *args)// returns the removed ele
     return -1;
 }
 
-Int std_list_pop(VirtualMachine *vm, IntList *args)// returns the removed element
+Int brl_std_list_pop(VirtualMachine *vm, IntList *args)// returns the removed element
 {
     Int list = stack_shift(*args);
     if (vm->typestack->data[list] == TYPE_LIST)
@@ -463,7 +585,7 @@ Int std_list_pop(VirtualMachine *vm, IntList *args)// returns the removed elemen
     return -1;
 }
 
-Int std_list_shift(VirtualMachine *vm, IntList *args)// returns the removed element
+Int brl_std_list_shift(VirtualMachine *vm, IntList *args)// returns the removed element
 {
     Int list = stack_shift(*args);
     if (vm->typestack->data[list] == TYPE_LIST)
@@ -475,7 +597,7 @@ Int std_list_shift(VirtualMachine *vm, IntList *args)// returns the removed elem
     return -1;
 }
 
-Int std_list_concat(VirtualMachine *vm, IntList *args)
+Int brl_std_list_concat(VirtualMachine *vm, IntList *args)
 {
     Int _newlist = new_list(vm);
     IntList *newlist = (IntList*)vm->stack->data[_newlist].pointer;
@@ -493,7 +615,7 @@ Int std_list_concat(VirtualMachine *vm, IntList *args)
     }
     return _newlist;
 }
-Int std_list_find(VirtualMachine *vm, IntList *args)
+Int brl_std_list_find(VirtualMachine *vm, IntList *args)
 {
     Int list = stack_shift(*args);
     Int value = stack_shift(*args);
@@ -510,7 +632,7 @@ Int std_list_find(VirtualMachine *vm, IntList *args)
     }
     return -1;
 }
-Int std_list_get(VirtualMachine *vm, IntList *args)
+Int brl_std_list_get(VirtualMachine *vm, IntList *args)
 {
     Int list = stack_shift(*args);
     Int index = stack_shift(*args);
@@ -527,7 +649,7 @@ Int std_list_get(VirtualMachine *vm, IntList *args)
     }
     return -1;
 }
-Int std_list_length(VirtualMachine *vm, IntList *args)
+Int brl_std_list_length(VirtualMachine *vm, IntList *args)
 {
     Int list = stack_shift(*args);
     if (vm->typestack->data[list] == TYPE_LIST)
@@ -538,7 +660,7 @@ Int std_list_length(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-/*Int std_list_first(VirtualMachine *vm, IntList *args)
+/*Int brl_std_list_first(VirtualMachine *vm, IntList *args)
 {
     Int list = stack_shift(*args);
     if (vm->typestack->data[list] == TYPE_LIST)
@@ -549,7 +671,7 @@ Int std_list_length(VirtualMachine *vm, IntList *args)
     return -1;
 }*/
 
-Int std_list_last(VirtualMachine *vm, IntList *args)
+Int brl_std_list_last(VirtualMachine *vm, IntList *args)
 {
     Int list = stack_shift(*args);
     if (vm->typestack->data[list] == TYPE_LIST)
@@ -563,7 +685,7 @@ Int std_list_last(VirtualMachine *vm, IntList *args)
 
 // std string
 
-Int std_string_concat(VirtualMachine *vm, IntList *args)
+Int brl_std_string_concat(VirtualMachine *vm, IntList *args)
 {
     Int _newstr = new_string(vm, "");
     char* _newstr_str = vm->stack->data[_newstr].string;
@@ -579,7 +701,7 @@ Int std_string_concat(VirtualMachine *vm, IntList *args)
     return _newstr;
 }
 
-Int std_string_find(VirtualMachine *vm, IntList *args)
+Int brl_std_string_find(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int substr = stack_shift(*args);
@@ -597,7 +719,7 @@ Int std_string_find(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_string_ndup(VirtualMachine *vm, IntList *args)
+Int brl_std_string_ndup(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int start = stack_shift(*args);
@@ -612,7 +734,7 @@ Int std_string_ndup(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_string_split(VirtualMachine *vm, IntList *args)
+Int brl_std_string_split(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int delim = stack_shift(*args);
@@ -634,7 +756,7 @@ Int std_string_split(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_string_replace(VirtualMachine *vm, IntList *args)
+Int brl_std_string_replace(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int substr = stack_shift(*args);
@@ -652,7 +774,7 @@ Int std_string_replace(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_string_replace_all(VirtualMachine *vm, IntList *args)
+Int brl_std_string_replace_all(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int substr = stack_shift(*args);
@@ -670,7 +792,7 @@ Int std_string_replace_all(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_string_to_number(VirtualMachine *vm, IntList *args)
+Int brl_std_string_to_number(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int result = -1;
@@ -681,7 +803,7 @@ Int std_string_to_number(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_string_length(VirtualMachine *vm, IntList *args)
+Int brl_std_string_length(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int result = -1;
@@ -692,7 +814,7 @@ Int std_string_length(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_string_format(VirtualMachine *vm, IntList *args)
+Int brl_std_string_format(VirtualMachine *vm, IntList *args)
 {
     Int str = stack_shift(*args);
     Int result = -1;
@@ -771,7 +893,7 @@ Int std_string_format(VirtualMachine *vm, IntList *args)
 // std conditions
 // std conditions
 // std conditions
-Int std_condition_equals(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_equals(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -790,7 +912,7 @@ Int std_condition_equals(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_not_equals(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_not_equals(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -810,7 +932,7 @@ Int std_condition_not_equals(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_greater(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_greater(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -829,7 +951,7 @@ Int std_condition_greater(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_less(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_less(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -848,7 +970,7 @@ Int std_condition_less(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_greater_equals(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_greater_equals(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -867,7 +989,7 @@ Int std_condition_greater_equals(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_less_equals(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_less_equals(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -886,14 +1008,14 @@ Int std_condition_less_equals(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_and(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_and(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
     return new_number(vm, (is_true(vm->stack->data[a], vm->typestack->data[a]) && is_true(vm->stack->data[b], vm->typestack->data[b])));
 }
 
-Int std_condition_or(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_or(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int b = stack_shift(*args);
@@ -930,7 +1052,7 @@ Int std_condition_or(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_not(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_not(VirtualMachine *vm, IntList *args)
 {
     Int a = stack_shift(*args);
     Int result = 0;
@@ -950,7 +1072,7 @@ Int std_condition_not(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_if(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_if(VirtualMachine *vm, IntList *args)
 {
     Int condition = stack_shift(*args);
     Int _then = stack_shift(*args);
@@ -962,7 +1084,7 @@ Int std_condition_if(VirtualMachine *vm, IntList *args)
     return result;
 }
 
-Int std_condition_ifelse(VirtualMachine *vm, IntList *args)
+Int brl_std_condition_ifelse(VirtualMachine *vm, IntList *args)
 {
     Int condition = stack_shift(*args);
     Int _then = stack_shift(*args);
@@ -983,7 +1105,7 @@ Int std_condition_ifelse(VirtualMachine *vm, IntList *args)
 // std loop
 // std loop
 
-Int std_loop_while(VirtualMachine *vm, IntList *args)
+Int brl_std_loop_while(VirtualMachine *vm, IntList *args)
 {
     Int condition_str = stack_shift(*args);
     Int _do_str = stack_shift(*args);
@@ -996,7 +1118,7 @@ Int std_loop_while(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int std_loop_repeat(VirtualMachine *vm, IntList *args)
+Int brl_std_loop_repeat(VirtualMachine *vm, IntList *args)
 {
     Int times = stack_shift(*args);
     Int _do_str = stack_shift(*args);
@@ -1006,120 +1128,494 @@ Int std_loop_repeat(VirtualMachine *vm, IntList *args)
     }
     return -1;
 }
+
+// memory functions
+
+
+Int brl_mem_clear(VirtualMachine *vm, IntList *args)
+{
+    while (args->size > 0)
+    {
+        Int index = stack_shift(*args);
+        if (stack_find(*vm->temp, index) >= 0)
+        {
+            unuse_var(vm, index);
+        }
+    }
+
+    return -1;
+}
+
+Int brl_mem_hold(VirtualMachine *vm, IntList *args)
+{
+    Int index;
+    while (args->size > 0)
+    {
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            hold_var(vm, index);
+        } 
+    }
+    
+    return -1;
+}
+
+Int brl_mem_keep(VirtualMachine *vm, IntList *args)
+{
+    Int index = stack_shift(*args);
+    hold_var(vm, index);
+    return index;
+}
+
+Int brl_mem_unhold(VirtualMachine *vm, IntList *args)
+{
+    Int index;
+    while (args->size > 0)
+    {
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            unhold_var(vm, index);
+        }
+    }
+    return -1;
+}
+
+Int brl_mem_rebase(VirtualMachine *vm, IntList *args)
+{
+    Int index = vm->stack->size - 1;
+    while (vm->unused->size > 0)
+    {
+        index = stack_pop(*vm->unused);
+        // removes
+        for (Int i = 0; i < vm->hashes->size; i++)
+        {
+            if (vm->hashes->data[i].index == index)
+            {
+                free(vm->hashes->data[i].key);
+                stack_remove(*vm->hashes, i);
+            }
+        }
+        for (Int i = 0; i < vm->unused->size; i++)
+        {
+            if (vm->unused->data[i] == index)
+            {
+                stack_remove(*vm->unused, i);
+            }
+        }
+        for (Int i = 0; i < vm->temp->size; i++)
+        {
+            if (vm->temp->data[i] == index)
+            {
+                stack_remove(*vm->temp, i);
+            }
+        }
+        for (Int i = 0; i < vm->stack->size; i++)
+        {
+            if (vm->typestack->data[i] == TYPE_LIST)
+            {
+                IntList *list = (IntList*)vm->stack->data[i].pointer;
+                for (Int j = 0; j < list->size; j++)
+                {
+                    if (list->data[j] == index)
+                    {
+                        list->data[j] = -1;
+                    }
+                    else if (list->data[j] > index)
+                    {
+                        list->data[j]--;
+                    }
+                }
+            }
+        }
+
+        // updates
+        for (Int i = 0; i < vm->temp->size; i++)
+        {
+            if (vm->temp->data[i] == index)
+            {
+                vm->temp->data[i] = -1;
+            }
+            else if (vm->temp->data[i] > index)
+            {
+                vm->temp->data[i]--;
+            }
+        }
+        for (Int i = 0; i < vm->unused->size; i++)
+        {
+            if (vm->unused->data[i] == index)
+            {
+                vm->unused->data[i] = -1;
+            }
+            else if (vm->unused->data[i] > index)
+            {
+                vm->unused->data[i]--;
+            }
+        }
+        for (Int i = 0; i < vm->hashes->size; i++)
+        {
+            if (vm->hashes->data[i].index == index)
+            {
+                vm->hashes->data[i].index = -1;
+            }
+            else if (vm->hashes->data[i].index > index)
+            {
+                vm->hashes->data[i].index--;
+            }
+        }
+
+        stack_remove(*vm->stack, index);
+        stack_remove(*vm->typestack, index);
+    }
+
+    return -1;
+}
+
+Int brl_mem_collect(VirtualMachine *vm, IntList *args)
+{
+    collect_garbage(vm);
+    return -1;
+}
+
+Int brl_mem_swap(VirtualMachine *vm, IntList *args)
+{
+    Int a = stack_shift(*args);
+    Int b = stack_shift(*args);
+    if (a >= 0 && a < vm->stack->size && b >= 0 && b < vm->stack->size)
+    {
+        Value temp = vm->stack->data[a];
+        char type = vm->typestack->data[a];
+        vm->stack->data[a] = vm->stack->data[b];
+        vm->typestack->data[a] = vm->typestack->data[b];
+        vm->stack->data[b] = temp;
+        vm->typestack->data[b] = type;
+    }
+    return -1;
+}
+
+Int brl_mem_set(VirtualMachine *vm, IntList *args)
+{
+    Int variable = stack_shift(*args);
+    Int value = stack_shift(*args);
+    
+    if (variable >= 0 && variable < vm->stack->size)
+    {
+        Int found = stack_find(*vm->temp, variable);
+        if (found >= 0)
+        {
+            unuse_var(vm, variable);
+        }
+        vm->stack->data[variable] = vm->stack->data[value];
+        vm->typestack->data[variable] = vm->typestack->data[value];
+    }
+    
+    return -1;
+}
+
+Int brl_mem_use(VirtualMachine *vm, IntList *args)
+{
+    Int index;
+    while (args->size > 0)
+    {
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            use_var(vm, index);
+        }
+    }
+    return -1;
+}
+
+Int brl_mem_unuse(VirtualMachine *vm, IntList *args)
+{
+    Int index;
+    while (args->size > 0)
+    {
+        index = stack_shift(*args);
+        if (index >= 0 && index < vm->stack->size)
+        {
+            unuse_var(vm, index);
+        }
+    }
+    return -1;
+}
+
+Int brl_mem_copy(VirtualMachine *vm, IntList *args)
+{
+    Int variable = stack_shift(*args);
+    Int value = stack_shift(*args);
+    Int newvar = new_var(vm);
+    
+    if (variable >= 0 && variable < vm->stack->size)
+    {
+        if (value >= 0 && value < vm->stack->size)
+        {
+            vm->stack->data[newvar] = value_duplicate(vm->stack->data[value], vm->typestack->data[value]);
+            vm->typestack->data[newvar] = vm->typestack->data[value];
+        }
+    }
+    
+    return newvar;
+}
+
+Int brl_mem_get(VirtualMachine *vm, IntList *args)
+{
+    Int index = (Int)stack_shift(*args);
+    if (index >= 0 && index < vm->stack->size)
+    {
+        return index;
+    }
+    
+    return -1;
+}
+
+
+Int brl_mem_delete(VirtualMachine *vm, IntList *args)
+{
+    while (args->size > 0)
+    {
+        unuse_var(vm, stack_shift(*args));
+    }
+    return -1;
+}
+
+
+Int brl_mem_length(VirtualMachine *vm, IntList *args)
+{
+    return new_number(vm, vm->stack->size);
+}
+
+Int brl_mem_next(VirtualMachine *vm, IntList *args)
+{
+    Int index = stack_shift(*args);
+    stack_unshift(*vm->unused, index);
+    while (args->size > 0)
+    {
+        stack_unshift(*vm->unused, stack_shift(*args));
+    }
+    return -1;
+}
+
+Int brl_mem_sector_new(VirtualMachine *vm, IntList *args)
+{
+    Int _size = stack_shift(*args);
+    Int index = new_var(vm);
+    while ((vm->stack->data[_size].number - 1) > 0)
+    {
+        new_var(vm);
+        vm->stack->data[_size].number--;
+    }
+    return index;
+}
+
+Int brl_mem_sector_copy(VirtualMachine *vm, IntList *args)
+{
+    Int origin = stack_shift(*args);
+    Int destination = stack_shift(*args);
+    Int _size = stack_shift(*args);
+    while (vm->stack->data[_size].number > 0)
+    {
+        if (origin >= 0 && origin < vm->stack->size)
+        {
+            if (destination >= 0 && destination < vm->stack->size)
+            {
+                vm->stack->data[destination] = value_duplicate(vm->stack->data[origin], vm->typestack->data[origin]);
+                vm->typestack->data[destination] = vm->typestack->data[origin];
+            }
+        }
+        origin++;
+        destination++;
+        vm->stack->data[_size].number--;
+    }
+    return -1;
+}
+
+Int brl_mem_sector_swap(VirtualMachine *vm, IntList *args)
+{
+    Int a = stack_shift(*args);
+    Int b = stack_shift(*args);
+    Int _size = stack_shift(*args);
+    while (vm->stack->data[_size].number > 0)
+    {
+        if (a >= 0 && a < vm->stack->size && b >= 0 && b < vm->stack->size)
+        {
+            Value temp = vm->stack->data[a];
+            char type = vm->typestack->data[a];
+            vm->stack->data[a] = vm->stack->data[b];
+            vm->typestack->data[a] = vm->typestack->data[b];
+            vm->stack->data[b] = temp;
+            vm->typestack->data[b] = type;
+        }
+        a++;
+        b++;
+        vm->stack->data[_size].number--;
+    }
+    return -1;
+}
+
 // inits
+#ifndef ARDUINO
+void init_os(VirtualMachine *vm)
+{
+    register_builtin(vm, "file.read", brl_os_file_read);
+    register_builtin(vm, "file.write", brl_os_file_write);
+    register_builtin(vm, "file.delete", brl_os_file_delete);
+    register_builtin(vm, "file.exists", brl_os_file_exists);
+    register_builtin(vm, "file.rename", brl_os_file_rename);
+    register_builtin(vm, "file.copy", brl_os_file_copy);
+    register_builtin(vm, "file.size", brl_os_file_size);
+
+    register_builtin(vm, "os.time", brl_os_time_now);
+    register_builtin(vm, "os.clock", brl_os_time_clock);
+    //register_builtin(vm, "os.sleep", brl_os_time_sleep);
+
+    register_builtin(vm, "dofile", brl_os_dofile);
+    register_builtin(vm, "repl", brl_os_repl);
+}
+#endif
 
 void init_basics(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "#", std_ignore);
-    registerBuiltin(vm, "do", std_do);
-    registerBuiltin(vm, "return", std_return);
-    registerBuiltin(vm, "gindex", std_gindex);
+    register_builtin(vm, "#", brl_std_ignore);
+    register_builtin(vm, "do", brl_std_do);
+    register_builtin(vm, "return", brl_std_return);
+    register_builtin(vm, "gindex", brl_std_gindex);
 #ifndef ARDUINO
-    registerBuiltin(vm, "ls", std_io_ls);
-    registerBuiltin(vm, "ls.type", std_io_ls_types);
-    registerBuiltin(vm, "ls.hash", std_io_ls_hashes);
-    registerBuiltin(vm, "ls.temp", std_io_ls_temp);
-    registerBuiltin(vm, "ls.free", std_io_ls_unused);
-    registerBuiltin(vm, "print", std_io_print);
+    register_builtin(vm, "ls", brl_std_io_ls);
+    register_builtin(vm, "ls.type", brl_std_io_ls_types);
+    register_builtin(vm, "ls.hash", brl_std_io_ls_hashes);
+    register_builtin(vm, "ls.temp", brl_std_io_ls_temp);
+    register_builtin(vm, "ls.free", brl_std_io_ls_unused);
+    register_builtin(vm, "print", brl_std_io_print);
 #endif
 }
 
 void init_type(VirtualMachine *vm)
 {
     // types
-    registerNumber(vm, "type.size", sizeof(Value));
-    registerNumber(vm, "type.nil", TYPE_NIL);
-    registerNumber(vm, "type.number", TYPE_NUMBER);
-    registerNumber(vm, "type.integer", TYPE_INTEGER);
-    registerNumber(vm, "type.string", TYPE_STRING);
-    registerNumber(vm, "type.builtin", TYPE_BUILTIN);
-    registerNumber(vm, "type.list", TYPE_LIST);
-    registerNumber(vm, "type.raw", TYPE_RAW);
-    registerNumber(vm, "type.other", TYPE_OTHER);
+    register_number(vm, "type.size", sizeof(Value));
+    register_number(vm, "type.nil", TYPE_NIL);
+    register_number(vm, "type.number", TYPE_NUMBER);
+    register_number(vm, "type.integer", TYPE_INTEGER);
+    register_number(vm, "type.string", TYPE_STRING);
+    register_number(vm, "type.builtin", TYPE_BUILTIN);
+    register_number(vm, "type.list", TYPE_LIST);
+    register_number(vm, "type.raw", TYPE_RAW);
+    register_number(vm, "type.other", TYPE_OTHER);
 
     // type functions
-    registerBuiltin(vm, "type.get", std_type_get);
-    registerBuiltin(vm, "type.set", std_type_set);
+    register_builtin(vm, "type.get", brl_std_type_get);
+    register_builtin(vm, "type.set", brl_std_type_set);
 }
 
 void init_loop(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "while", std_loop_while);
-    registerBuiltin(vm, "repeat", std_loop_repeat);
-    registerBuiltin(vm, "each", std_loop_each);
+    register_builtin(vm, "while", brl_std_loop_while);
+    register_builtin(vm, "repeat", brl_std_loop_repeat);
+    register_builtin(vm, "each", brl_std_loop_each);
 }
 
 void init_hash(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "hash.set", std_hash_set);
-    registerBuiltin(vm, "hash.get", std_hash_get);
-    registerBuiltin(vm, "hash.delete", std_hash_delete);
-    registerBuiltin(vm, "hash.rename", std_hash_rename);
+    register_builtin(vm, "hash.set", brl_std_hash_set);
+    register_builtin(vm, "hash.get", brl_std_hash_get);
+    register_builtin(vm, "hash.delete", brl_std_hash_delete);
+    register_builtin(vm, "hash.rename", brl_std_hash_rename);
 }
 
 void init_math(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "add", std_math_add);
-    registerBuiltin(vm, "sub", std_math_sub);
-    registerBuiltin(vm, "mul", std_math_mul);
-    registerBuiltin(vm, "div", std_math_div);
-    registerBuiltin(vm, "mod", std_math_mod);
-    registerBuiltin(vm, "pow", std_math_pow);
-    registerBuiltin(vm, "abs", std_math_abs);
-    registerBuiltin(vm, "sqrt", std_math_sqrt);
-    registerBuiltin(vm, "ceil", std_math_ceil);
-    registerBuiltin(vm, "seed", std_math_seed);
-    registerBuiltin(vm, "floor", std_math_floor);
-    registerBuiltin(vm, "round", std_math_round);
-    registerBuiltin(vm, "random", std_math_random);
-    registerBuiltin(vm, "incr", std_math_increment);
-    registerBuiltin(vm, "decr", std_math_decrement);
-    registerBuiltin(vm, "int.from.float", int_from_float);
-    registerBuiltin(vm, "float.from.int", int_to_float);
+    register_builtin(vm, "add", brl_std_math_add);
+    register_builtin(vm, "sub", brl_std_math_sub);
+    register_builtin(vm, "mul", brl_std_math_mul);
+    register_builtin(vm, "div", brl_std_math_div);
+    register_builtin(vm, "mod", brl_std_math_mod);
+    register_builtin(vm, "pow", brl_std_math_pow);
+    register_builtin(vm, "abs", brl_std_math_abs);
+    register_builtin(vm, "sqrt", brl_std_math_sqrt);
+    register_builtin(vm, "ceil", brl_std_math_ceil);
+    register_builtin(vm, "seed", brl_std_math_seed);
+    register_builtin(vm, "floor", brl_std_math_floor);
+    register_builtin(vm, "round", brl_std_math_round);
+    register_builtin(vm, "random", brl_std_math_random);
+    register_builtin(vm, "incr", brl_std_math_increment);
+    register_builtin(vm, "decr", brl_std_math_decrement);
+    register_builtin(vm, "int.from.float", int_from_float);
+    register_builtin(vm, "float.from.int", int_to_float);
 }
 
 void init_string(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "string.sub", std_string_ndup);
-    registerBuiltin(vm, "string.find", std_string_find);
-    registerBuiltin(vm, "string.len", std_string_length);
-    registerBuiltin(vm, "string.split", std_string_split);
-    registerBuiltin(vm, "string.concat", std_string_concat);
-    registerBuiltin(vm, "string.format", std_string_format);
-    registerBuiltin(vm, "string.replace", std_string_replace);
-    registerBuiltin(vm, "string.to.number", std_string_to_number);
-    registerBuiltin(vm, "string.replace.all", std_string_replace_all);
+    register_builtin(vm, "string.sub", brl_std_string_ndup);
+    register_builtin(vm, "string.find", brl_std_string_find);
+    register_builtin(vm, "string.len", brl_std_string_length);
+    register_builtin(vm, "string.split", brl_std_string_split);
+    register_builtin(vm, "string.concat", brl_std_string_concat);
+    register_builtin(vm, "string.format", brl_std_string_format);
+    register_builtin(vm, "string.replace", brl_std_string_replace);
+    register_builtin(vm, "string.to.number", brl_std_string_to_number);
+    register_builtin(vm, "string.replace.all", brl_std_string_replace_all);
 }
 
 void init_condition(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "or", std_condition_or);
-    registerBuiltin(vm, "if", std_condition_if);
-    registerBuiltin(vm, "<", std_condition_less);
-    registerBuiltin(vm, "and", std_condition_and);
-    registerBuiltin(vm, "not", std_condition_not);
-    registerBuiltin(vm, "==", std_condition_equals);
-    registerBuiltin(vm, ">", std_condition_greater);
-    registerBuiltin(vm, "ifelse", std_condition_ifelse);
-    registerBuiltin(vm, "!=", std_condition_not_equals);
-    registerBuiltin(vm, "<=", std_condition_less_equals);
-    registerBuiltin(vm, ">=", std_condition_greater_equals);
+    register_builtin(vm, "or", brl_std_condition_or);
+    register_builtin(vm, "if", brl_std_condition_if);
+    register_builtin(vm, "<", brl_std_condition_less);
+    register_builtin(vm, "and", brl_std_condition_and);
+    register_builtin(vm, "not", brl_std_condition_not);
+    register_builtin(vm, "==", brl_std_condition_equals);
+    register_builtin(vm, ">", brl_std_condition_greater);
+    register_builtin(vm, "ifelse", brl_std_condition_ifelse);
+    register_builtin(vm, "!=", brl_std_condition_not_equals);
+    register_builtin(vm, "<=", brl_std_condition_less_equals);
+    register_builtin(vm, ">=", brl_std_condition_greater_equals);
 }
 
 void init_list(VirtualMachine *vm)
 {
-    registerBuiltin(vm, "list.new", std_list_new);
-    registerBuiltin(vm, "list.pop", std_list_pop);
-    registerBuiltin(vm, "list.get", std_list_get);
-    registerBuiltin(vm, "list.len", std_list_length);
-    registerBuiltin(vm, "list.push", std_list_push);
-    registerBuiltin(vm, "list.find", std_list_find);
-    registerBuiltin(vm, "list.shift", std_list_shift);
-    registerBuiltin(vm, "list.insert", std_list_insert);
-    registerBuiltin(vm, "list.remove", std_list_remove);
-    registerBuiltin(vm, "list.concat", std_list_concat);
-    registerBuiltin(vm, "list.unshift", std_list_unshift);
-    registerBuiltin(vm, "list.last", std_list_last);
+    register_builtin(vm, "list.new", brl_std_list_new);
+    register_builtin(vm, "list.pop", brl_std_list_pop);
+    register_builtin(vm, "list.get", brl_std_list_get);
+    register_builtin(vm, "list.len", brl_std_list_length);
+    register_builtin(vm, "list.push", brl_std_list_push);
+    register_builtin(vm, "list.find", brl_std_list_find);
+    register_builtin(vm, "list.shift", brl_std_list_shift);
+    register_builtin(vm, "list.insert", brl_std_list_insert);
+    register_builtin(vm, "list.remove", brl_std_list_remove);
+    register_builtin(vm, "list.concat", brl_std_list_concat);
+    register_builtin(vm, "list.unshift", brl_std_list_unshift);
+    register_builtin(vm, "list.last", brl_std_list_last);
+}
+
+void init_sector(VirtualMachine *vm)
+{
+    register_builtin(vm, "sector.new", brl_mem_sector_new);
+    register_builtin(vm, "sector.copy", brl_mem_sector_copy);
+    register_builtin(vm, "sector.swap", brl_mem_sector_swap);
+}
+
+void init_mem(VirtualMachine *vm)
+{
+    register_number(vm, "mem.size", sizeof(Float));
+    register_builtin(vm, "mem.use", brl_mem_use);
+    register_builtin(vm, "mem.unuse", brl_mem_unuse);
+    register_builtin(vm, "mem.get", brl_mem_get);
+    register_builtin(vm, "mem.hold", brl_mem_hold);
+    register_builtin(vm, "mem.keep", brl_mem_keep);
+    register_builtin(vm, "mem.set", brl_mem_set);
+    register_builtin(vm, "mem.copy", brl_mem_copy);
+    register_builtin(vm, "mem.len", brl_mem_length);
+    register_builtin(vm, "mem.clear", brl_mem_clear);
+    register_builtin(vm, "mem.rebase", brl_mem_rebase);
+    register_builtin(vm, "mem.unhold", brl_mem_unhold);
+    register_builtin(vm, "mem.delete", brl_mem_delete);
+    register_builtin(vm, "mem.collect", brl_mem_collect);
+    register_builtin(vm, "mem.swap", brl_mem_swap);
+    register_builtin(vm, "mem.next", brl_mem_next);
+
+    init_sector(vm);
 }
 
 void init_default_vars(VirtualMachine *vm)
@@ -1130,6 +1626,9 @@ void init_default_vars(VirtualMachine *vm)
 // std init presets
 void init_std(VirtualMachine *vm)
 {
+    #ifndef ARDUINO
+    init_os(vm);
+    #endif
     init_basics(vm);
     init_type(vm);
     init_loop(vm);
