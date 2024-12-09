@@ -166,6 +166,8 @@ VERSION
 "    HashList *hashes;\n"
 "    IntList *unused;\n"
 "    IntList *temp;\n"
+"    IntList* (*parse)(void*, char*);\n"
+"    Int (*interpret)(void*, char*);\n"
 "} VirtualMachine;\n"
 "\n"
 "//Function\n"
@@ -181,8 +183,8 @@ VERSION
 "extern char* str_replace(const char *str, const char *substr, const char *replacement);\n"
 "extern char* str_replace_all(const char *str, const char *substr, const char *replacement);\n"
 "\n"
-"extern StringList* split_string(char *str, char *delim);\n"
-"extern StringList* split_string_by_char(char *str, char delim);\n"
+"extern StringList* str_split(char *str, char *delim);\n"
+"extern StringList* str_split_char(char *str, char delim);\n"
 "extern StringList* special_space_split(char *str);\n"
 "extern StringList* special_split(char *str, char delim);\n"
 "\n"
@@ -233,8 +235,6 @@ VERSION
 "\n"
 "// eval\n"
 "extern Int eval(VirtualMachine *vm, char *cmd);\n"
-"extern Int interpret(VirtualMachine *vm, char* cmd);\n"
-"extern IntList* parse(VirtualMachine *vm, char *cmd);\n"
 "\n"
 "extern void collect_garbage(VirtualMachine *vm);\n"
 "\n"
@@ -261,8 +261,8 @@ void add_common_symbols(TCCState *tcc)
         str_find,
         str_replace,
         str_replace_all,
-        split_string,
-        split_string_by_char,
+        str_split,
+        str_split_char,
         special_space_split,
         special_split,
         make_value_list,
@@ -295,8 +295,6 @@ void add_common_symbols(TCCState *tcc)
         hash_set,
         hash_unset,
         eval,
-        interpret,
-        parse,
         collect_garbage,
         #ifndef ARDUINO
         readfile,
@@ -315,8 +313,8 @@ void add_common_symbols(TCCState *tcc)
         "str_find",
         "str_replace",
         "str_replace_all",
-        "split_string",
-        "split_string_by_char",
+        "str_split",
+        "str_split_char",
         "special_space_split",
         "special_split",
         "make_value_list",
@@ -349,8 +347,6 @@ void add_common_symbols(TCCState *tcc)
         "hash_set",
         "hash_unset",
         "eval",
-        "interpret",
-        "parse",
         "collect_garbage",
     #ifndef ARDUINO
         "readfile",
@@ -399,20 +395,19 @@ Int brl_tcc_c_new_function(VirtualMachine *vm, IntList *args) // a combo of new_
     Int _code = stack_shift(*args);
     char *code;
 
-    if (args->size > 1)
+    if (args->size > 0)
     {
-        code = str_format("%s\n\n%s\n\nInt %s(VirtualMachine *vm, IntList *args) {%s}", bruter_header, vm->stack->data[stack_shift(*args)].string, _symbol, vm->stack->data[stack_shift(*args)].string);
+        code = str_format("%s\n\n%s\n\nInt %s(VirtualMachine *vm, IntList *args) {%s}", bruter_header, vm->stack->data[_code].string, _symbol, vm->stack->data[stack_shift(*args)].string);
     }
     else
     {
         code = str_format("%s\n\nInt %s(VirtualMachine *vm, IntList *args) {%s}", bruter_header, _symbol, vm->stack->data[_code].string);
     }
-    
     add_common_symbols(tcc);
 
     if (tcc_compile_string(tcc, code) < 0) 
     {
-        fprintf(stderr, "could not compilar string\n");
+        fprintf(stderr, "could not compile string\n");
         return -1;
     }
 
@@ -461,7 +456,7 @@ Int brl_tcc_c_delete_function(VirtualMachine *vm, IntList *args)
     return -1;
 }
 
-Int brl_tcc_c_include(VirtualMachine *vm, IntList *args)
+Int brl_tcc_c_dofile(VirtualMachine *vm, IntList *args)
 {
     Int _filepath_id = stack_shift(*args);
     char* _filepath = vm->stack->data[_filepath_id].string;
@@ -471,7 +466,7 @@ Int brl_tcc_c_include(VirtualMachine *vm, IntList *args)
     char* __code = str_replace(_code, "#include \"bruter.h\"", ___special_header);
     char* _symbol = str_format("init_%s", _filename_without_extension_and_path);
     char* _dummy_symbol = str_format("_libr_%s_handler", _filename_without_extension_and_path);
-    printf("Including %s\n", _filepath);
+    printf("compiling %s\n", _filepath);
     TCCState *tcc = tcc_new();
     if (!tcc) 
     {
@@ -521,15 +516,15 @@ void _terminate_tcc_at_exit_handler()
     stack_free(*tcc_states_temp);
 }
 
-void init_dyc(VirtualMachine* vm)
+void init_dycc(VirtualMachine* vm)
 {
     tcc_states_temp = (SymbolAssociationList*)malloc(sizeof(SymbolAssociationList));
     stack_init(*tcc_states_temp);
 
-    register_builtin(vm, "dyc.clear", brl_tcc_clear_states);
-    register_builtin(vm, "dyc.new", brl_tcc_c_new_function);
-    register_builtin(vm, "dyc.delete", brl_tcc_c_delete_function);
-    register_builtin(vm, "dyc.include", brl_tcc_c_include);
+    register_builtin(vm, "dycc.clear", brl_tcc_clear_states);
+    register_builtin(vm, "dycc.new", brl_tcc_c_new_function);
+    register_builtin(vm, "dycc.delete", brl_tcc_c_delete_function);
+    register_builtin(vm, "dycc.dofile", brl_tcc_c_dofile);
 
     atexit(_terminate_tcc_at_exit_handler);
 }

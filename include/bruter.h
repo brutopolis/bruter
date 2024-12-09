@@ -8,7 +8,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-#define VERSION "0.6.7a"
+#define VERSION "0.6.8"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
@@ -150,6 +150,8 @@ typedef struct
     HashList *hashes;
     IntList *unused;
     IntList *temp;
+    IntList* (*parse)(void*, char*);
+    Int (*interpret)(void*, char*);
 } VirtualMachine;
 
 //Function
@@ -165,12 +167,13 @@ extern Int str_find(const char *str, const char *substr);
 extern char* str_replace(const char *str, const char *substr, const char *replacement);
 extern char* str_replace_all(const char *str, const char *substr, const char *replacement);
 
-extern StringList* split_string(char *str, char *delim);
-extern StringList* split_string_by_char(char *str, char delim);
+extern StringList* str_split(char *str, char *delim);
+extern StringList* str_split_char(char *str, char delim);
 extern StringList* special_space_split(char *str);
 extern StringList* special_split(char *str, char delim);
 
-#define is_true(value, __type) (__type == TYPE_NUMBER ? (round(value.number) != 0) : (__type == TYPE_NIL ? 0 : 1))
+// if integer == 0 or type == TYPE_NIL return 0, else return 1
+#define is_true(value, __type) (__type == TYPE_NIL ? 0 : (value.integer == 0 ? 0 : 1))
 
 #define is_space(c) (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f')
 
@@ -217,8 +220,6 @@ extern void hash_unset(VirtualMachine *vm, char *key);
 
 // eval
 extern Int eval(VirtualMachine *vm, char *cmd);
-extern Int interpret(VirtualMachine *vm, char* cmd);
-extern IntList* parse(VirtualMachine *vm, char *cmd);
 
 extern void collect_garbage(VirtualMachine *vm);
 

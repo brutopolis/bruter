@@ -1,5 +1,9 @@
 #include "bruter.h"
 
+// parser and interpreter declarations
+IntList *default_parser(void *_vm, char *cmd);
+Int default_interpreter(void *_vm, char *cmd);
+
 //string functions
 char* str_duplicate(const char *str)
 {
@@ -307,7 +311,7 @@ StringList* special_split(char *str, char delim)
     return splited;
 }
 
-StringList* split_string(char *str, char *delim)
+StringList* str_split(char *str, char *delim)
 {
     StringList *splited;
     splited = (StringList*)malloc(sizeof(StringList));
@@ -336,7 +340,7 @@ StringList* split_string(char *str, char *delim)
 }
 
 
-StringList* split_string_by_char(char *str, char delim)
+StringList* str_split_char(char *str, char delim)
 {
     StringList *splited;
     splited = (StringList*)malloc(sizeof(StringList));
@@ -615,8 +619,8 @@ VirtualMachine* make_vm()
     stack_init(*vm->hashes);
     vm->unused = make_int_list();
     vm->temp = make_int_list();
-
-
+    vm->interpret = default_interpreter;
+    vm->parse = default_parser;
     return vm;
 }
 
@@ -849,8 +853,9 @@ void unhold_var(VirtualMachine *vm, Int index)
 }
 
 // Parser functions
-IntList* parse(VirtualMachine *vm, char *cmd) 
+IntList* default_parser(void *_vm, char *cmd) 
 {
+    VirtualMachine* vm = (VirtualMachine*)_vm;
     IntList *result = make_int_list();
     StringList *splited = special_space_split(cmd);
     //Int current = 0;
@@ -881,7 +886,7 @@ IntList* parse(VirtualMachine *vm, char *cmd)
         {
             if (strchr(str, ':') != NULL)
             {
-                StringList *splited = split_string(str, ":");
+                StringList *splited = str_split(str, ":");
                 char* s_left =  splited->data[0] + 1;
                 char* s_right = splited->data[1];
 
@@ -972,9 +977,10 @@ IntList* parse(VirtualMachine *vm, char *cmd)
     return result;
 }
 
-Int interpret(VirtualMachine *vm, char* cmd)
+Int default_interpreter(void *_vm, char* cmd)
 {
-    IntList *args = parse(vm, cmd);
+    VirtualMachine* vm = (VirtualMachine*) _vm;
+    IntList *args = vm->parse(vm, cmd);
     Int func = stack_shift(*args);
     Int result = -1;
 
@@ -996,7 +1002,7 @@ Int eval(VirtualMachine *vm, char *cmd)
 {
     if(strchr(cmd, ';') == NULL)
     {
-        return interpret(vm, cmd);
+        return vm->interpret(vm, cmd);
     }
 
     StringList *splited = special_split(cmd, ';');
@@ -1037,7 +1043,7 @@ Int eval(VirtualMachine *vm, char *cmd)
             free(str);
             continue;
         }
-        result = interpret(vm, str);
+        result = vm->interpret(vm, str);
         free(str);
         if (result > 0)
         {
