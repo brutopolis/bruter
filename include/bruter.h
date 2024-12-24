@@ -8,7 +8,7 @@
 #include <stdarg.h>
 #include <time.h>
 
-#define VERSION "0.6.9"
+#define VERSION "0.7.0"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
@@ -16,6 +16,7 @@
 #define TYPE_LIST 3
 #define TYPE_BUILTIN 4
 #define TYPE_INTEGER 6
+#define TYPE_FUNCTION 7
 #define TYPE_OTHER 8
 
 
@@ -118,20 +119,6 @@
     i == (s).size ? -1 : i; \
 })
 
-#define data(index) (vm->stack->data[index])
-#define data_t(index) (vm->typestack->data[index])
-#define data_unused(index) (vm->unused->data[index])
-#define data_temp(index) (vm->temp->data[index])
-
-#define hash(index) (vm->hashes->data[index])
-
-#define arg(index) (vm->stack->data[args->data[index]])
-#define arg_i(index) (args->data[index])
-#define arg_t(index) (vm->typestack->data[args->data[index]])
-
-#define function(name) Int name(VirtualMachine *vm, IntList *args)
-#define init(name) void init_##name(VirtualMachine *vm)
-
 //Value
 typedef union 
 {
@@ -158,15 +145,21 @@ typedef Stack(char) CharList;
 
 typedef struct
 {
+    StringList *varnames;
+    char *code;
+} InternalFunction;
+
+typedef struct
+{
     ValueList *stack;
     CharList *typestack;
     HashList *hashes;
     IntList *unused;
-    Int (*interpret)(void*, char*);
+    Int (*interpret)(void*, char*, HashList*);
 } VirtualMachine;
 
 //Function
-typedef Int (*Function)(VirtualMachine*, IntList*);
+typedef Int (*Function)(VirtualMachine*, IntList*, HashList*);
 
 //String
 extern char* str_duplicate(const char *str);
@@ -208,25 +201,39 @@ extern Int new_list(VirtualMachine *vm);
 
 extern Value value_duplicate(Value value, char type);
 
-extern Int spawn_var(VirtualMachine *vm, char* varname);
-extern Int spawn_string(VirtualMachine *vm, char* varname, char* string);
-extern Int spawn_number(VirtualMachine *vm, char* varname, Float number);
-extern Int spawn_builtin(VirtualMachine *vm, char* varname, Function function);
-extern Int spawn_list(VirtualMachine *vm, char* varname);
-
-
-extern void register_builtin(VirtualMachine *vm, char* name, Function function);
-extern void register_number(VirtualMachine *vm, char* name, Float number);
-extern void register_string(VirtualMachine *vm, char* name, char* string);
-extern void register_list(VirtualMachine *vm, char* name);
-
+extern Int register_var(VirtualMachine *vm, char* varname);
+extern Int register_string(VirtualMachine *vm, char* varname, char* string);
+extern Int register_number(VirtualMachine *vm, char* varname, Float number);
+extern Int register_builtin(VirtualMachine *vm, char* varname, Function function);
+extern Int register_list(VirtualMachine *vm, char* varname);
 
 extern Int hash_find(VirtualMachine *vm, char *key);
 extern void hash_set(VirtualMachine *vm, char *key, Int index);
 extern void hash_unset(VirtualMachine *vm, char *key);
 
+extern char is(VirtualMachine *vm, char *str, HashList *context);
+
 // eval
-extern Int eval(VirtualMachine *vm, char *cmd);
+// pass NULL as context if you don't want to use a local context
+extern Int eval(VirtualMachine *vm, char *cmd, HashList *context);
+
+extern void print_element(VirtualMachine *vm, Int index);
+
+// macros
+
+#define data(index) (vm->stack->data[index])
+#define data_t(index) (vm->typestack->data[index])
+#define data_unused(index) (vm->unused->data[index])
+#define data_temp(index) (vm->temp->data[index])
+
+#define hash(index) (vm->hashes->data[index])
+
+#define arg(index) (vm->stack->data[args->data[index]])
+#define arg_i(index) (args->data[index])
+#define arg_t(index) (vm->typestack->data[args->data[index]])
+
+#define function(name) Int name(VirtualMachine *vm, IntList *args, HashList *context)
+#define init(name) void init_##name(VirtualMachine *vm)
 
 // <libraries header>
 
@@ -235,7 +242,6 @@ extern Int eval(VirtualMachine *vm, char *cmd);
 extern char* readfile(char *filename);
 extern void writefile(char *filename, char *content);
 extern Int repl(VirtualMachine *vm);
-extern void print_element(VirtualMachine *vm, Int index);
 
 #endif
 

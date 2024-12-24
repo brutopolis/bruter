@@ -38,7 +38,7 @@ function(brl_os_dofile)
     Int result = -1;
     if (code != NULL)
     {
-        result = eval(vm, code);
+        result = eval(vm, code, context);
         free(code);
     }
     else 
@@ -106,33 +106,75 @@ function(brl_os_time_clock)
 
 function(brl_std_hash_set)
 {
-    hash_set(vm, arg(0).string, arg_i(1));
+    if (context != NULL)
+    {
+        HashList *global_context = vm->hashes;
+        vm->hashes = context;
+        hash_set(vm, arg(0).string, arg_i(1));
+        vm->hashes = global_context;
+    }
+    else 
+    {
+        hash_set(vm, arg(0).string, arg_i(1));
+    }
     return -1;
 }
 
 function(brl_std_hash_get)
 {
-    Int index = hash_find(vm, arg(0).string);
-    if (index >= 0)
+    if (context != NULL)
     {
-        return hash(index).index;
+        HashList *global_context = vm->hashes;
+        vm->hashes = context;
+        Int index = hash_find(vm, arg(0).string);
+        vm->hashes = global_context;
+        return index;
+    }
+    else 
+    {
+        return hash_find(vm, arg(0).string);
     }
     return -1;
 }
 
 function(brl_std_hash_delete)
 {
-    hash_unset(vm, arg(0).string);
+    if (context != NULL)
+    {
+        HashList *global_context = vm->hashes;
+        vm->hashes = context;
+        hash_unset(vm, arg(0).string);
+        vm->hashes = global_context;
+    }
+    else 
+    {
+        hash_unset(vm, arg(0).string);
+    }
     return -1;
 }
 
 function(brl_std_hash_rename)
 {
-    Int index = hash_find(vm, arg(0).string);
-    if (index >= 0)
+    if (context != NULL)
     {
-        free(hash(index).key);
-        hash(index).key = strdup(arg(1).string);
+        HashList *global_context = vm->hashes;
+        vm->hashes = context;
+        Int index = hash_find(vm, arg(0).string);
+        if (index != -1)
+        {
+            hash_set(vm, arg(1).string, index);
+            hash_unset(vm, arg(0).string);
+        }
+        vm->hashes = global_context;
+    }
+    else 
+    {
+        Int index = hash_find(vm, arg(0).string);
+        if (index != -1)
+        {
+            hash_set(vm, arg(1).string, index);
+            hash_unset(vm, arg(0).string);
+        }
     }
     return -1;
 }
@@ -201,18 +243,54 @@ function(brl_std_io_ls_types)
 
 function(brl_std_io_ls_hashes)
 {
-    for (Int i = 0; i < vm->hashes->size; i++)
+    if (context != NULL)
     {
-        printf("[%s] {%d} @%ld: ", hash(i).key, vm->typestack->data[hash(i).index], hash(i).index);
-        print_element(vm, hash(i).index);
-        printf("\n");
+        for (Int i = 0; i < context->size; i++)
+        {
+            printf("[%s] {%d} @%ld: ", context->data[i].key, vm->typestack->data[context->data[i].index], context->data[i].index);
+            print_element(vm, context->data[i].index);
+            printf("\n");
+        }
+    }
+    else 
+    {
+        for (Int i = 0; i < vm->hashes->size; i++)
+        {
+            printf("[%s] {%d} @%ld: ", hash(i).key, vm->typestack->data[hash(i).index], hash(i).index);
+            print_element(vm, hash(i).index);
+            printf("\n");
+        }
     }
     return -1;
 }
 
 function(brl_std_do)
 {
-    return eval(vm, arg(0).string);
+    return eval(vm, arg(0).string, context);
+}
+
+
+
+// functions
+function(brl_std_function)
+{
+    StringList *varnames = (StringList*)malloc(sizeof(StringList));
+    stack_init(*varnames);
+    while (args->size > 1)
+    {
+        stack_push(*varnames, str_duplicate(data(stack_shift(*args)).string));
+    }
+
+    char *code = str_duplicate(arg(args->size - 1).string);
+
+    InternalFunction *func = (InternalFunction*)malloc(sizeof(InternalFunction));
+    func->varnames = varnames;
+    func->code = code;
+
+    Int index = new_var(vm);
+    data(index).pointer = func;
+    data_t(index) = TYPE_FUNCTION;
+    return index;
 }
 
 function(brl_std_ignore)
@@ -348,6 +426,151 @@ function(brl_std_math_decrement)
     return -1;
 }
 
+// tree-walker math
+
+
+
+Float math(VirtualMachine *vm, char* str, HashList *context)
+{
+    Float a = 0;
+    Float b = 0;
+    char* token = strtok(str, " ");
+    char operator = 0;
+
+    if (token[0] == '@')
+    {
+        a = data(atoi(token+1)).number;
+    }
+    else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
+    {
+        a = atof(token);
+    }
+    else if (token[0] == '(')
+    {
+        char* _str = str_sub(token, 1, strlen(token) - 1);
+        a = math(vm, _str, context);
+        free(_str);
+    }
+    else
+    {
+        Int _index;
+        if (context != NULL)
+        {
+            void *backup = vm->hashes;
+            vm->hashes = context;
+            _index = hash_find(vm, token);
+            vm->hashes = backup;
+            if (_index == -1)
+            {
+                _index = hash_find(vm, token);
+            }
+            a = data(_index).number;
+        }
+        else 
+        {
+            _index = hash_find(vm, token);
+            a = data(_index).number;
+        }
+    }
+
+    token = strtok(NULL, " ");
+    while (token != NULL)
+    {
+        operator = token[0];
+        token = strtok(NULL, " ");
+        if (token[0] == '@')
+        {
+            b = data(atoi(token+1)).number;
+        }
+        else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
+        {
+            b = atof(token);
+        }
+        else if (token[0] == '(')
+        {
+            char* _str = str_sub(token, 1, strlen(token) - 1);
+            b = math(vm, _str, context);
+            free(_str);
+        }
+        else
+        {
+            Int _index;
+            if (context != NULL)
+            {
+                void *backup = vm->hashes;
+                vm->hashes = context;
+                _index = hash_find(vm, token);
+                vm->hashes = backup;
+                if (_index == -1)
+                {
+                    _index = hash_find(vm, token);
+                }
+                b = data(_index).number;
+            }
+            else 
+            {
+                _index = hash_find(vm, token);
+                b = data(_index).number;
+            }
+        }
+        printf("a: %f, b: %f, operator: %c\n", a, b, operator);
+        switch (operator)
+        {
+            case '+':
+                a += b;
+                break;
+            case '-':
+                a -= b;
+                break;
+            case '*':
+                a *= b;
+                break;
+            case '/':
+                a /= b;
+                break;
+            case '%':
+                a = fmod(a, b);
+                break;
+            case '^':
+                a = pow(a, b);
+                break;
+            case '&': // bitwise and
+                a = (Int)a & (Int)b;
+                break;
+            case '|':
+                a = (Int)a | (Int)b;
+                break;
+            case '~':
+                a = (Int)a ^ (Int)b;
+                break;
+            case '>':
+                a = (Int)a >> (Int)b;
+                break;
+            case '<':
+                a = (Int)a << (Int)b;
+                break;
+            default:
+                // error
+                printf("error: cant handle this operator (%c)\n", operator);
+                exit(1);
+                break;
+        }
+
+        token = strtok(NULL, " ");
+    }
+    return a;
+}
+
+function(brl_std_math)
+{
+    char* str = arg(0).string;
+    char* _str = str_nduplicate(str, strlen(str));
+    Int result = new_number(vm, math(vm, _str, context));
+    free(_str);
+    return result;
+}
+
+
 // list functions
 // list functions
 // list functions
@@ -365,8 +588,10 @@ function(brl_std_list_push)
     if (arg_t(0) == TYPE_LIST)
     {
         IntList *list = (IntList*)arg(0).pointer;
-        Int value = arg_i(1);
-        stack_push(*list, value);
+        for (Int i = 1; i < args->size; i++)
+        {
+            stack_push(*list, arg_i(i));
+        }
     }
     return -1;
 }
@@ -376,8 +601,10 @@ function(brl_std_list_unshift)
     if (arg_t(0) == TYPE_LIST)
     {
         IntList *list = (IntList*)arg(0).pointer;
-        Int value = arg_i(1);
-        stack_unshift(*list, value);
+        for (Int i = 1; i < args->size; i++)
+        {
+            stack_unshift(*list, arg_i(i));
+        }
     }
     return -1;   
 }
@@ -454,6 +681,27 @@ function(brl_std_list_get)
             printf("error: index %d out of range in list %d of size %d\n", index, list, lst->size);
             print_element(vm, list);
             return -1;
+        }
+    }
+    return -1;
+}
+
+function(brl_std_list_set)
+{
+    Int list = arg_i(0);
+    Int index = arg(1).number;
+    Int value = arg_i(2);
+    if (arg_t(0) == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)data(list).pointer;
+        if (index >= 0 && index < lst->size)
+        {
+            lst->data[index] = value;
+        }
+        else 
+        {
+            printf("error: index %d out of range in list %d of size %d\n", index, list, lst->size);
+            print_element(vm, list);
         }
     }
     return -1;
@@ -643,107 +891,6 @@ function(brl_std_string_format)
 // std conditions
 // std conditions
 // std conditions
-function(brl_std_condition_equals)
-{
-    if (arg_t(0) == arg_t(1))
-    {
-        if (arg_t(0) == TYPE_NUMBER)
-        {
-            return new_number(vm, arg(0).number == arg(1).number);
-        }
-        else if (arg_t(0) == TYPE_STRING)
-        {
-            return new_number(vm, strcmp(arg(0).string, arg(1).string) == 0);
-        }
-    }
-    return (new_number(vm, 0));
-}
-
-function(brl_std_condition_not_equals)
-{
-    if (arg_t(0) == arg_t(1))
-    {
-        if (arg_t(0) == TYPE_NUMBER)
-        {
-            return new_number(vm, arg(0).number != arg(1).number);
-        }
-        else if (arg_t(0) == TYPE_STRING)
-        {
-            return new_number(vm, strcmp(arg(0).string, arg(1).string) != 0);
-        }
-    }
-    return (new_number(vm, 0));
-}
-
-function(brl_std_condition_greater)
-{
-    if (arg_t(0) == arg_t(1))
-    {
-        if (arg_t(0) == TYPE_NUMBER)
-        {
-            return new_number(vm, arg(0).number > arg(1).number);
-        }
-        else if (arg_t(0) == TYPE_STRING)
-        {
-            return new_number(vm, strcmp(arg(0).string, arg(1).string) > 0);
-        }
-    }
-    return (new_number(vm, 0));
-}
-
-function(brl_std_condition_less)
-{
-    if (arg_t(0) == arg_t(1))
-    {
-        if (arg_t(0) == TYPE_NUMBER)
-        {
-            return new_number(vm, arg(0).number < arg(1).number);
-        }
-        else if (arg_t(0) == TYPE_STRING)
-        {
-            return new_number(vm, strcmp(arg(0).string, arg(1).string) < 0);
-        }
-    }
-    return (new_number(vm, 0));
-}
-
-function(brl_std_condition_greater_equals)
-{
-    if (arg_t(0) == arg_t(1))
-    {
-        if (arg_t(0) == TYPE_NUMBER)
-        {
-            return new_number(vm, arg(0).number >= arg(1).number);
-        }
-        else if (arg_t(0) == TYPE_STRING)
-        {
-            return new_number(vm, strcmp(arg(0).string, arg(1).string) >= 0);
-        }
-    }
-    return (new_number(vm, 0));
-}
-
-function(brl_std_condition_less_equals)
-{
-    if (arg_t(0) == arg_t(1))
-    {
-        if (arg_t(0) == TYPE_NUMBER)
-        {
-            return new_number(vm, arg(0).number <= arg(1).number);
-        }
-        else if (arg_t(0) == TYPE_STRING)
-        {
-            return new_number(vm, strcmp(arg(0).string, arg(1).string) <= 0);
-        }
-    }
-    return (new_number(vm, 0));
-}
-
-function(brl_std_condition_and)
-{
-    return new_number(vm, (is_true(arg(0), arg_t(0)) && is_true(arg(1), arg_t(1))));
-}
-
 function(brl_std_condition_or)
 {
     Int result = 0;
@@ -778,48 +925,38 @@ function(brl_std_condition_or)
     return result;
 }
 
-function(brl_std_condition_not)
-{
-    Int result = 0;
-    if (arg_t(0) == TYPE_NUMBER)
-    {
-        result = new_number(vm, !arg(0).number);
-    }
-    else if (is_true(arg(0), arg_t(0)))
-    {
-        result = new_number(vm, 0);
-    }
-    else
-    {
-        result = new_number(vm, 1);
-    }
-
-    return result;
-}
-
 function(brl_std_condition_if)
 {
-    Int result = eval(vm, arg(0).string);
-    if (is_true(data(result), data_t(result)))
+    Int result = -1;
+    if (is(vm, arg(0).string, context))
     {
-        result = eval(vm, arg(1).string);
-        return result;
+        result = eval(vm, arg(1).string, context);
+
     }
     unuse_var(vm, result);
-    return -1;
+    return result;
 }
 
 function(brl_std_condition_ifelse)
 {
-    Int result = eval(vm, arg(0).string);
-    if (is_true(data(result), data_t(result)))
+    Int result = -1;
+    if (is(vm, arg(0).string, context))
     {
-        result = eval(vm, arg(1).string);
+        result = eval(vm, arg(1).string, context);
     }
     else
     {
-        result = eval(vm, arg(2).string);
+        result = eval(vm, arg(2).string, context);
     }
+    return result;
+}
+
+function(brl_std_is)
+{
+    char* str = arg(0).string;
+    char* _str = str_nduplicate(str, strlen(str));
+    Int result = new_number(vm, is(vm, _str, context));
+    free(_str);
     return result;
 }
 
@@ -830,9 +967,9 @@ function(brl_std_condition_ifelse)
 function(brl_std_loop_while)
 {
     Int result = -1;
-    while (is_true(arg(0), arg_t(0)))
+    while (is(vm, arg(0).string, context))
     {
-        result = eval(vm, arg(1).string);
+        result = eval(vm, arg(1).string, context);
 
         if (result >= 0)
         {
@@ -846,7 +983,7 @@ function(brl_std_loop_repeat)
 {
     for (Int i = 0; i < arg(0).number; i++)
     {
-        eval(vm, arg(1).string);
+        eval(vm, arg(1).string, context);
     }
     return -1;
 }
@@ -857,7 +994,7 @@ function(brl_std_loop_each)
     for (Int i = 0; i < list->size; i++)
     {
         hash_set(vm, arg(1).string, list->data[i]);
-        eval(vm, arg(2).string);
+        eval(vm, arg(2).string, context);
     }
     return -1;
 }
@@ -916,6 +1053,14 @@ function(brl_mem_delete)
     return -1;
 }
 
+function(brl_mem_next)
+{
+    for (Int i = 0; i < args->size; i++)
+    {
+        stack_push(*vm->unused, arg_i(i));
+    }
+    return -1;
+}
 
 function(brl_mem_length)
 {
@@ -1069,12 +1214,12 @@ void init_basics(VirtualMachine *vm)
     register_builtin(vm, "do", brl_std_do);
     register_builtin(vm, "return", brl_std_return);
     register_builtin(vm, "gindex", brl_std_gindex);
-#ifndef ARDUINO
     register_builtin(vm, "ls", brl_std_io_ls);
     register_builtin(vm, "ls.type", brl_std_io_ls_types);
     register_builtin(vm, "ls.hash", brl_std_io_ls_hashes);
     register_builtin(vm, "print", brl_std_io_print);
-#endif
+
+    register_builtin(vm, "fn", brl_std_function);
 }
 
 void init_type(VirtualMachine *vm)
@@ -1087,6 +1232,7 @@ void init_type(VirtualMachine *vm)
     register_number(vm, "type.string", TYPE_STRING);
     register_number(vm, "type.builtin", TYPE_BUILTIN);
     register_number(vm, "type.list", TYPE_LIST);
+    register_number(vm, "type.function", TYPE_FUNCTION);
     register_number(vm, "type.other", TYPE_OTHER);
 
     // type functions
@@ -1125,6 +1271,7 @@ void init_math(VirtualMachine *vm)
     register_builtin(vm, "random", brl_std_math_random);
     register_builtin(vm, "incr", brl_std_math_increment);
     register_builtin(vm, "decr", brl_std_math_decrement);
+    register_builtin(vm, "math", brl_std_math);
 }
 
 void init_string(VirtualMachine *vm)
@@ -1144,15 +1291,8 @@ void init_condition(VirtualMachine *vm)
 {
     register_builtin(vm, "or", brl_std_condition_or);
     register_builtin(vm, "if", brl_std_condition_if);
-    register_builtin(vm, "<", brl_std_condition_less);
-    register_builtin(vm, "and", brl_std_condition_and);
-    register_builtin(vm, "not", brl_std_condition_not);
-    register_builtin(vm, "==", brl_std_condition_equals);
-    register_builtin(vm, ">", brl_std_condition_greater);
     register_builtin(vm, "ifelse", brl_std_condition_ifelse);
-    register_builtin(vm, "!=", brl_std_condition_not_equals);
-    register_builtin(vm, "<=", brl_std_condition_less_equals);
-    register_builtin(vm, ">=", brl_std_condition_greater_equals);
+    register_builtin(vm, "is", brl_std_is);
 }
 
 void init_list(VirtualMachine *vm)
@@ -1167,6 +1307,7 @@ void init_list(VirtualMachine *vm)
     register_builtin(vm, "list.concat", brl_std_list_concat);
     register_builtin(vm, "list.unshift", brl_std_list_unshift);
     register_builtin(vm, "list.last", brl_std_list_last);
+    register_builtin(vm, "list.set", brl_std_list_set);
 }
 
 void init_sector(VirtualMachine *vm)
@@ -1184,6 +1325,7 @@ void init_mem(VirtualMachine *vm)
     register_builtin(vm, "mem.copy", brl_mem_copy);
     register_builtin(vm, "mem.len", brl_mem_length);
     register_builtin(vm, "mem.delete", brl_mem_delete);
+    register_builtin(vm, "mem.next", brl_mem_next);
     register_builtin(vm, "mem.swap", brl_mem_swap);
     register_builtin(vm, "mem.push", brl_std_mem_push);
     register_builtin(vm, "mem.unshift", brl_std_mem_unshift);

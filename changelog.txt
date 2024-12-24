@@ -1,3 +1,19 @@
+(24/12/2024) - version 0.7.0
+
+- no more @: operator;
+- new operators @+, @-, @> and @<;
+- no more (//) delimiter, use // instead;
+- proper commentary with // instead of (//) are now possible;
+- dycc.c removed, it will be a avaliable in a separated repository soon;
+- register_* functions removed;
+- spawn_* functions renamed to register_*;
+- arduino code in main.c completely updated;
+- new local context system;
+- new function system;
+- new condition system, using tree-walking;
+- removed old condition functions;
+- new tree-walking math function;
+
 (17/12/2024) - version 0.6.9
 
 - global.* are now part of std.mem as mem.*;
