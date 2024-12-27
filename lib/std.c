@@ -1,5 +1,406 @@
 #include "bruter.h"
 
+// functions defitions for internal use
+// functions defitions for internal use
+// functions defitions for internal use
+// functions defitions for internal use
+// functions defitions for internal use
+
+
+char is(VirtualMachine *vm, char* str, HashList *context)
+{
+    char condition_result = 0;
+    Float cond[4] = {0, 0, 0, 0};
+    StringList *splited = special_split(str, ' ');
+    Int index = -1;
+    Int step = -1;
+    char _new_condition_result = 0;
+    
+    while (index < splited->size)
+    {
+        index++;
+        step++;
+        switch(step)
+        {
+            case 1:
+                if (index >= splited->size)
+                {
+                    _new_condition_result = (cond[0] != 0);
+                    goto condition_processing;
+                }
+
+                switch (splited->data[index][0])
+                {
+                    case '=':
+                        cond[1] = 1;
+                        break;
+                    case '!':
+                        cond[1] = 2;
+                        break;
+                    case '>':
+                        cond[1] = 3;
+                        break;
+                    case '<': 
+                        cond[1] = 4;
+                        break;
+                    default:
+                        // error
+                        printf("error: cant handle this condition (%s)\n", splited->data[index]);
+                        exit(1);
+                        break;
+                }
+                break;
+            case 3:
+                _new_condition_result = 0;
+
+                switch ((Int)cond[1])
+                {
+                    case 1: // ==
+                        _new_condition_result = (cond[0] == cond[2]);
+                        break;
+                    case 2: // !=
+                        _new_condition_result = (cond[0] != cond[2]);
+                        break;
+                    case 3: // >
+                        _new_condition_result = (cond[0] >  cond[2]);
+                        break;
+                    case 4: // <
+                        _new_condition_result = (cond[0] <  cond[2]);
+                        break;
+                    case 5: // >=
+                        _new_condition_result = (cond[0] >= cond[2]);
+                        break;
+                    case 6: // <=
+                        _new_condition_result = (cond[0] <= cond[2]);
+                        break;
+                }
+                condition_processing:
+
+                switch ((Int)cond[3])
+                {    
+                    case 1:
+                        _new_condition_result = condition_result && _new_condition_result;
+                        break;
+                    case 2:
+                        _new_condition_result = condition_result || _new_condition_result;
+                        break;
+                }
+
+                
+                condition_result = _new_condition_result;
+
+
+                if (index < splited->size-1)
+                {
+                    if (strcmp(splited->data[index], "&&") == 0)
+                    {
+                        cond[3] = 1;
+                    }
+                    else if (strcmp(splited->data[index], "||") == 0)
+                    {
+                        cond[3] = 2;
+                    }
+                    else
+                    {
+                        // error
+                        printf("error: cant handle this symbol (%s)\n", splited->data[index]);
+                        exit(1);
+                    }
+                }
+                else 
+                {
+                    return condition_result;
+                }
+
+                step = -1;
+                break;
+            default:// 0 or 2
+                if (splited->data[index][0] == '@')
+                {
+                    cond[step] = data(atoi(splited->data[index]+1)).number;
+                }
+                else if ((splited->data[index][0] >= '0' && splited->data[index][0] <= '9') || splited->data[index][0] == '-')
+                {
+                    cond[step] = atof(splited->data[index]);
+                }
+                else if (splited->data[index][0] == '(')
+                {
+                    if (splited->data[index][1] == ':')
+                    {
+                        char* _str = str_nduplicate(splited->data[index]+2, strlen(splited->data[index]) - 3);
+                        cond[step] = eval(vm, _str, context);
+                        free(_str);
+                    }
+                    else 
+                    {
+                        char* _str = str_sub(splited->data[index], 1, strlen(splited->data[index]) - 1);
+                        cond[step] = is(vm, _str, context);
+                        free(_str);
+                    }
+                }
+                else
+                {
+                    Int _index;
+                    if (context != NULL)
+                    {
+                        void *backup = vm->hashes;
+                        vm->hashes = context;
+                        _index = hash_find(vm, splited->data[index]);
+                        vm->hashes = backup;
+                        if (_index == -1)
+                        {
+                            _index = hash_find(vm, splited->data[index]);
+                        }
+                        cond[step] = data(_index).number;
+                    }
+                    else 
+                    {
+                        _index = hash_find(vm, splited->data[index]);
+                        cond[step] = data(_index).number;
+                    }
+                }
+                break;
+        }
+        
+    }
+    printf("error: misformed condition: %s\n", str);
+    return -1;
+}
+
+Int solve_index(VirtualMachine *vm, char* token, HashList *context)
+{
+    Int result = 0;
+    if (token[0] == '@')
+    {
+        result = data(atoi(token+1)).number;
+    }
+    else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
+    {
+        result = atoi(token);
+    }
+    else if (token[0] == '(')
+    {
+        if (token[1] == ':')
+        {
+            char* _str = str_nduplicate(token+2, strlen(token) - 3);
+            result = eval(vm, _str, context);
+            free(_str);
+        }
+        else
+        {
+            char* _str = str_sub(token, 1, strlen(token) - 1);
+            result = imath(vm, _str, context);
+            free(_str);
+        }
+    }
+    else
+    {
+        Int _index;
+        if (context != NULL)
+        {
+            void *backup = vm->hashes;
+            vm->hashes = context;
+            _index = hash_find(vm, token);
+            vm->hashes = backup;
+            if (_index == -1)
+            {
+                _index = hash_find(vm, token);
+            }
+            result = _index;
+        }
+        else 
+        {
+            _index = hash_find(vm, token);
+            result = _index;
+        }
+    }
+    return result;
+}
+
+Int imath(VirtualMachine *vm, char* str, HashList *context)
+{
+    Int a = 0;
+    Int b = 0;
+    StringList *splited = special_split(str, ' ');
+    char* token = stack_shift(*splited);
+    char operator = 0;
+
+    a = solve_index(vm, token, context);
+    free(token);
+    
+    while (splited->size > 0)
+    {
+        token = stack_shift(*splited);
+        operator = token[0];
+        free(token);
+        token = stack_shift(*splited);
+        b = solve_index(vm, token, context);
+        free(token);
+        switch (operator)
+        {
+            case '+':
+                a += b;
+                break;
+            case '-':
+                a -= b;
+                break;
+            case '*':
+                a *= b;
+                break;
+            case '/':
+                a /= b;
+                break;
+            case '%':
+                a %= b;
+                break;
+            case '&': // bitwise and
+                a = (Int)a & (Int)b;
+                break;
+            case '|':
+                a = (Int)a | (Int)b;
+                break;
+            case '>':
+                a = (Int)a >> (Int)b;
+                break;
+            case '<':
+                a = (Int)a << (Int)b;
+                break;
+            case '^':
+                a = (Int)a ^ (Int)b;
+                break;
+            case '~':
+                a = ~(Int)a;
+                break;
+            default:
+                // error
+                printf("error: cant handle this operator (%c)\n", operator);
+                exit(1);
+                break;
+        }
+    }
+    stack_free(*splited);
+    return a;
+}
+
+Float solve_number(VirtualMachine *vm, char* token, HashList *context)
+{
+    Float result = 0;
+    if (token[0] == '@')
+    {
+        result = data(atoi(token+1)).number;
+    }
+    else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
+    {
+        result = atof(token);
+    }
+    else if (token[0] == '(')
+    {
+        if (token[1] == ':')
+        {
+            char* _str = str_nduplicate(token+2, strlen(token) - 3);
+            result = data(eval(vm, _str, context)).number;
+            free(_str);
+        }
+        else
+        {
+            char* _str = str_sub(token, 1, strlen(token) - 1);
+            result = math(vm, _str, context);
+            free(_str);
+        }
+    }
+    else
+    {
+        Int _index;
+        if (context != NULL)
+        {
+            void *backup = vm->hashes;
+            vm->hashes = context;
+            _index = hash_find(vm, token);
+            vm->hashes = backup;
+            if (_index == -1)
+            {
+                _index = hash_find(vm, token);
+            }
+            result = data(_index).number;
+        }
+        else 
+        {
+            _index = hash_find(vm, token);
+            result = data(_index).number;
+        }
+    }
+    return result;
+}
+
+Float math(VirtualMachine *vm, char* str, HashList *context)
+{
+    Float a = 0;
+    Float b = 0;
+    StringList *splited = special_split(str, ' ');
+    char* token = stack_shift(*splited);
+    char operator = 0;
+
+    a = solve_number(vm, token, context);
+    free(token);
+    
+    while (splited->size > 0)
+    {
+        token = stack_shift(*splited);
+        operator = token[0];
+        free(token);
+        token = stack_shift(*splited);
+        b = solve_number(vm, token, context);
+        free(token);
+        switch (operator)
+        {
+            case '+':
+                a += b;
+                break;
+            case '-':
+                a -= b;
+                break;
+            case '*':
+                a *= b;
+                break;
+            case '/':
+                a /= b;
+                break;
+            case '%':
+                a = fmod(a, b);
+                break;
+            case '&': // bitwise and
+                a = (Int)a & (Int)b;
+                break;
+            case '|':
+                a = (Int)a | (Int)b;
+                break;
+            case '>':
+                a = (Int)a >> (Int)b;
+                break;
+            case '<':
+                a = (Int)a << (Int)b;
+                break;
+            case '^':
+                a = (Int)a ^ (Int)b;
+                break;
+            case '~':
+                a = ~(Int)a;
+                break;
+            default:
+                // error
+                printf("error: cant handle this operator (%c)\n", operator);
+                exit(1);
+                break;
+        }
+    }
+    stack_free(*splited);
+    return a;
+}
+
+// functions defitions for bruter
+// functions defitions for bruter
+// functions defitions for bruter
+
 #ifndef ARDUINO
 
 function(brl_os_file_read)
@@ -427,145 +828,20 @@ function(brl_std_math_decrement)
 }
 
 // tree-walker math
-
-
-
-Float math(VirtualMachine *vm, char* str, HashList *context)
-{
-    Float a = 0;
-    Float b = 0;
-    char* token = strtok(str, " ");
-    char operator = 0;
-
-    if (token[0] == '@')
-    {
-        a = data(atoi(token+1)).number;
-    }
-    else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
-    {
-        a = atof(token);
-    }
-    else if (token[0] == '(')
-    {
-        char* _str = str_sub(token, 1, strlen(token) - 1);
-        a = math(vm, _str, context);
-        free(_str);
-    }
-    else
-    {
-        Int _index;
-        if (context != NULL)
-        {
-            void *backup = vm->hashes;
-            vm->hashes = context;
-            _index = hash_find(vm, token);
-            vm->hashes = backup;
-            if (_index == -1)
-            {
-                _index = hash_find(vm, token);
-            }
-            a = data(_index).number;
-        }
-        else 
-        {
-            _index = hash_find(vm, token);
-            a = data(_index).number;
-        }
-    }
-
-    token = strtok(NULL, " ");
-    while (token != NULL)
-    {
-        operator = token[0];
-        token = strtok(NULL, " ");
-        if (token[0] == '@')
-        {
-            b = data(atoi(token+1)).number;
-        }
-        else if ((token[0] >= '0' && token[0] <= '9') || token[0] == '-')
-        {
-            b = atof(token);
-        }
-        else if (token[0] == '(')
-        {
-            char* _str = str_sub(token, 1, strlen(token) - 1);
-            b = math(vm, _str, context);
-            free(_str);
-        }
-        else
-        {
-            Int _index;
-            if (context != NULL)
-            {
-                void *backup = vm->hashes;
-                vm->hashes = context;
-                _index = hash_find(vm, token);
-                vm->hashes = backup;
-                if (_index == -1)
-                {
-                    _index = hash_find(vm, token);
-                }
-                b = data(_index).number;
-            }
-            else 
-            {
-                _index = hash_find(vm, token);
-                b = data(_index).number;
-            }
-        }
-        printf("a: %f, b: %f, operator: %c\n", a, b, operator);
-        switch (operator)
-        {
-            case '+':
-                a += b;
-                break;
-            case '-':
-                a -= b;
-                break;
-            case '*':
-                a *= b;
-                break;
-            case '/':
-                a /= b;
-                break;
-            case '%':
-                a = fmod(a, b);
-                break;
-            case '^':
-                a = pow(a, b);
-                break;
-            case '&': // bitwise and
-                a = (Int)a & (Int)b;
-                break;
-            case '|':
-                a = (Int)a | (Int)b;
-                break;
-            case '~':
-                a = (Int)a ^ (Int)b;
-                break;
-            case '>':
-                a = (Int)a >> (Int)b;
-                break;
-            case '<':
-                a = (Int)a << (Int)b;
-                break;
-            default:
-                // error
-                printf("error: cant handle this operator (%c)\n", operator);
-                exit(1);
-                break;
-        }
-
-        token = strtok(NULL, " ");
-    }
-    return a;
-}
-
 function(brl_std_math)
 {
     char* str = arg(0).string;
     char* _str = str_nduplicate(str, strlen(str));
     Int result = new_number(vm, math(vm, _str, context));
+    free(_str);
+    return result;
+}
+
+function(brl_std_imath)
+{
+    char* str = arg(0).string;
+    char* _str = str_nduplicate(str, strlen(str));
+    Int result = imath(vm, _str, context);
     free(_str);
     return result;
 }
@@ -933,7 +1209,6 @@ function(brl_std_condition_if)
         result = eval(vm, arg(1).string, context);
 
     }
-    unuse_var(vm, result);
     return result;
 }
 
@@ -958,6 +1233,125 @@ function(brl_std_is)
     Int result = new_number(vm, is(vm, _str, context));
     free(_str);
     return result;
+}
+
+function(brl_std_group)//group interpreter
+{
+    Int _str = stack_shift(*args);
+    StringList *splited = special_split(data(_str).string, ' ');
+
+    Int lst = new_list(vm);
+    IntList *list = (IntList*)data(lst).pointer;
+
+    Int from,to;
+    from = 0;
+    to = vm->stack->size-1;
+    while (splited->size > 0)
+    {
+        char* str = stack_shift(*splited);
+        if (strcmp(str, "from") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            from = atoi(str);
+        }
+        else if (strcmp(str, "to") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = atoi(str);
+        }
+        else if (strcmp(str, "+") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from + atoi(str);
+        }
+        else if (strcmp(str, "-") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from - atoi(str);
+        }
+        else if (strcmp(str, "*") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from * atoi(str);
+        }
+        else if (strcmp(str, "/") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from / atoi(str);
+        }
+        else if (strcmp(str, "\%") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from % atoi(str);
+        }
+        else if (strcmp(str, "&") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from & atoi(str);
+        }
+        else if (strcmp(str, "|") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from | atoi(str);
+        }
+        else if (strcmp(str, "^") == 0)
+        {
+            free(str);
+            str = stack_shift(*splited);
+            to = from ^ atoi(str);
+        }
+        else if (strcmp(str, "~") == 0)
+        {
+            free(str);
+            to = ~from;
+        }
+        free(str);
+    }
+
+    if (from < 0)
+    {
+        from = 0;
+    }
+    else if (from >= vm->stack->size)
+    {
+        from = vm->stack->size - 1;
+    }
+    
+    if (to < 0)
+    {
+        to = 0;
+    }
+    else if (to >= vm->stack->size)
+    {
+        to = vm->stack->size - 1;
+    }
+
+    if (from > to)
+    {
+        for (Int i = from; i >= to; i--)
+        {
+            stack_push(*list, i);
+        }
+    }
+    else 
+    {
+        for (Int i = from; i <= to; i++)
+        {
+            stack_push(*list, i);
+        }
+    }
+
+    stack_free(*splited);
+    return lst;
 }
 
 // std loop
@@ -1218,6 +1612,7 @@ void init_basics(VirtualMachine *vm)
     register_builtin(vm, "ls.type", brl_std_io_ls_types);
     register_builtin(vm, "ls.hash", brl_std_io_ls_hashes);
     register_builtin(vm, "print", brl_std_io_print);
+    register_builtin(vm, "group", brl_std_group);
 
     register_builtin(vm, "fn", brl_std_function);
 }
@@ -1272,6 +1667,7 @@ void init_math(VirtualMachine *vm)
     register_builtin(vm, "incr", brl_std_math_increment);
     register_builtin(vm, "decr", brl_std_math_decrement);
     register_builtin(vm, "math", brl_std_math);
+    register_builtin(vm, "index", brl_std_imath);
 }
 
 void init_string(VirtualMachine *vm)
