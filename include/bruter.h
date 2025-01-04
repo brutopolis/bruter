@@ -8,7 +8,11 @@
 #include <stdarg.h>
 #include <time.h>
 
-#define VERSION "0.7.1"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
+#define VERSION "0.7.2"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
@@ -252,6 +256,14 @@ extern char* readfile(char *filename);
 extern void writefile(char *filename, char *content);
 extern Int repl(VirtualMachine *vm);
 
+#endif
+
+#ifdef __EMSCRIPTEN__
+
+//declarations
+Int wasm_new_vm();
+void wasm_destroy_vm(Int index);
+char* wasm_eval(Int index, char *cmd);
 #endif
 
 #endif
