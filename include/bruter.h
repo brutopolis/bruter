@@ -7,12 +7,13 @@
 #include <math.h>
 #include <stdarg.h>
 #include <time.h>
+#include <unistd.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
 
-#define VERSION "0.7.2"
+#define VERSION "0.7.3"
 
 #define TYPE_NIL 0
 #define TYPE_NUMBER 1
@@ -136,7 +137,7 @@ typedef union
     Int integer;
     char* string;
     void* pointer;
-    unsigned char byte[sizeof(Float)];
+    char byte[sizeof(Float)];
 } Value;
 
 //Hash
@@ -152,6 +153,7 @@ typedef Stack(Hash) HashList;
 typedef Stack(char*) StringList;
 typedef Stack(Int) IntList;
 typedef Stack(char) CharList;
+
 
 typedef struct
 {

@@ -1,3 +1,16 @@
+(11/01/2025) - version 0.7.3
+
+- minor changes;
+- README.md updated;
+- experimental bruter "package manager": bpm;
+- wasm_wrapper.c merged into bruter.c;
+- bruter can now receive some arguments from the command line, use -h to see them;
+- new std functions for conditions, brl_std_equals, brl_std_not_equals, brl_std_greater_than, brl_std_less_than, brl_std_greater_or_equals, brl_std_less_or_equals, brl_std_and, brl_std_or, brl_std_not, brl_std_xor;
+- condition functions now does return @0 or @1, it does NOT create a new variable, keep that in mind;
+- reduced std_group operators to 4: to, from, + and -;
+- new std functions: std_loop_while_is, std_condition_if_is, std_condition_ifelse_is;
+- new lib: pkg, used to deal with package.br file;
+
 (04/01/2025) - version 0.7.2
 
 - experimental web (wasm) support, set $EMCC to emscripten path when calling build.sh, it will create the folder build/web;
