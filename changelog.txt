@@ -1,7 +1,11 @@
-(??/01/2025) - version 0.7.4
+(15/01/2025) - version 0.7.3b
 
-TODO: a repository on github that will be used to store the packages info
-
+- bruter interpreter can receive args now, they are store under file.args;
+- bruter.a is now libbruter.a(for obvious reasons);
+- build.sh rewritten;
+- new command: "system";
+- bpm removed, maybe it was a bad idea, at least in this repo;
+- group function fixed;
 
 (14/01/2025) - version 0.7.3a
 

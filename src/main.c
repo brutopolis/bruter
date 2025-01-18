@@ -26,14 +26,6 @@ int main(int argc, char **argv)
             printf("  -h, --help\t\tprint this help\n");
             return 0;
         }
-        else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--run") == 0)
-        {
-            if (i + 1 < argc)
-            {
-                code = argv[i + 1];
-                i++;
-            }
-        }
         else
         {
             stack_push(*args, argv[i]);
@@ -41,45 +33,45 @@ int main(int argc, char **argv)
     }
     
     VirtualMachine *vm = make_vm();
-
+    
+    // libraries init is not a merely comment
     // <libraries init>
 
     if (args->size == 0)
     {
         repl(vm);
     }
-    else if (args->size == 1) 
+    else if (args->size > 0) 
     {
-        if (code == NULL) // read file pointed by argv[1]
+        char *_code = readfile(argv[1]);
+        if (_code == NULL)
         {
-            char *_code = readfile(argv[1]);
-            if (_code == NULL)
-            {
-                printf("file %s not found\n", argv[1]);
-                return 1;
-            }
-            Int filepathindex = new_var(vm);
-            // path without file name
-            vm->typestack->data[filepathindex] = TYPE_STRING;
-            // remove file name
-            char *path = stack_shift(*args);
-            char *last = strrchr(path, '/');
-            if (last == NULL)
-            {
-                vm->stack->data[filepathindex].string = str_duplicate("");
-            }
-            else
-            {
-                vm->stack->data[filepathindex].string = str_nduplicate(path, last - path + 1);
-            }
-            hash_set(vm, "file.path", filepathindex);
-            result = eval(vm, _code, NULL);
-            free(_code);
+            printf("file %s not found\n", argv[1]);
+            return 1;
+        }
+        Int filepathindex = new_var(vm);
+        // path without file name
+        vm->typestack->data[filepathindex] = TYPE_STRING;
+        // remove file name
+        char *path = stack_shift(*args);
+        char *last = strrchr(path, '/');
+        if (last == NULL)
+        {
+            vm->stack->data[filepathindex].string = str_duplicate("");
         }
         else
         {
-            result = eval(vm, code, NULL);
+            vm->stack->data[filepathindex].string = str_nduplicate(path, last - path + 1);
         }
+        hash_set(vm, "file.path", filepathindex);
+        register_list(vm, "file.args");
+        IntList *fileargs = (IntList*)data(hash_find(vm, "file.args")).pointer;
+        while (args->size > 0)
+        {
+            stack_push(*fileargs, new_string(vm, stack_shift(*args)));
+        }
+        result = eval(vm, _code, NULL);
+        free(_code);
     }
     stack_free(*args);
     free_vm(vm);

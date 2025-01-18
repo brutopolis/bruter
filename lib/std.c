@@ -487,6 +487,12 @@ function(brl_os_file_size)
     return result;
 }
 
+function(brl_os_system)
+{
+    system(arg(0).string);
+    return -1;
+}
+
 #ifndef __EMSCRIPTEN__
 function(brl_os_time_now)
 {
@@ -1006,6 +1012,17 @@ function(brl_std_list_last)
     return -1;
 }
 
+function(brl_std_list_reverse)
+{
+    Int list = arg_i(0);
+    if (arg_t(0) == TYPE_LIST)
+    {
+        IntList *lst = (IntList*)data(list).pointer;
+        stack_reverse(*lst);
+    }
+    return -1;
+}
+
 // std string
 
 function(brl_std_string_concat)
@@ -1365,7 +1382,7 @@ function(brl_std_group)//group interpreter
     stack_reverse(*args);
     Int _str = stack_pop(*args);
     StringList *splited = special_split(data(_str).string, ' ');
-
+    stack_reverse(*splited);
     Int lst = new_list(vm);
     IntList *list = (IntList*)data(lst).pointer;
 
@@ -1692,6 +1709,7 @@ void init_os(VirtualMachine *vm)
     register_builtin(vm, "file.rename", brl_os_file_rename);
     register_builtin(vm, "file.copy", brl_os_file_copy);
     register_builtin(vm, "file.size", brl_os_file_size);
+    register_builtin(vm, "system", brl_os_system);
 
 #ifndef __wasm__
     register_builtin(vm, "os.time", brl_os_time_now);
@@ -1829,6 +1847,7 @@ void init_list(VirtualMachine *vm)
     register_builtin(vm, "list.unshift", brl_std_list_unshift);
     register_builtin(vm, "list.last", brl_std_list_last);
     register_builtin(vm, "list.set", brl_std_list_set);
+    register_builtin(vm, "list.reverse", brl_std_list_reverse);
 }
 
 void init_sector(VirtualMachine *vm)
