@@ -243,16 +243,16 @@ Bruter *session = new Bruter();
 void setup()
 {
     Serial.begin(115200);
-    session->run((char*)"hash.set 'str' (@@looping);");
-    session->run((char*)"Serial.println (gindex str);");
-    session->run((char*)"Serial.println (gindex str);");
+    session->run((char*)"#set 'str' (@@looping);");
+    session->run((char*)"Serial.println @str;");
+    session->run((char*)"Serial.println @str;");
 }
 
 void loop()
 {
     delay(1000);
 
-    session->run((char*)"Serial.println (gindex str);");
+    session->run((char*)"Serial.println @str;");
 }
 
 #endif

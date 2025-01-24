@@ -482,7 +482,7 @@ void hash_set(VirtualMachine *vm, char* varname, Int index)
     Int _index = hash_find(vm, varname);
     if (_index != -1)
     {
-        vm->hashes->data[_index].index = index;
+        hash(_index).index = index;
     }
     else 
     {
@@ -694,7 +694,7 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
         char* str = stack_pop(*splited);
         if (str[0] == '(')
         {
-            if(str[1] == '@' && str[2] == '@')//string
+            if(str[1] == '@' && str[2] == '@') //string
             {
                 char* temp = str + 3;
                 temp[strlen(temp) - 1] = '\0';
@@ -711,7 +711,14 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
         }
         else if (str[0] == '@') 
         {
-            stack_push(*result, atoi(str + 1));
+            if (str[1] >= '0' && str[1] <= '9')
+            {
+                stack_push(*result, atoi(str + 1));
+            }
+            else 
+            {
+                stack_push(*result, new_number(vm, hash_find(vm, str + 1)));
+            }
         }
         else if (str[0] == '"' || str[0] == '\'') // string
         {
@@ -720,7 +727,7 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
             Int var = new_string(vm, temp);
             stack_push(*result, var);
         }
-        else if ((str[0] >= '0' && str[0] <= '9') || str[0] == '-') 
+        else if ((str[0] >= '0' && str[0] <= '9') || (str[0] == '-' && str[1] > '\0')) // number
         {
             Int var = new_number(vm, atof(str));
             stack_push(*result, var);
@@ -744,6 +751,11 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
         }
         else if (str[0] == '/' && str[1] == '/') // comment
         {
+            free(str);
+            while (splited->size > 0)
+            {
+                free(stack_pop(*splited));
+            }
             break;
         }
         else //variable 
@@ -780,6 +792,7 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
     stack_free(*splited);
     return result;
 }
+
 
 Int default_interpreter(void *_vm, char* cmd, HashList *context)
 {

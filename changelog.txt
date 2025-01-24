@@ -1,3 +1,26 @@
+(24/01/2025) - version 0.7.4
+
+- type.set fixed;
+- new operator: @name, it returns the index of the hash as number value, replacement for gindex function;
+- gindex removed;
+- tree-walking math interpreters removed;
+- new function to.int;
+- new function to.float;
+- removed if.is, ifelse.is and while.is, use if, ifelse and while instead;
+- comments are leaking no more;
+- sector functions removed;
+- removed 'is' function;
+- removed mem.len, list.last, list.len, string.len;
+- all hash functions renamed to #name instead of hash.name;
+- all list functions renamed to :name instead of list.name;
+- list functions now deal also with strings and global scope also;
+- add, sub, mul, div, mod, incr, decr renamed to +, -, *, /, %, ++, --;
+- no more group function use :sub instead;
+- new function scan, it always return a string, only avaliable in os;
+- removed mem.swap, mem.push, mem.unshift, mem.shift, mem.pop, mem.insert, mem.remove, mem.set and mem.get, use :push, :unshift, :shift, :pop, :insert, :remove, :set and :get instead;
+- "fn" is now "function";
+- removed "each";
+
 (18/01/2025) - version 0.7.3c
 
 - some README updates;

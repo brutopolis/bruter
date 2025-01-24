@@ -56,23 +56,20 @@ bruter is a metaprogramable lightweight virtual machine/interpreted programming 
     function ...;
     function (function (function ...));
     function variable_1 variable_2 ...;
-    hash.set "name" value; 
-    hash.set "name" (function ...);
+    #set "name" value; 
+    #set "name" (function ...);
     function name;
     do "code";
     repeat amount "code";
     while "condition" "code";
-    each list "name" "code";
     ...a_list; // spread operator;
     // comment;
     function "string";
     function 'string';
     function (@@ string);
     if "condition" "code";
-    if.is "condition" "code";
     ifelse "condition" "code" "code";
-    ifelse.is "condition" "code" "code";
-    function (group "from x to y");
+    function (:sub x y);
 
 ## Building instructions
 

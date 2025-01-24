@@ -1,4 +1,5 @@
-hash.set "str" "test str 1 2 3 ()ld ç p e o oooo";
-hash.set "splited" (string.split str " ");
-ls;
+#set "str" "test str 1 2 3 ()ld ç p e o oooo";
+#set "splited" (string.split str " ");
+// :each splited "a" "print a";
+print splited;
 return 0;
