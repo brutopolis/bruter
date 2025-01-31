@@ -1,0 +1,27 @@
+// just ideas, dont expect this to work;
+
+// IDEA each implementation;
+
+#new "each" (function "callback"
+    (@@
+        #new "i" 0;
+        #new "size" (len:);
+        while "< i size"
+        (@@
+            callback (get: i);
+            "++ i";
+        )
+    )
+);
+
+#new "cbk" (function "item"
+    (@@
+        "print item";
+    )
+);
+
+#new "lst" (list: 1 2 3 4 5 6 7 8 9 10);
+
+each cbk;
+return 0;
+
