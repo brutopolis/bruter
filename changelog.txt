@@ -1,3 +1,42 @@
+(19/02/2025) - version 0.7.5c
+
+- all std functions are now documented under README.md;
+- TYPE_FUNCTION removed, use TYPE_LIST instead;
+- TYPE_BUILTIN removed, use TYPE_LIST instead;
+- ifelse removed, use if instead;
+- condition "not" removed;
+- function "do" removed;
+- function "help" renamed to "ls.hash" again;
+- some examples updated;
+- some optimizations;
+- some cleanup;
+- some fixes;
+
+(14/02/2025) - version 0.7.5b
+
+- new function #priority, it reorder the hash in the hashes list, the first argument is the hash name, the second is the priority, 0 is the max priority, if it receive only 1 arg it sets the minimum priority, which is 10 by default, if no args are passed it will return the priority of the hash;
+- some memory leaking fixed;
+- some optimizations on loops, while is about ~50% faster now, and repeat is about ~20% faster;
+- #new still working for re-setting a hash, but is not recommended unless you know exactly what you are doing, some optimizations now expect static hashes;
+- some internal systems were splited in minor parts and some changed behavior, just internal stuff;
+- new file c_list.h;
+- all stack_* functions were renamed to list_* instead, usage is now simpler and you dont need to allocate the list anymore, list_init does it now;
+- new internal list macro: list_fast_remove, is a swap and pop, a faster list_remove, that doesnt mantain the order;
+- new internal list macro: list_double, it reallocs the list to double its size;
+- new internal list macro: list_half, it reallocs the list to half its size;
+- repeat loop now can be interrupted with return just like while;
+- InternalFunction structure removed, functions are now a bruter list with strings, the last is the code, the other are the argument names;
+- std_inplace.c removed;
+- all math functions are now inplace, they dont create a new variable anymore, they just set the first argument, use deplace if you want a non destructive operation;
+- ++ and -- removed, use + and - instead, they're now just as fast as ++ and --;
+- new functions: min and max;
+- some optimizations in math functions;
+- new function "$" aka deplace, it make destructive operations non-destructive(e.g. #new "c" ($ + a b) will not change a);
+- endless args are now under "..." instead "etc";
+- os.time and os.clock now are now called time and clock;
+- some examples updated;
+- cast is now inplace;
+
 (01/02/2025) - version 0.7.5a
 
 - lots of documentation written on README.md;

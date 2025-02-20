@@ -4,6 +4,12 @@
 // functions defitions for bruter
 // functions defitions for bruter
 
+// MAX priority is always 0
+// MIN priority is BASE_PRIORITY
+Int BASE_PRIORITY = 10;
+
+typedef List(IntList) IntListList;
+
 #ifndef ARDUINO
 
 function(brl_os_file_read)
@@ -52,20 +58,25 @@ function(brl_os_time_clock)
 
 function(brl_std_hash_new)
 {
-    if (hash_find(vm, arg(0).string) != -1)
-    {
-        hash_unset(vm, arg(0).string);
-    }
-
     if (context != NULL)
     {
         HashList *global_context = vm->hashes;
         vm->hashes = context;
+        
+        if (hash_find(vm, arg(0).string) != -1)
+        {
+            hash_unset(vm, arg(0).string);
+        }
+        
         hash_set(vm, arg(0).string, arg_i(1));
         vm->hashes = global_context;
     }
     else 
     {
+        if (hash_find(vm, arg(0).string) != -1)
+        {
+            hash_unset(vm, arg(0).string);
+        }
         hash_set(vm, arg(0).string, arg_i(1));
     }
     return -1;
@@ -84,6 +95,42 @@ function(brl_std_hash_delete)
     {
         hash_unset(vm, arg(0).string);
     }
+    return -1;
+}
+
+function(brl_std_hash_priority)
+{
+    if (args->size == 1)
+    {
+        BASE_PRIORITY = (Int)arg(0).number;
+        return -1;
+    }
+    else if (args->size == 0)
+    {
+        return new_number(vm, BASE_PRIORITY);
+    }
+
+    char* hash_name = arg(0).string;
+    Int priority = arg(1).number;
+    Int hash_index = -1;
+    
+    for (Int i = 0; i < vm->hashes->size; i++)
+    {
+        if (strcmp(hash_name, hash(i).key) == 0)
+        {
+            hash_index = i;
+            break;
+        }
+    }
+
+    if (hash_index < 0)
+    {
+        printf("could not find hash \"%s\"\n", hash_name);
+    }
+
+    Hash obj = list_fast_remove(*vm->hashes, hash_index);
+    Int position = priority * (Int)(vm->hashes->size/BASE_PRIORITY);
+    list_insert(*vm->hashes, position, obj);
     return -1;
 }
 
@@ -166,42 +213,26 @@ function(brl_std_io_ls_hashes)
     {
         for (Int i = 0; i < vm->hashes->size; i++)
         {
-            printf("[%s] {%d} @%ld: ", hash(i).key, vm->typestack->data[hash(i).index], hash(i).index);
-            print_element(vm, hash(i).index);
+            printf("[%s] {%d} @%ld: ", vm->hashes->data[i].key, vm->typestack->data[vm->hashes->data[i].index], vm->hashes->data[i].index);
+            print_element(vm, vm->hashes->data[i].index);
             printf("\n");
         }
     }
     return -1;
 }
 
-function(brl_std_do)
-{
-    return eval(vm, arg(0).string, context);
-}
-
-
-
 // functions
 function(brl_std_function)
 {
-    StringList *varnames = (StringList*)malloc(sizeof(StringList));
-    stack_init(*varnames);
-    stack_reverse(*args);
-    while (args->size > 1)
+    Int func = new_list(vm);
+    IntList *func_list = (IntList*)data(func).pointer;
+    //list_reverse(*args);
+    for (Int i = 0; i < args->size; i++)
     {
-        stack_push(*varnames, str_duplicate(data(stack_pop(*args)).string));
+        list_push(*func_list, arg_i(i));
     }
-
-    char *code = str_duplicate(arg(args->size - 1).string);
-
-    InternalFunction *func = (InternalFunction*)malloc(sizeof(InternalFunction));
-    func->varnames = varnames;
-    func->code = code;
-
-    Int index = new_var(vm);
-    data(index).pointer = func;
-    data_t(index) = TYPE_FUNCTION;
-    return index;
+    data_t(func) = TYPE_LIST;
+    return func;
 }
 
 function(brl_std_ignore)
@@ -228,7 +259,7 @@ function(brl_std_list_new)
     IntList *list = (IntList*)data(index).pointer;
     for (Int i = 0; i < args->size; i++)
     {
-        stack_push(*list, arg_i(i));
+        list_push(*list, arg_i(i));
     }
     return index;
 }
@@ -237,15 +268,15 @@ function(brl_std_list_push)
 {
     if (args->size == 1) // push to global vm->stack
     {
-        stack_push(*vm->stack, value_duplicate(arg(0), arg_t(0)));
-        stack_push(*vm->typestack, arg_t(0));
+        list_push(*vm->stack, value_duplicate(arg(0), arg_t(0)));
+        list_push(*vm->typestack, arg_t(0));
     }
     else if (arg_t(0) == TYPE_LIST)
     {
         IntList *list = (IntList*)arg(0).pointer;
         for (Int i = 1; i < args->size; i++)
         {
-            stack_push(*list, arg_i(i));
+            list_push(*list, arg_i(i));
         }
     }
     else if (arg_t(0) == TYPE_STRING)
@@ -261,8 +292,8 @@ function(brl_std_list_unshift)
 {
     if (args->size == 1) // unshift to global vm->stack
     {
-        stack_unshift(*vm->stack, value_duplicate(arg(0), arg_t(0)));
-        stack_unshift(*vm->typestack, arg_t(0));
+        list_unshift(*vm->stack, value_duplicate(arg(0), arg_t(0)));
+        list_unshift(*vm->typestack, arg_t(0));
         // update hashes and lists indexes
         for (Int i = 0; i < vm->hashes->size; i++)
         {
@@ -286,7 +317,7 @@ function(brl_std_list_unshift)
         IntList *list = (IntList*)arg(0).pointer;
         for (Int i = 1; i < args->size; i++)
         {
-            stack_unshift(*list, arg_i(i));
+            list_unshift(*list, arg_i(i));
         }
     }
     else if (arg_t(0) == TYPE_STRING)
@@ -307,13 +338,13 @@ function(brl_std_list_pop)// returns the removed element
 {
     if (args->size == 0) // pop from global vm->stack
     {
-        stack_pop(*vm->stack);
-        stack_pop(*vm->typestack);
+        list_pop(*vm->stack);
+        list_pop(*vm->typestack);
     }
     else if (arg_t(0) == TYPE_LIST)
     {
         IntList *list = (IntList*)arg(0).pointer;
-        return stack_pop(*list);
+        return list_pop(*list);
     }
     else if (arg_t(0) == TYPE_STRING)
     {
@@ -329,8 +360,8 @@ function(brl_std_list_shift)// returns the removed element
 {
     if (args->size == 0) // shift from global vm->stack
     {
-        stack_shift(*vm->stack);
-        stack_shift(*vm->typestack);
+        list_shift(*vm->stack);
+        list_shift(*vm->typestack);
         // update hashes and lists indexes
         for (Int i = 0; i < vm->hashes->size; i++)
         {
@@ -352,7 +383,7 @@ function(brl_std_list_shift)// returns the removed element
     else if (arg_t(0) == TYPE_LIST)
     {
         IntList *list = (IntList*)arg(0).pointer;
-        return stack_shift(*list);
+        return list_shift(*list);
     }
     else if (arg_t(0) == TYPE_STRING)
     {
@@ -373,8 +404,8 @@ function(brl_std_list_insert)
     {
         // lets do it  with push
         Value v = value_duplicate(arg(0), arg_t(0));
-        stack_push(*vm->stack, v);
-        stack_push(*vm->typestack, arg_t(0));
+        list_push(*vm->stack, v);
+        list_push(*vm->typestack, arg_t(0));
         // relocate the element to the desired index
         for (Int i = vm->stack->size - 1; i > arg_i(1); i--)
         {
@@ -394,7 +425,7 @@ function(brl_std_list_insert)
     else if (arg_t(0) == TYPE_LIST)
     {
         IntList *list = (IntList*)arg(0).pointer;
-        stack_insert(*list, (Int)arg(1).number, arg_i(2));
+        list_insert(*list, (Int)arg(1).number, arg_i(2));
     }
     else if (arg_t(0) == TYPE_STRING)
     {
@@ -416,8 +447,8 @@ function(brl_std_list_remove)
 {
     if (args->size == 1) // remove from global vm->stack
     {
-        stack_remove(*vm->stack, arg_i(0));
-        stack_remove(*vm->typestack, arg_i(0));
+        list_remove(*vm->stack, arg_i(0));
+        list_remove(*vm->typestack, arg_i(0));
         // update hashes and lists indexes
         for (Int i = 0; i < vm->hashes->size; i++)
         {
@@ -430,7 +461,7 @@ function(brl_std_list_remove)
     else if (arg_t(0) == TYPE_LIST)
     {
         IntList *list = (IntList*)arg(0).pointer;
-        stack_remove(*list, (Int)arg(1).number);
+        list_remove(*list, (Int)arg(1).number);
     }
     else if (arg_t(0) == TYPE_STRING)
     {
@@ -451,8 +482,8 @@ function(brl_std_list_concat)
         IntList* list = (IntList*)data(arg_i(0)).pointer;
         for (Int i = 0; i < list->size; i++)
         {
-            stack_push(*vm->stack, value_duplicate(data(list->data[i]), data_t(list->data[i])));
-            stack_push(*vm->typestack, data_t(list->data[i]));
+            list_push(*vm->stack, value_duplicate(data(list->data[i]), data_t(list->data[i])));
+            list_push(*vm->typestack, data_t(list->data[i]));
         }
     }
     else if (arg_t(0) == TYPE_LIST)
@@ -466,7 +497,7 @@ function(brl_std_list_concat)
                 IntList *list = (IntList*)arg(i).pointer;
                 for (Int j = 0; j < list->size; j++)
                 {
-                    stack_push(*newlist, list->data[j]);
+                    list_push(*newlist, list->data[j]);
                 }
             }
         }
@@ -492,12 +523,12 @@ function(brl_std_list_find)
 {
     if (args->size == 1)
     {
-        Int value = arg_i(0);
+        Int value = arg(0).integer;
         for (Int i = 0; i < vm->stack->size; i++)
         {
             if (data(i).integer == value)
             {
-                return i;
+                return new_number(vm, i);
             }
         }
     }
@@ -512,7 +543,7 @@ function(brl_std_list_find)
             {
                 if (lst->data[i] == list)
                 {
-                    return i;
+                    return new_number(vm, i);
                 }
             }
         }
@@ -668,8 +699,8 @@ function(brl_std_list_reverse)
     Int list = arg_i(0);
     if (args->size == 0)
     {
-        stack_reverse(*vm->stack);
-        stack_reverse(*vm->typestack);
+        list_reverse(*vm->stack);
+        list_reverse(*vm->typestack);
         // update hashes and lists indexes
         for (Int i = 0; i < vm->hashes->size; i++)
         {
@@ -690,7 +721,7 @@ function(brl_std_list_reverse)
     else if (arg_t(0) == TYPE_LIST)
     {
         IntList *lst = (IntList*)data(list).pointer;
-        stack_reverse(*lst);
+        list_reverse(*lst);
     }
     else if (arg_t(0) == TYPE_STRING)
     {
@@ -714,7 +745,7 @@ function(brl_std_list_sub)
         Int end = arg_i(1);
         for (Int i = start; i < end; i++)
         {
-            stack_push(*list, i);
+            list_push(*list, i);
         }
         Int result = new_var(vm);
         data(result).pointer = list;
@@ -733,7 +764,7 @@ function(brl_std_list_sub)
         IntList *newlist = make_int_list();
         for (Int i = 0; i < arg(1).number; i++)
         {
-            stack_push(*newlist, list->data[i]);
+            list_push(*newlist, list->data[i]);
         }
         Int result = new_var(vm);
         data(result).pointer = newlist;
@@ -758,9 +789,9 @@ function(brl_std_list_split)
                 IntList *sub = (IntList*)data(sublist).pointer;
                 for (Int j = start; j < i; j++)
                 {
-                    stack_push(*sub, j);
+                    list_push(*sub, j);
                 }
-                stack_push(*list, sublist);
+                list_push(*list, sublist);
                 start = i + 1;
             }
         }
@@ -768,9 +799,9 @@ function(brl_std_list_split)
         IntList *sub = (IntList*)data(sublist).pointer;
         for (Int j = start; j < vm->stack->size; j++)
         {
-            stack_push(*sub, j);
+            list_push(*sub, j);
         }
-        stack_push(*list, sublist);
+        list_push(*list, sublist);
         Int result = new_var(vm);
         data(result).pointer = list;
         data_t(result) = TYPE_LIST;
@@ -786,13 +817,13 @@ function(brl_std_list_split)
         for (Int i = 0; i < splited->size; i++)
         {
             Int _str = new_string(vm, splited->data[i]);
-            stack_push(*__splited, _str);
+            list_push(*__splited, _str);
         }
         for (Int i = 0; i < splited->size; i++)
         {
             free(splited->data[i]);
         }
-        stack_free(*splited);
+        list_free(*splited);
         return _splited;
     }
     else if (arg_t(0) == TYPE_LIST)
@@ -807,16 +838,16 @@ function(brl_std_list_split)
         {
             if (list->data[i] == separator)
             {
-                stack_push(*__splited, temp);
+                list_push(*__splited, temp);
                 temp = new_list(vm);
                 _temp = (IntList*)data(temp).pointer;
             }
             else 
             {
-                stack_push(*_temp, list->data[i]);
+                list_push(*_temp, list->data[i]);
             }
         }
-        stack_push(*__splited, temp);
+        list_push(*__splited, temp);
         return _splited;
     }
     return -1;
@@ -867,12 +898,12 @@ function(brl_std_list_replace)
         {
             if (list->data[i] == substr && !done)
             {
-                stack_push(*newlist, replacement);
+                list_push(*newlist, replacement);
                 done = 1; // replace only the first occurence
             }
             else 
             {
-                stack_push(*newlist, list->data[i]);
+                list_push(*newlist, list->data[i]);
             }
         }
         return _newlist;
@@ -932,8 +963,8 @@ function(brl_std_list_swap)
 
 function(brl_std_string_format)
 {
-    stack_reverse(*args);
-    Int str = stack_pop(*args);
+    list_reverse(*args);
+    Int str = list_pop(*args);
     Int result = -1;
     char* _str = str_duplicate(data(str).string);
     for (Int i = 0; i < strlen(_str); i++)
@@ -942,7 +973,7 @@ function(brl_std_string_format)
         {
             if (_str[i+1] == 'd')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = str_format("%ld", (Int)data(value).number);
                 char* _newstr = str_replace(_str, "\%d", _value);
                 free(_str);
@@ -950,7 +981,7 @@ function(brl_std_string_format)
             }
             else if (_str[i+1] == 's')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = data(value).string;
                 char* _newstr = str_replace(_str, "\%s", _value);
                 free(_str);
@@ -958,7 +989,7 @@ function(brl_std_string_format)
             }
             else if (_str[i+1] == 'f')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = str_format("%f", data(value).number);
                 char* _newstr = str_replace(_str, "\%f", _value);
                 free(_str);
@@ -966,7 +997,7 @@ function(brl_std_string_format)
             }
             else if (_str[i+1] == 'p')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = str_format("%p", data(value).pointer);
                 char* _newstr = str_replace(_str, "\%p", _value);
                 free(_str);
@@ -1015,13 +1046,82 @@ function(brl_std_string_format)
 function(brl_std_loop_while)
 {
     Int result = -1;
-    while (eval(vm, arg(0).string, context))
+    if (strchr(arg(1).string, '#') == NULL)
     {
-        result = eval(vm, arg(1).string, context);
-
-        if (result >= 0)
         {
-            break;
+            char* _parentesis = strchr(arg(1).string, '(');
+            if (_parentesis != NULL)
+            {
+                if (_parentesis[1] == '@' && _parentesis[2] == '@')
+                {
+                    // its a string 
+                    goto skip_safety_check;
+                }
+                else 
+                {
+                    // its a expression
+                    goto regret_optimization;
+                }
+            }
+        }
+
+        skip_safety_check:
+
+        StringList *splited = str_split(arg(1).string, ";");
+        
+        IntListList *arglist = list_init(IntListList);
+
+        for (Int i = 0; i < splited->size; i++)
+        {
+            //if splited->data[i] is empty or contains only spacy characters, skip it
+            if (strspn(splited->data[i], " \t\n\r\f\v") == strlen(splited->data[i]) || splited->data[i][0] == 0)
+            {
+                free(splited->data[i]);
+                continue;
+            }
+            IntList *_args = parse(vm, splited->data[i], context);
+            list_push(*arglist, *_args);
+            free(splited->data[i]);
+
+            free(_args);
+        }
+
+        list_free(*splited);
+        char cond = eval(vm,arg(0).string,context);
+        printf("cond: %d\n", cond);
+        while (cond)
+        {
+            cond = eval(vm,arg(0).string,context);
+            printf("cond: %d\n", cond);
+            for (Int i = 0; i < arglist->size; i++)
+            {
+                result = interpret(vm, &arglist->data[i], context);
+                if (result > -1)
+                {
+                    goto skip_to_return;
+                }
+            }
+        }
+
+        skip_to_return:
+
+        for (Int i = 0; i < arglist->size; i++)
+        {
+            free(arglist->data[i].data);
+        }
+
+        list_free(*arglist);
+    }
+    else
+    {
+        regret_optimization:
+        while (eval(vm,arg(0).string,context))
+        {
+            result = eval(vm,arg(1).string,context);
+            if (result > -1)
+            {
+                break;
+            }
         }
     }
     return result;
@@ -1029,11 +1129,83 @@ function(brl_std_loop_while)
 
 function(brl_std_loop_repeat)
 {
-    for (Int i = 0; i < arg(0).number; i++)
+    Int result = -1;
+    if (strchr(arg(1).string, '#') == NULL)
     {
-        eval(vm, arg(1).string, context);
+        {
+            char* _parentesis = strchr(arg(1).string, '(');
+            if (_parentesis != NULL)
+            {
+                if (_parentesis[1] == '@' && _parentesis[2] == '@')
+                {
+                    // its a string 
+                    goto skip_safety_check;
+                }
+                else 
+                {
+                    // its a expression
+                    goto regret_optimization;
+                }
+            }
+        }
+
+        skip_safety_check:
+
+        StringList *splited = str_split(arg(1).string, ";");
+        
+        IntListList *arglist = list_init(IntListList);
+
+        for (Int i = 0; i < splited->size; i++)
+        {
+            //if splited->data[i] is empty or contains only spacy characters, skip it
+            if (strspn(splited->data[i], " \t\n\r\f\v") == strlen(splited->data[i]) || splited->data[i][0] == 0)
+            {
+                free(splited->data[i]);
+                continue;
+            }
+            IntList *_args = parse(vm, splited->data[i], context);
+            list_push(*arglist, *_args);
+            free(splited->data[i]);
+
+            free(_args);
+        }
+
+        list_free(*splited);
+
+        for (Int i = 0; i < arg(0).number; i++)
+        {
+            for (Int i = 0; i < arglist->size; i++)
+            {
+                result = interpret(vm, &arglist->data[i], context);
+                if (result > -1)
+                {
+                    goto skip_to_return;
+                }
+            }
+        }
+
+        skip_to_return:
+
+        for (Int i = 0; i < arglist->size; i++)
+        {
+            free(arglist->data[i].data);
+        }
+
+        list_free(*arglist);
     }
-    return -1;
+    else
+    {
+        regret_optimization:
+        for (int i = 0; i < (Int)arg(0).number; i++)
+        {
+            result = eval(vm,arg(1).string,context);
+            if (result > -1)
+            {
+                break;
+            }
+        }
+    }
+    return result;
 }
 
 function(brl_mem_copy)
@@ -1052,6 +1224,17 @@ function(brl_mem_delete)
     return -1;
 }
 
+function(brl_std_deplace)
+{
+    Int newindex = new_var(vm);
+    Int func = arg_i(0);
+    data(newindex) = value_duplicate(data(arg_i(1)), data_t(arg_i(1)));
+    data_t(newindex) = data_t(arg_i(1));
+    arg_i(1) = newindex;
+    interpret(vm, args, context);
+    return newindex;
+}
+
 
 // inits
 #ifndef ARDUINO
@@ -1062,8 +1245,8 @@ void init_os(VirtualMachine *vm)
     register_builtin(vm, "system", brl_os_system);
 
 #ifndef __wasm__
-    register_builtin(vm, "os.time", brl_os_time_now);
-    register_builtin(vm, "os.clock", brl_os_time_clock);
+    register_builtin(vm, "time", brl_os_time_now);
+    register_builtin(vm, "clock", brl_os_time_clock);
 #endif
 
     register_builtin(vm, "repl", brl_os_repl);
@@ -1073,10 +1256,9 @@ void init_os(VirtualMachine *vm)
 void init_basics(VirtualMachine *vm)
 {
     register_builtin(vm, "#", brl_std_ignore);
-    register_builtin(vm, "do", brl_std_do);
     register_builtin(vm, "return", brl_std_return);
     register_builtin(vm, "ls", brl_std_io_ls);
-    register_builtin(vm, "help", brl_std_io_ls_hashes);
+    register_builtin(vm, "ls.hash", brl_std_io_ls_hashes);
     register_builtin(vm, "function", brl_std_function);
     
     
@@ -1084,6 +1266,7 @@ void init_basics(VirtualMachine *vm)
     register_builtin(vm, "format", brl_std_string_format);
 
     register_builtin(vm, "print", brl_std_io_print);
+    register_builtin(vm, "$", brl_std_deplace);
 
 #ifndef ARDUINO
     register_builtin(vm, "scan", brl_std_io_scan);// not avaliable on arduino, so its here
@@ -1100,6 +1283,7 @@ void init_hash(VirtualMachine *vm)
 {
     register_builtin(vm, "#new", brl_std_hash_new);
     register_builtin(vm, "#delete", brl_std_hash_delete);
+    register_builtin(vm, "#priority", brl_std_hash_priority);
 }
 
 void init_list(VirtualMachine *vm)

@@ -2,8 +2,8 @@
 
 function(brl_std_type_get)
 {
-    Int result = new_number(vm, arg_t(0));
-    return result;
+    arg(0).integer = arg_t(0);
+    return -1;
 }
 
 function(brl_std_type_set)
@@ -18,31 +18,38 @@ function(brl_std_type_cast)
     switch (arg_t(0))
     {
         char* _str;
+        Int index;
         case TYPE_NUMBER:
             switch ((Int)arg(1).number)
             {
                 case TYPE_STRING:
                     _str =  str_format("%ld", (Int)arg(0).number);
-                    Int result = new_string(vm, _str);
-                    free(_str);
-                    return result;
+                    arg(0).string = _str;
+                    arg_t(0) = TYPE_STRING;
+                    return -1;
                     break;
                 case TYPE_ANY:
-                    Int index = new_var(vm);
-                    data(index).integer = arg(0).number;
-                    return index;
+                    arg(0).integer = arg(0).number;
+                    arg_t(0) = TYPE_ANY;
+                    return -1;
                     break;
             }
             break;
         case TYPE_STRING:
+            _str = arg(0).string;
             switch ((Int)arg(1).number)
             {
                 case TYPE_NUMBER:
-                    return new_number(vm, atof(arg(0).string));
+                    arg(0).number = atof(arg(0).string);
+                    arg_t(0) = TYPE_NUMBER;
+                    free(_str);
+                    return -1;
                     break;
                 case TYPE_ANY:
-                    Int index = new_var(vm);
-                    data(index).integer = atoi(arg(0).string);
+                    arg(0).integer = atoi(arg(0).string);
+                    arg_t(0) = TYPE_ANY;
+                    free(_str);
+                    return -1;
                     break;
             }
             break;
@@ -50,10 +57,12 @@ function(brl_std_type_cast)
             switch ((Int)arg(1).number)
             {
                 case TYPE_STRING:
-                    return new_string(vm, list_stringify(vm, (IntList*)arg(0).pointer));
-                    break;
-                case TYPE_ANY:
-                    return new_number(vm, (Int)arg(0).pointer);
+                    IntList* backup = (IntList*)arg(0).pointer;
+                    char* _str = list_stringify(vm, (IntList*)arg(0).pointer);
+                    arg(0).string = _str;
+                    arg_t(0) = TYPE_STRING;
+                    list_free(*backup);
+                    return -1;
                     break;
             }
             break;
@@ -61,24 +70,22 @@ function(brl_std_type_cast)
             switch ((Int)arg(1).number)
             {
                 case TYPE_STRING:
-                    return new_string(vm, str_format("%ld", arg(0).integer));
+                    _str = str_format("%ld", arg(0).integer);
+                    arg(0).string = _str;
+                    arg_t(0) = TYPE_STRING;
+                    return -1;
                     break;
                 case TYPE_NUMBER:
-                    return new_number(vm, (Float)arg(0).integer);
+                    arg(0).number = arg(0).integer;
+                    arg_t(0) = TYPE_NUMBER;
+                    return -1;
                     break;
             }
-            break;
-        case TYPE_FUNCTION:
-            if ((Int)arg(1).number == TYPE_STRING)
-            {
-                return new_string(vm, function_stringify(vm, (InternalFunction*)arg(0).pointer));
-            }
-            break;
-        case TYPE_BUILTIN:
             break;
     }
 }
 
+// destructive/inplace!!
 void init_std_type(VirtualMachine *vm)
 {
     // type size(4 or 8 bytes)
@@ -88,10 +95,10 @@ void init_std_type(VirtualMachine *vm)
     register_number(vm, "type.any", TYPE_ANY);
     register_number(vm, "type.number", TYPE_NUMBER);
     register_number(vm, "type.string", TYPE_STRING);
-    register_number(vm, "type.builtin", TYPE_BUILTIN);
     register_number(vm, "type.list", TYPE_LIST);
-    register_number(vm, "type.function", TYPE_FUNCTION);
 
+    // type functions are inplace(destructive), you might want to use $ to do non-destructive operations
+    // e.g. $ type a; // returns the type of a instead turning a into a number of its type
     // type functions
     register_builtin(vm, "type", brl_std_type_get);
     register_builtin(vm, "pun", brl_std_type_set);
