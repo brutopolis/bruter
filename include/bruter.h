@@ -14,8 +14,13 @@
 #include <emscripten.h>
 #endif
 
+#ifndef ARDUINO
+    #ifndef __EMSCRIPTEN__
+        #include "dlfcn.h"
+    #endif
+#endif
 
-#define VERSION "0.7.5c"
+#define VERSION "0.7.6"
 
 #define TYPE_ANY 0
 #define TYPE_NUMBER 1
@@ -63,6 +68,9 @@ typedef List(char*) StringList;
 typedef List(Int) IntList;
 typedef List(char) CharList;
 
+typedef List(IntList) IntListList;
+
+
 typedef struct
 {
     ValueList *stack;
@@ -74,6 +82,7 @@ typedef struct
 
 //Function
 typedef Int (*Function)(VirtualMachine*, IntList*, HashList*);
+typedef void (*InitFunction)(VirtualMachine*);
 
 //String
 extern char* str_duplicate(const char *str);
@@ -95,11 +104,6 @@ extern StringList* special_split(char *str, char delim);
 // #define is_space(c) (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f')
 
 // variable
-
-extern ValueList* make_value_list();
-extern IntList* make_int_list();
-extern StringList* make_string_list();
-extern CharList* make_char_list();
 
 extern VirtualMachine* make_vm();
 extern void free_vm(VirtualMachine *vm);
@@ -133,8 +137,6 @@ extern void print_element(VirtualMachine *vm, Int index);
 // macros
 #define data(index) (vm->stack->data[index])
 #define data_t(index) (vm->typestack->data[index])
-#define data_unused(index) (vm->unused->data[index])
-#define data_temp(index) (vm->temp->data[index])
 
 #define hash(index) (vm->hashes->data[index])
 

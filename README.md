@@ -31,8 +31,8 @@ bruter is a metaprogramable lightweight programming language;
     - [functions](#functions)
     - [libraries](#libraries)
     - [standard library](#standard-library)
-      - [std.math (destructive)](#stdmath-destructive)
-      - [std.type (destructive)](#stdtype-destructive)
+      - [std.math ](#stdmath)
+      - [std.type ](#stdtype)
       - [std.condition (index-based)](#stdcondition-index-based)
       - [std.hash](#stdhash)
       - [std.loop](#stdloop)
@@ -41,6 +41,7 @@ bruter is a metaprogramable lightweight programming language;
       - [std.string](#stdstring)
       - [std.global](#stdglobal)
       - [std](#std)
+    - [dynamic libraries](#dynamic-libraries)
   - [vm concept](#vm-concept)
     - [concepts](#concepts-1)
     - [the vm](#the-vm)
@@ -75,7 +76,7 @@ bruter is a metaprogramable lightweight programming language;
     command variable_1 variable_2 ...;
     #new "name" value; 
     #new "name" (command ...);
-    #new "name" (list: value value ...);
+    #new "name" (: value value ...);
     command name;
     "script whatever";
     repeat amount "code";
@@ -145,8 +146,12 @@ bruter is a metaprogramable lightweight programming language;
     ./build.sh --exclude path/to/lib.c
     ./build.sh --exclude path/to/lib1 --exclude path/to/lib2 
     ./build.sh --exclude "path/to/lib1.c path/to/lib2"
+
+    # you can compile the dynamic libraries from build.sh as well;
     
-  note that, the clean build is always compiled, even with WASI, INO, EXEC, or WEB flags;
+    ./build.sh --lib path/to/lib.so
+    
+  note that, dynamic libraries are only supported if not arduino or wasm;
 
 # Examples
 
@@ -172,20 +177,18 @@ bruter is a metaprogramable lightweight programming language;
   - `procedural`, bruter is a very imperative language;
   - `semi-functional`, bruter has some functional features, but it is not a complete functional language;
   - `interpreted`, bruter is an interpreted language, but can be compiled to a executable file, which just embeds the code in the interpreter;
-  - `lightweight`, bruter is a very small language, and the stdlib is also tiny, e.g. in 0.7.5 bruter stdlib has 80functions at total and 9 variables, maybe seems a lot, but this also includes the basic math functions, conditions, loops and such things whose are usually implemented in the language itself;
-  - `weakly typed`, bruter is a weakly typed language, but it has types, the types are not really enforced, but they are there, also the functions can check the types if needed, but that is not really common, at least in the stdlib;
-  - `non-modular`, bruter is not a modular language, you can create a library, but it will not be modular, the library will be included in the interpreter, the interpreter is meant to be compiled with the libraries you need, you can exclude the libraries you dont need during compiling, but you cant include a library at runtime;
+  - `lightweight`, bruter is a very small language, and the stdlib is also tiny, e.g. in 0.7.6 bruter stdlib has 62 functions and 6 variables at total, maybe seems a lot, but this also includes the basic math functions, conditions, loops and such things whose are usually implemented in the language itself;
   - `no OOP`, bruter has no OOP;
-  - `no GC`, bruter memory is completely manual, you can delete the variables at anytime, but you need to do it manually;
+  - `no GC`, bruter memory is completely manual, you can delete the variables at anytime, manually;
   - `metaprogramable`, everything said above can be changed or implemented in another way, you can create a new interpreter function and replace the old one, you can even build bruter withou any value at all, with a clean stack;
 
   ## Types
       
   bruter essentially has 4 types of data:
-  - `any`, the default type, its a integer, but can store pointers as integers so it can be anything, any is not suitable for arithmetic operations(in stdlib), any is also treated as a built-in C function if passed as first argument;
-  - `number`, a float, can be used for arithmetic operations;
-  - `string`, a string;
-  - `list`, a list or a user defined function;
+  - `any`, the default type, its a integer, but can store pointers as integers so it can be anything, any is also treated as a built-in C function if passed as first argument;
+  - `number`, a floating point number, float or double;
+  - `string`, a string pointer;
+  - `list`, the list the the most complex type
 
   ## Scope
   bruter has 2 types of scope, global scope and function scope;
@@ -206,6 +209,7 @@ bruter is a metaprogramable lightweight programming language;
   - `""` string delimiter;
   - `''` string delimiter;
   - `(@@ )` string delimiter;
+  - `(: )` list delimiter;
 
   ## Variables
   bruter consider everything a variable;
@@ -259,20 +263,20 @@ bruter is a metaprogramable lightweight programming language;
 
   ## Functions
 
-  functions work just like functions in other languages, nothing new here, beside it has its scope cant access the upper scope if not created from global, only two scopes can be used at time, the global scope and the *current* function scope;
+  functions work just like functions in other languages, nothing new here, beside its scope cant access the upper scope if not created from global, only two scopes can be used at time, the global scope and the *current* function scope;
 
   C functions doesnt have a own scope, but  you can easily create the context at the start of the function and delete it at the end;
 
   ## Libraries
   
-  in *bruter language* doesnt really exists the concept of libraries, you can call scripts with declaring the functions and call that a library, the *bruter vm* has a similar concept of libraries, which are also not modular;
+  *bruter language* does support(if not arduino or wasm) dynamic libraries, which are bruter C libraries, you can load and unload them at anytime, and if you dont want to manually unload them, they will be automatically unloaded at exit;
 
   ## Standard Library
 
   bruter has a small standard library, some concepts are only part of the stdlib and not a language or vm concept itself.
   all functions detailed:
 
-  ### std.math (destructive)
+  ### std.math
 
   math functions are destructive.
 
@@ -294,7 +298,9 @@ bruter is a metaprogramable lightweight programming language;
   | `min`     | Set origin to the minimum value | `void function(Float origin, Float[] ...);` |
   | `max`     | Set origin to the maximum value | `void function(Float origin, Float[] ...);` |
 
-  ### std.type (destructive)
+  ### std.type
+
+  type functions are destructive.
   
   | Function  | Description                     | Function Signature                          |
   |-----------|---------------------------------|---------------------------------------------|
@@ -338,6 +344,7 @@ bruter is a metaprogramable lightweight programming language;
   | `while`   | Execute args[2] while args[1] is true                                      | `void function(String condition, String code);` |
   | `loop`    | Execute args[2] args[1] times                                              | `void function(Float amount, String code);`     |
 
+
   ### std.mem
 
   | Function    | Description                                                      | Function Signature                           |
@@ -345,11 +352,11 @@ bruter is a metaprogramable lightweight programming language;
   | `mem.copy`  | Copy the value of args[1] and return it                               | `any function(any value);`                   |
   | `mem.delete`| Delete the value of args[1]                                           | `void function(any value);`                  |
 
+
   ### std.list
 
   | Function    | Description                                                      | Function Signature                                        |
   |-------------|------------------------------------------------------------------|-----------------------------------------------------------|
-  | `list:`     | Create a list with the values ...  and return it                 | `List function(any ...);`                                 |
   | `get:`      | Get the value of args[2] from args[1] and return it                        | `any function(List list, Float index);`                   |
   | `set:`      | Set the value of args[2] from args[1] to args[3]                                | `void function(List list, Float index, any value);`       |
   | `len:`      | Get the length of args[1] and return it                               | `Float function(List list);`                              |
@@ -420,12 +427,24 @@ bruter is a metaprogramable lightweight programming language;
   | `print`     | Print the values based on the type                               | `void function(any ...);`                    |
   | `scan`      | get the input from the user and return it                        | `String function();`                         |
   | `return`    | return the value                                                 | `void function(any value);`                  |
-  | `function`  | create a new function                                            | `void function(String var_names..., String code);`   | 
-  | `format`    | format the string with the values                                | `String function(String string, any ...);`   |
 
   | Variable       | Description    | Type  | Default |
   |----------------|----------------|-------|---------|
   | `VERSION`      | Version number | Float | depends | 
+
+  ## Dynamic libraries
+
+  dynamic libraries functions are actually not part of stdlib itself, it comes from the idea of clean bruter, a bruter withou std that can load dynamic libs, like the std itself, while dl.close is a thing, all dynamic libs are auto-closed at exit(except if you delete the dl.list);
+
+  | Function    | Description                              | Function Signature                           |
+  |-------------|------------------------------------------|----------------------------------------------|
+  | `dl.open`   | load a library                           | `void function(string path);`                |
+  | `dl.close`  | close a library                          | `void function(any libpointer);`             |
+
+  | Variable       | Description              | Type  | Default |
+  |----------------|--------------------------|-------|---------|
+  | `dl.list`      | List of loaded libraries | List  |         |
+
 
 # VM Concept
   ## Concepts
@@ -527,7 +546,7 @@ bruter is a metaprogramable lightweight programming language;
 
   bruter have 2 types of libraries, which work mostly the same way.
   
-  `C file libraries` are the default library type, it must have a function called `init_$name` where $name is the name of the file, all C files inside lib folder will be added to header and the interpreter initializer, example for a file lib/lib_name.c:
+  `C file libraries` are the default library type, it can be loaded as dynamic lib, it must have a function called `init_$name` where $name is the name of the file, all C files inside lib folder will be added to header and the interpreter initializer, example for a file lib/lib_name.c:
 
     // including bruter.h is mandatory, it has everything you need to create a library;
     #include "bruter.h"
@@ -554,7 +573,7 @@ bruter is a metaprogramable lightweight programming language;
         register_string(vm, "hello", "Hello, World!");
     }
 
-  `folder libs` are a bit more complex type of library, it is expected that you understand all the build.sh file, the entire bruter.c and bruter.h and know every folder of the bruter source file structure(which are not really hard, bruter is really simple), knowing that, you can create a folder lib/lib_name with the following structure:
+  `folder libs` are a bit more complex type of library, those cant be loaded as dynamic lib by its nature, it is expected that you understand all the build.sh file, the entire bruter.c and bruter.h and know every folder of the bruter source file structure(which are not really hard, bruter is really simple), knowing that, you can create a folder lib/lib_name with the following structure:
 
     lib_name/
     ├── include
@@ -594,9 +613,9 @@ bruter is a metaprogramable lightweight programming language;
 
   - usually takes longer to delete/unuse a variable than to create one, especially if there are unused variables, but the delete overhead is just for strings, lists and functions, functions are the slower, but not that slow tho;
 
-  - you can replace the interpreter function by another one with the optimizations you need, e.g. less types or such;
+  - you can replace the interpreter function by another one with the optimizations you need;
 
-  - you can easy write functions in C like explained before;
+  - you can easy write functions in C like explained before, and even more easy to load them as dynamic libs(if not arduino or wasm);
 
   - you can delete the unused variables at anytime;
 
@@ -606,8 +625,10 @@ bruter is a metaprogramable lightweight programming language;
 
     peforms faster than:
 
-      `+ 1 (+ 2 (+ 3 (+ 4 (+ 5 (+ 6 (+ 7 (+ 8 (+ 9 (+ 10 (+ 11 (+ 12 (+ 13 (+ 14 (+ 15 16))))))))))))));`
+      `+ 1 ($ + 2 ($ + 3 ($ + 4 ($ + 5 ($ + 6 ($ + 7 ($ + 8 ($ + 9 ($ + 10 ($ + 11 ($ + 12 ($ + 13 ($ + 14 ($ + 15 16))))))))))))));`
   
   - you can exclude all the stdlib or part of it if you dont need it, see the build instructions;
 
   - loops contexts are optimized if it does not contain any # or ()(except for string delimitation);
+
+  - while loops are usually faster if inside a function;
