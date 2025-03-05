@@ -1,6 +1,17 @@
+(05/03/2025) - version 0.7.6a
+
+- string char access fixed;
+- std conditions now does compare integers too, when type is not a number;
+- @0 is now type.any instead of type.number;
+- fixed some function args related problems;
+- fixed if undeclared in std;
+- fixed string format '$' related problems and added some error messages;
+- new experimental hash operator =, it beahave as #new if no hash is found, and as set: if a hash is found;
+- usage: name=value or name=(fn ...) or name@number@name=value, it should have no spaces between the name and the operator;
+
 (03/03/2025) - version 0.7.6
 
-- this version gives more independence to the interpreter, it allow it to do functions, switches, loops and conditions without the need of the std;
+- this version gives more independence to the interpreter, it allow it to do functions and switches without the need of the std;
 - std files unified;
 - defining @0 as NULL is now done in the std;
 - make_int_list, make_string_list and make_char_list removed;
@@ -11,7 +22,6 @@
 - the third element of the lookup table is the default value, if the lookup fails it will return it;
 - format function removed, "" and '' strings now support escape codes using \whatever and variables using $varname;
 - the new formatter also suport $(whatever "code" etc);
-- if function removed, use lookup tables instead;
 - you can now use varname@index to get the element at the index;
 - you can now use varname@name to get the element named "name" from a lookup table;
 - you can also use varname@name@index... etc;

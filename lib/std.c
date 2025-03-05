@@ -168,30 +168,11 @@ function(brl_std_io_scan) // always get string
 
 function(brl_std_io_ls)
 {
-    Int _var = -1;
-    if (args->size > 0)
+    for (Int i = 0; i < vm->stack->size; i++)
     {
-        _var = arg_i(0);
-    }
-
-    if (_var > -1 && data_t(_var) == TYPE_LIST)
-    {
-        IntList *list = (IntList*)vm->stack->data[(Int)data(_var).number].pointer;
-        for (Int i = 0; i < list->size; i++)
-        {
-            printf("%d[%d]: ", (Int)data(_var).number, i);
-            print_element(vm, list->data[i]);
-            printf("\n");
-        }
-    }
-    else 
-    {
-        for (Int i = 0; i < vm->stack->size; i++)
-        {
-            printf("[%ld]: ", i);
-            print_element(vm, i);
-            printf("\n");
-        }
+        printf("[%ld]: ", i);
+        print_element(vm, i);
+        printf("\n");
     }
 
     return -1;
@@ -1462,12 +1443,26 @@ function(brl_std_condition_greater)
     }
     outside_the_loop:
 
-    for (Int i = 1; i < args->size; i++)
+    switch (arg_t(1))
     {
-        if (arg(i - 1).number <= arg(i).number)
-        {
-            return 0;
-        }
+        case TYPE_NUMBER:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).number <= arg(i).number)
+                {
+                    return 0;
+                }
+            }
+            break;
+        default:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).integer <= arg(i).integer)
+                {
+                    return 0;
+                }
+            }
+            break;
     }
     return result;
 }
@@ -1489,12 +1484,26 @@ function(brl_std_condition_greater_equals)
     }
     outside_the_loop:
 
-    for (Int i = 1; i < args->size; i++)
+    switch (arg_t(1))
     {
-        if (arg(i - 1).number < arg(i).number)
-        {
-            return 0;
-        }
+        case TYPE_NUMBER:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).number < arg(i).number)
+                {
+                    return 0;
+                }
+            }
+            break;
+        default:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).integer < arg(i).integer)
+                {
+                    return 0;
+                }
+            }
+            break;
     }
     return result;
 }
@@ -1516,12 +1525,26 @@ function(brl_std_condition_less)
     }
     outside_the_loop:
 
-    for (Int i = 1; i < args->size; i++)
+    switch (arg_t(1))
     {
-        if (arg(i - 1).number >= arg(i).number)
-        {
-            return 0;
-        }
+        case TYPE_NUMBER:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).number >= arg(i).number)
+                {
+                    return 0;
+                }
+            }
+            break;
+        default:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).integer >= arg(i).integer)
+                {
+                    return 0;
+                }
+            }
+            break;
     }
     return result;
 }
@@ -1543,12 +1566,26 @@ function(brl_std_condition_less_equals)
     }
     outside_the_loop:
 
-    for (Int i = 1; i < args->size; i++)
+    switch (arg_t(1))
     {
-        if (arg(i - 1).number > arg(i).number)
-        {
-            return 0;
-        }
+        case TYPE_NUMBER:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).number > arg(i).number)
+                {
+                    return 0;
+                }
+            }
+            break;
+        default:
+            for (Int i = 1; i < args->size; i++)
+            {
+                if (arg(i - 1).integer > arg(i).integer)
+                {
+                    return 0;
+                }
+            }
+            break;
     }
     return result;
 }
@@ -1570,9 +1607,9 @@ function(brl_std_condition_and)
     }
     outside_the_loop:
 
-    for (Int i = 0; i < args->size; i++)
+    for (Int i = 1; i < args->size; i++)
     {
-        if (arg_i(i) > 0)
+        if (arg_i(i) == 0)
         {
             return 0;
         }
@@ -1595,27 +1632,8 @@ function(brl_std_condition_raw_or)
 function(brl_std_loop_while)
 {
     Int result = -1;
-    if (strchr(arg(1).string, '#') == NULL)
+    if (strchr(arg(1).string, '#') == NULL && strchr(arg(1).string, '(') == NULL && strchr(arg(1).string, '=') == NULL)
     {
-        {
-            char* _parentesis = strchr(arg(1).string, '(');
-            if (_parentesis != NULL)
-            {
-                if (_parentesis[1] == '@' && _parentesis[2] == '@')
-                {
-                    // its a string 
-                    goto skip_safety_check;
-                }
-                else 
-                {
-                    // its a expression
-                    goto regret_optimization;
-                }
-            }
-        }
-
-        skip_safety_check:
-
         StringList *splited = str_split(arg(1).string, ";");
         
         IntListList *arglist = list_init(IntListList);
@@ -1677,27 +1695,8 @@ function(brl_std_loop_while)
 function(brl_std_loop_repeat)
 {
     Int result = -1;
-    if (strchr(arg(1).string, '#') == NULL)
+    if (strchr(arg(1).string, '#') == NULL && strchr(arg(1).string, '(') == NULL && strchr(arg(1).string, '=') == NULL)
     {
-        {
-            char* _parentesis = strchr(arg(1).string, '(');
-            if (_parentesis != NULL)
-            {
-                if (_parentesis[1] == '@' && _parentesis[2] == '@')
-                {
-                    // its a string 
-                    goto skip_safety_check;
-                }
-                else 
-                {
-                    // its a expression
-                    goto regret_optimization;
-                }
-            }
-        }
-
-        skip_safety_check:
-
         StringList *splited = str_split(arg(1).string, ";");
         
         IntListList *arglist = list_init(IntListList);
@@ -1775,7 +1774,9 @@ void init_os(VirtualMachine *vm)
 void init_basics(VirtualMachine *vm)
 {
     register_builtin(vm, "#", brl_std_ignore);
+    
     register_builtin(vm, "return", brl_std_return);
+
     register_builtin(vm, "ls", brl_std_io_ls);
     register_builtin(vm, "ls.hash", brl_std_io_ls_hashes);
 
@@ -1786,7 +1787,7 @@ void init_basics(VirtualMachine *vm)
     register_builtin(vm, "repeat", brl_std_loop_repeat);
 
 #ifndef ARDUINO
-    register_builtin(vm, "scan", brl_std_io_scan);// not avaliable on arduino, so its here
+    register_builtin(vm, "scan", brl_std_io_scan);// not avaliable on arduino
 #endif
 }
 
@@ -1881,13 +1882,15 @@ void init_std_condition(VirtualMachine *vm)
     
     register_builtin(vm, "&&", brl_std_condition_and);
     register_builtin(vm, "||", brl_std_condition_raw_or);
+
+    register_builtin(vm, "if", brl_std_condition_if);
 }
 
 // std init presets
 void init_std(VirtualMachine *vm)
 {
     // @0 = NULL
-    register_number(vm, "NULL", 0);
+    register_var(vm, "NULL");
 
     #ifndef ARDUINO
     init_os(vm);
