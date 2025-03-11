@@ -299,337 +299,6 @@ StringList* str_split_char(char *str, char delim)
     return splited;
 }
 
-
-void process_string(VirtualMachine *vm, char *str, HashList *context, IntList *result) 
-{
-     if (!(str[0] == '"' || str[0] == '\'')) 
-     {
-        return; // Não é um token de string
-    }
-
-    /* Cria uma cópia não destrutiva da string de entrada */
-    char *newstr = str_duplicate(str);
-
-    /* Processa os tokens '$' para substituição de variáveis ou expressões */
-    char *token = strchr(newstr + 1, '$');
-    while (token != NULL) {
-        if (token[-1] == '\\') 
-        {
-            token = strchr(token + 1, '$');
-            continue;
-        } 
-        else if (token[1] != '\0' && !isspace((unsigned char)token[1])) 
-        {
-            if (isalpha((unsigned char)token[1])) 
-            {
-                /* Localiza o fim do nome da variável */
-                char *space_token = strchr(token + 1, ' ');
-                if (space_token == NULL) 
-                {
-                    space_token = strchr(token + 1, '"');
-                    if (space_token == NULL) 
-                    {
-                        space_token = strchr(token + 1, '\'');
-                        if (space_token == NULL) 
-                        {
-                            space_token = strchr(token + 1, '\0');
-                        }
-                    }
-                }
-                char *varname = str_nduplicate(token, space_token - token);
-                Int index = hash_find(vm, varname + 1);
-
-                if (index != -1) 
-                {
-                    char *replacement = NULL;
-                    char *tempstr = NULL;
-                    switch (data_t(index)) 
-                    {
-                        case TYPE_STRING:
-                            tempstr = str_replace(newstr, varname, data(index).string);
-                            break;
-                        case TYPE_NUMBER:
-                            if (data(index).number == (Int)data(index).number) 
-                            {
-                                replacement = str_format("%ld", (Int)data(index).number);
-                                tempstr = str_replace(newstr, varname, replacement);
-                            } 
-                            else 
-                            {
-                                replacement = str_format("%f", data(index).number);
-                                tempstr = str_replace(newstr, varname, replacement);
-                            }
-                            break;
-                        case TYPE_LIST:
-                            replacement = list_stringify(vm, (IntList*)data(index).pointer);
-                            tempstr = str_replace(newstr, varname, replacement);
-                            break;
-                        default:
-                            replacement = str_format("%ld", data(index).integer);
-                            tempstr = str_replace(newstr, varname, replacement);
-                            break;
-                    }
-                    free(newstr);
-                    newstr = tempstr;
-                    if (replacement)
-                        free(replacement);
-                }
-                free(varname);
-            } 
-            else if (isdigit((unsigned char)token[1])) 
-            { // Substitui $1, $2, etc.
-                Int index = atoi(token + 1);
-                if (index >= 0 && index < vm->stack->size) 
-                {
-                    char *tempstr = NULL;
-                    char *replacement = NULL;
-                    switch (data_t(index)) 
-                    {
-                        case TYPE_STRING:
-                            tempstr = str_replace(newstr, token, data(index).string);
-                            break;
-                        case TYPE_NUMBER:
-                            if (data(index).number == (Int)data(index).number) 
-                            {
-                                replacement = str_format("%ld", (Int)data(index).number);
-                                tempstr = str_replace(newstr, token, replacement);
-                            } 
-                            else 
-                            {
-                                replacement = str_format("%f", data(index).number);
-                                tempstr = str_replace(newstr, token, replacement);
-                            }
-                            free(replacement);
-                            break;
-                        case TYPE_LIST:
-                            replacement = list_stringify(vm, (IntList*)data(index).pointer);
-                            tempstr = str_replace(newstr, token, replacement);
-                            free(replacement);
-                            break;
-                        default:
-                            replacement = str_format("%ld", data(index).integer);
-                            tempstr = str_replace(newstr, token, replacement);
-                            free(replacement);
-                            break;
-                    }
-                    free(newstr);
-                    newstr = tempstr;
-                }
-            } 
-            else if (token[1] == '(') 
-            { // Substitui $(...)
-                /* Procura o parêntese de fechamento correspondente */
-                char *closing = strchr(token, ')');
-                if (closing != NULL) 
-                {
-                    /* Extrai a expressão entre os parênteses */
-                    char *expr = str_nduplicate(token + 2, closing - (token + 2));
-                    Int index = eval(vm, expr, context);
-                    free(expr);
-                    
-                    if (index != -1) 
-                    {
-                        char *replacement = NULL;
-                        char *tempstr = NULL;
-                        /* Formata a saída de acordo com o tipo do resultado da avaliação */
-                        switch (data_t(index)) 
-                        {
-                            case TYPE_STRING:
-                                replacement = data(index).string;
-                                break;
-                            case TYPE_NUMBER:
-                                if (data(index).number == (Int)data(index).number) 
-                                {
-                                    replacement = str_format("%ld", (Int)data(index).number);
-                                } 
-                                else 
-                                {
-                                    replacement = str_format("%f", data(index).number);
-                                }
-                                break;
-                            case TYPE_LIST:
-                                replacement = list_stringify(vm, (IntList*)data(index).pointer);
-                                break;
-                            default:
-                                replacement = str_format("%ld", data(index).integer);
-                                break;
-                        }
-                        /* Cria o padrão que será substituído: de '$' até o ')' */
-                        int pattern_length = closing - token + 1;
-                        char *pattern = str_nduplicate(token, pattern_length);
-                        tempstr = str_replace(newstr, pattern, replacement);
-                        free(pattern);
-                        free(newstr);
-                        newstr = tempstr;
-                        if (data_t(index) != TYPE_STRING) 
-                        {
-                            free(replacement);
-                        }
-                    }
-                }
-            }
-        } 
-        else 
-        {
-            printf("error: cannot format '%s'. there is a $ not preceeded by a \\ neither succeeded by a valid character\n", str);
-        }
-        token = strchr(newstr + 1, '$');
-    }
-
-    /* Processa as sequências de escape iniciadas por '\' com buffer dinâmico */
-    token = strchr(newstr + 1, '\\');
-    while (token != NULL) 
-    {
-        if (token[1] != '\0') 
-        {
-            char *tempstr = NULL;
-            char *pattern = NULL;
-            char *replacement = NULL; // buffer dinâmico
-
-            switch (token[1]) 
-            {
-                case '0':
-                    /* Se houver 3 dígitos após '\' (ex: "\123"), usa escape octal */
-                    if (strlen(token + 1) >= 3 && isdigit((unsigned char)token[2]) && isdigit((unsigned char)token[3])) 
-                    {
-                        pattern = str_nduplicate(token, 4); // "\ddd" (4 chars)
-                        int value = (int)strtol(token + 1, NULL, 8);
-                        replacement = malloc(2);
-                        if (replacement) 
-                        {
-                            replacement[0] = (char)value;
-                            replacement[1] = '\0';
-                        }
-                        tempstr = str_replace(newstr, pattern, replacement);
-                        free(pattern);
-                        free(replacement);
-                    } 
-                    else 
-                    {
-                        /* Trata como "\0" literal */
-                        pattern = str_nduplicate(token, 2);
-                        replacement = malloc(2);
-                        if (replacement) {
-                            replacement[0] = '0';
-                            replacement[1] = '\0';
-                        }
-                        tempstr = str_replace(newstr, pattern, replacement);
-                        free(pattern);
-                        free(replacement);
-                    }
-                    break;
-                case 'x':
-                    /* Se houver 2 dígitos hexadecimais após "\x" */
-                    if (strlen(token + 1) >= 3 && isxdigit((unsigned char)token[2]) && isxdigit((unsigned char)token[3])) 
-                    {
-                        pattern = str_nduplicate(token, 4); // "\xhh" (4 chars)
-                        int value = (int)strtol(token + 2, NULL, 16);
-                        replacement = malloc(2);
-                        if (replacement) {
-                            replacement[0] = (char)value;
-                            replacement[1] = '\0';
-                        }
-                        tempstr = str_replace(newstr, pattern, replacement);
-                        free(pattern);
-                        free(replacement);
-                    }
-                    break;
-                case 'n':
-                    pattern = str_nduplicate(token, 2); // "\n"
-                    replacement = strdup("\n");
-                    tempstr = str_replace(newstr, pattern, replacement);
-                    free(pattern);
-                    free(replacement);
-                    break;
-                case 't':
-                    pattern = str_nduplicate(token, 2); // "\t"
-                    replacement = strdup("\t");
-                    tempstr = str_replace(newstr, pattern, replacement);
-                    free(pattern);
-                    free(replacement);
-                    break;
-                case 'r':
-                    pattern = str_nduplicate(token, 2); // "\r"
-                    replacement = strdup("\r");
-                    tempstr = str_replace(newstr, pattern, replacement);
-                    free(pattern);
-                    free(replacement);
-                    break;
-                case '\\':
-                    pattern = str_nduplicate(token, 2); // "\\"
-                    replacement = strdup("\\");
-                    tempstr = str_replace(newstr, pattern, replacement);
-                    free(pattern);
-                    free(replacement);
-                    break;
-                case '"':
-                    pattern = str_nduplicate(token, 2); // '\"'
-                    replacement = strdup("\"");
-                    tempstr = str_replace(newstr, pattern, replacement);
-                    free(pattern);
-                    free(replacement);
-                    break;
-                case '\'':
-                    pattern = str_nduplicate(token, 2); // "\'"
-                    replacement = strdup("'");
-                    tempstr = str_replace(newstr, pattern, replacement);
-                    free(pattern);
-                    free(replacement);
-                    break;
-                case '$':
-                    pattern = str_nduplicate(token, 2); // "\$"
-                    replacement = strdup("$");
-                    tempstr = str_replace(newstr, pattern, replacement);
-                    free(pattern);
-                    free(replacement);
-                    break;
-                default:
-                    if (isdigit((unsigned char)token[1])) 
-                    {
-                        /* Trata sequência numérica com quantidade variável de dígitos */
-                        int len = 1;
-                        while (isdigit((unsigned char)token[1 + len])) 
-                        {
-                            len++;
-                        }
-                        pattern = str_nduplicate(token, len + 1); // '\' + dígitos
-                        int value = atoi(token + 1);
-                        replacement = malloc(2);
-                        if (replacement) 
-                        {
-                            replacement[0] = (char)value;
-                            replacement[1] = '\0';
-                        }
-                        tempstr = str_replace(newstr, pattern, replacement);
-                        free(pattern);
-                        free(replacement);
-                    }
-                    break;
-            }
-            if (tempstr != NULL) 
-            {
-                free(newstr);
-                newstr = tempstr;
-            }
-        }
-        token = strchr(newstr + 1, '\\');
-    }
-
-    /* Remove as aspas inicial e final da string */
-    char *temp = newstr + 1;
-    temp[strlen(temp) - 1] = '\0';
-    Int var = new_string(vm, temp);
-    list_push(*result, var);
-
-    free(newstr);
-    return;
-
-parse_error:
-    printf("Variable %s not found\n", str);
-    list_push(*result, -1);
-}
-
-
 // print 
 void print_element(VirtualMachine *vm, Int index)
 {
@@ -911,7 +580,7 @@ void free_vm(VirtualMachine *vm)
 }
 
 // Parser functions
-IntList* parse(void *_vm, char *cmd, HashList *context) 
+IntList* parse(void *_vm, char *cmd) 
 {
     VirtualMachine* vm = (VirtualMachine*)_vm;
     IntList *result = list_init(IntList);
@@ -925,9 +594,9 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
         char* str = list_pop(*splited);
         if (str[0] == '(')
         {
-            if(str[1] == '@' && str[2] == '@') //string
+            if(str[1] == '@') //string
             {
-                char* temp = str + 3;
+                char* temp = str + 2;
                 temp[strlen(temp) - 1] = '\0';
                 Int var = new_string(vm, temp);
                 list_push(*result, var);            
@@ -936,60 +605,30 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
             {
                 char* temp = str + 1;
                 temp[strlen(temp) - 1] = '\0';
-                Int index = eval(vm, temp, context);
+                Int index = eval(vm, temp);
                 list_push(*result, index);
-            }
-        }
-        else if (str[0] == '@') 
-        {
-            if (isdigit(str[1]))
-            {
-                list_push(*result, atoi(str + 1));
-            }
-            else 
-            {
-                list_push(*result, new_number(vm, hash_find(vm, str + 1)));
             }
         }
         else if (str[0] == '"' || str[0] == '\'') // string
         {
-            process_string(vm, str, context, result);
+            char* temp = str_nduplicate(str + 1, strlen(str) - 2);
+            Int var = new_string(vm, temp);
+            list_push(*result, var);
+            free(temp);
         }
         else if (isdigit(str[0]) || (str[0] == '-' && isdigit(str[1]))) // number
         {
             Int var = new_number(vm, atof(str));
             list_push(*result, var);
         }
-        else if (str[0] == '/' && str[1] == '/') // comment
-        {
-            free(str);
-            while (splited->size > 0)
-            {
-                free(list_pop(*splited));
-            }
-            break;
-        }
         else //variable 
         {
             int index = -1;
-            
-            if (context != NULL) 
-            {
-                HashList* _global_context = vm->hashes;
-                vm->hashes = context;
-                index = hash_find(vm, str);
-                vm->hashes = _global_context;
-                if (index == -1) index = hash_find(vm, str);
-            } 
-            else 
-            {
-                index = hash_find(vm, str);
-            }
-
+            index = hash_find(vm, str);
 
             if (index == -1) 
             {
-                printf("Variable %s not found\n", str);
+                printf("variable %s not found\n", str);
             }
             else 
             {
@@ -1003,15 +642,13 @@ IntList* parse(void *_vm, char *cmd, HashList *context)
     return result;
 }
 
-Int interpret_args(VirtualMachine *vm, IntList *args, HashList *context)
+Int interpret_args(VirtualMachine *vm, IntList *args)
 {
     Int func = list_shift(*args);
     Int result = -1;
     Int etc = -1;
     if (func > -1)
     {
-        HashList *global_context;
-        HashList *_context;
         IntList  *_list;
         Function _function;
 
@@ -1019,41 +656,14 @@ Int interpret_args(VirtualMachine *vm, IntList *args, HashList *context)
         {
             case TYPE_ANY:
                 _function = vm->stack->data[func].pointer;
-                result = _function(vm, args, context);
+                result = _function(vm, args);
                 list_unshift(*args, func);
                 break;
 
                 
             case TYPE_STRING:
-                // create context
-                _context = list_init(HashList);
-
-                global_context = vm->hashes;
-                vm->hashes = _context;
-                
-                if (args->size > 0)
-                {
-                    etc = register_var(vm, "...");
-                    data_t(etc) = TYPE_LIST;
-                    data(etc).pointer = args;
-                }
-
-                vm->hashes = global_context;
-
                 // eval
-                result = eval(vm, data(func).string, _context);
-
-                // free context
-                while (_context->size > 0)
-                {
-                    free(list_pop(*_context).key);
-                }
-
-                list_free(*_context);
-
-                args = (IntList*)data(etc).pointer;
-                data_t(etc) = TYPE_ANY;
-
+                result = eval(vm, data(func).string);
                 break;
         }
     }
@@ -1064,9 +674,9 @@ Int interpret_args(VirtualMachine *vm, IntList *args, HashList *context)
     return result;
 }
 
-Int interpret(VirtualMachine *vm, char* cmd, HashList *context)
+Int interpret(VirtualMachine *vm, char* cmd)
 {
-    IntList *args = parse(vm, cmd, context);
+    IntList *args = parse(vm, cmd);
 
     if (args->size == 0)
     {
@@ -1075,18 +685,18 @@ Int interpret(VirtualMachine *vm, char* cmd, HashList *context)
     }
     
     
-    Int result = interpret_args(vm, args, context);
+    Int result = interpret_args(vm, args);
     
     list_free(*args);
     
     return result;
 }
 
-Int eval(VirtualMachine *vm, char *cmd, HashList *context)
+Int eval(VirtualMachine *vm, char *cmd)
 {
     if(strchr(cmd, ';') == NULL)
     {
-        return interpret(vm, cmd, context);
+        return interpret(vm, cmd);
     }
 
     StringList *splited = special_split(cmd, ';');
@@ -1127,7 +737,7 @@ Int eval(VirtualMachine *vm, char *cmd, HashList *context)
             free(str);
             continue;
         }
-        result = interpret(vm, str, context);
+        result = interpret(vm, str);
         free(str);
         if (result > 0)
         {
@@ -1172,7 +782,7 @@ char* list_stringify(VirtualMachine* vm, IntList *list)
         {
         case TYPE_STRING:
             strbak = _str;
-            _str = str_format("%s(@@ %s)", _str, data(list->data[i]).string); 
+            _str = str_format("%s(@ %s)", _str, data(list->data[i]).string); 
             free(strbak);
             break;
         case TYPE_NUMBER:
