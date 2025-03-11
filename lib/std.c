@@ -35,18 +35,6 @@ function(brl_os_system)
     return -1;
 }
 
-#ifndef __EMSCRIPTEN__
-function(brl_os_time_now)
-{
-    return new_number(vm, time(NULL));
-}
-
-function(brl_os_time_clock)
-{
-    return new_number(vm, clock());
-}
-
-#endif
 
 #endif
 
@@ -1771,8 +1759,8 @@ function(brl_std_loop_repeat)
 
 function(brl_std_string_format)
 {
-    stack_reverse(*args);
-    Int str = stack_pop(*args);
+    list_reverse(*args);
+    Int str = list_pop(*args);
     Int result = -1;
     char* _str = str_duplicate(data(str).string);
     for (Int i = 0; i < strlen(_str); i++)
@@ -1781,7 +1769,7 @@ function(brl_std_string_format)
         {
             if (_str[i+1] == 'd')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = str_format("%ld", (Int)data(value).number);
                 char* _newstr = str_replace(_str, "\%d", _value);
                 free(_str);
@@ -1789,7 +1777,7 @@ function(brl_std_string_format)
             }
             else if (_str[i+1] == 's')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = data(value).string;
                 char* _newstr = str_replace(_str, "\%s", _value);
                 free(_str);
@@ -1797,7 +1785,7 @@ function(brl_std_string_format)
             }
             else if (_str[i+1] == 'f')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = str_format("%f", data(value).number);
                 char* _newstr = str_replace(_str, "\%f", _value);
                 free(_str);
@@ -1805,7 +1793,7 @@ function(brl_std_string_format)
             }
             else if (_str[i+1] == 'p')
             {
-                Int value = stack_pop(*args);
+                Int value = list_pop(*args);
                 char* _value = str_format("%p", data(value).pointer);
                 char* _newstr = str_replace(_str, "\%p", _value);
                 free(_str);
@@ -1854,10 +1842,6 @@ void init_os(VirtualMachine *vm)
     register_builtin(vm, "file.write", brl_os_file_write);
     register_builtin(vm, "system", brl_os_system);
 
-#ifndef __EMSCRIPTEN__
-    register_builtin(vm, "time", brl_os_time_now);
-    register_builtin(vm, "clock", brl_os_time_clock);
-#endif
 }
 #endif
 
