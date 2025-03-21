@@ -6,7 +6,8 @@
 - new macro "Byte", essentially a uint8_t;
 - bruter .so files are now loaded RTLD_GLOBAL, to make things faster;
 - main.c: vm and args are now global, that make easier to free them, in exceptions;
-- 
+- some fixes;
+- some optimizations;
 
 (15/03/2025) - version 0.7.7c
 
