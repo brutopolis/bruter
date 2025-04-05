@@ -53,28 +53,24 @@ char* str_concat(const char *str1, const char *str2)
 
 char* str_replace(const char *str, const char *substr, const char *replacement)
 {
-    const char *pos = strstr(str, substr); // Localiza a primeira ocorrência de 'substr'
+    const char *pos = strstr(str, substr);
     if (!pos)
     {
-        // Se não encontrou, retorna uma cópia da string original
         char *newstr = (char *)malloc(strlen(str) + 1);
         strcpy(newstr, str);
         return newstr;
     }
 
-    // Calcula os tamanhos
     size_t len_before = pos - str;
     size_t substr_len = strlen(substr);
     size_t replacement_len = strlen(replacement);
     size_t new_len = strlen(str) - substr_len + replacement_len;
 
-    // Aloca memória para a nova string
     char *newstr = (char *)malloc(new_len + 1);
 
-    // Constrói a nova string
-    strncpy(newstr, str, len_before); // Parte antes da substring
-    strcpy(newstr + len_before, replacement); // Substituição
-    strcpy(newstr + len_before + replacement_len, pos + substr_len); // Parte após a substring
+    strncpy(newstr, str, len_before);
+    strcpy(newstr + len_before, replacement);
+    strcpy(newstr + len_before + replacement_len, pos + substr_len);
 
     return newstr;
 }
@@ -85,38 +81,35 @@ char* str_replace_all(const char *str, const char *substr, const char *replaceme
     size_t substr_len = strlen(substr);
     size_t replacement_len = strlen(replacement);
 
-    // Contar substrings e calcular tamanho necessário em uma única passagem
     size_t new_len = 0;
     size_t count = 0;
     for (const char *p = strstr(str, substr); p; p = strstr(p + substr_len, substr))
     {
         count++;
-        new_len += (p - str) - new_len; // Adiciona a parte antes da substring
-        new_len += replacement_len;    // Adiciona o tamanho da substituição
-        str = p + substr_len;          // Avança para o próximo trecho
+        new_len += (p - str) - new_len;
+        new_len += replacement_len;
+        str = p + substr_len;
     }
-    new_len += strlen(str); // Adiciona o restante da string
+    new_len += strlen(str);
 
-    // Aloca memória para a nova string
     char *newstr = (char *)malloc(new_len + 1);
     char *dest = newstr;
 
-    // Construir a nova string
-    str = str - new_len + strlen(newstr); // Reiniciar ponteiro para o início da string original
+    str = str - new_len + strlen(newstr);
     const char *p = strstr(str, substr);
     while (p)
     {
         size_t len_before = p - str;
-        strncpy(dest, str, len_before);    // Copiar parte antes da substring
+        strncpy(dest, str, len_before);
         dest += len_before;
 
-        strcpy(dest, replacement);        // Copiar substituição
+        strcpy(dest, replacement);
         dest += replacement_len;
 
-        str = p + substr_len;             // Avançar na string original
+        str = p + substr_len;
         p = strstr(str, substr);
     }
-    strcpy(dest, str);                    // Copiar o restante da string original
+    strcpy(dest, str);
 
     return newstr;
 }
@@ -157,26 +150,26 @@ StringList* special_space_split(char *str)
         else if (str[i] == '"')
         {
             int j = i;
-            j++;  // Avança para depois da abertura de aspas duplas
+            j++;
             while (str[j] != '"' && str[j] != '\0')
             {
                 j++;
             }
             char *tmp = str_nduplicate(str + i, j - i + 1);
             list_push(*splited, tmp);
-            i = j + 1;  // Avança para após o fechamento de aspas duplas
+            i = j + 1;
         }
         else if (str[i] == '\'')
         {
             int j = i;
-            j++;  // Avança para depois da abertura de aspas simples
+            j++;
             while (str[j] != '\'' && str[j] != '\0')
             {
                 j++;
             }
             char *tmp = str_nduplicate(str + i, j - i + 1);
             list_push(*splited, tmp);
-            i = j + 1;  // Avança para após o fechamento de aspas simples
+            i = j + 1;
         }
         else if (isspace(str[i]))
         {
@@ -185,7 +178,7 @@ StringList* special_space_split(char *str)
         else
         {
             int j = i;
-            while (!isspace(str[j]) && str[j] != '\0' && str[j] != '(' && str[j] != ')' && str[j] != '"' && str[j] != '\'')
+            while (!isspace(str[j]) && str[j] != '\0' && str[j] != '(' && str[j] != ')')
             {
                 j++;
             }
@@ -217,25 +210,22 @@ StringList* special_split(char *str, char delim)
         {
             recursion--;
         }
-        else if (str[i] == '"' && recursion == 0 && !inside_single_quotes)
+        else if (str[i] == '"' && !recursion && !inside_single_quotes)
         {
-            // Alterna o estado de dentro/fora de aspas duplas
             inside_double_quotes = !inside_double_quotes;
         }
-        else if (str[i] == '\'' && recursion == 0 && !inside_double_quotes)
+        else if (str[i] == '\'' && !recursion && !inside_double_quotes)
         {
-            // Alterna o estado de dentro/fora de aspas simples
             inside_single_quotes = !inside_single_quotes;
         }
 
-        // Se encontramos o delimitador e não estamos dentro de parênteses nem de aspas simples ou duplas
-        if (str[i] == delim && recursion == 0 && !inside_double_quotes && !inside_single_quotes)
+        if (str[i] == delim && !recursion && !inside_double_quotes && !inside_single_quotes)
         {
             char* tmp = str_nduplicate(str + last_i, i - last_i);
             list_push(*splited, tmp);
             last_i = i + 1;
         }
-        else if (str[i + 1] == '\0') // Checagem para o último token
+        else if (str[i + 1] == '\0')
         {
             char* tmp = str_nduplicate(str + last_i, i - last_i + 1);
             list_push(*splited, tmp);
@@ -299,46 +289,6 @@ StringList* str_split_char(char *str, char delim)
     return splited;
 }
 
-// print 
-void print_element(VirtualMachine *vm, Int index)
-{
-    if (index < 0 || index >= vm->stack->size)
-    {
-        printf("(return (get: -1))");
-        return;
-    }
-
-    Value temp = vm->stack->data[index];
-
-    switch (data_t(index))
-    {
-        char* _str;
-        char* strbak;
-        char* stringified;
-        case TYPE_LIST:
-            stringified = list_stringify(vm, (IntList*)data(index).pointer);
-            printf("%s", stringified);
-            free(stringified);
-            break;
-        case TYPE_NUMBER:
-            if (((Int)data(index).number) == data(index).number)
-            {
-                printf("%ld", (Int)data(index).number);
-            }
-            else
-            {
-                printf("%f", data(index).number);
-            }
-            break;
-        case TYPE_STRING:
-            printf("%s", data(index).string);
-            break;
-        default:
-            printf("%ld", (Int)data(index).pointer);
-            break;
-    }
-}
-
 #ifndef ARDUINO
 
 // file functions
@@ -374,6 +324,17 @@ void writefile(char *filename, char *code)
     fclose(file);
 }
 
+bool file_exists(char* filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        return false;
+    }
+    fclose(file);
+    return true;
+}
+
 #endif
 
 // value functions
@@ -387,14 +348,6 @@ Value value_duplicate(Value value, Byte type)
         case TYPE_STRING:
             dup.string = str_duplicate(value.string);
             break;
-        case TYPE_LIST:
-            dup.pointer = list_init(IntList);
-            IntList *list = (IntList*)value.pointer;
-            for (Int i = 0; i < list->size; i++)
-            {
-                list_push(*((IntList*)dup.pointer), list->data[i]);
-            }
-            break;
         default:
             dup.integer = value.integer;
             break;
@@ -407,11 +360,11 @@ Value value_duplicate(Value value, Byte type)
 
 Int hash_find(VirtualMachine *vm, char *varname)
 {
-    for (Int i = 0; i < vm->hashes->size; i++)
+    for (Int i = 0; i < vm->hash_names->size; i++)
     {
-        if (strcmp(vm->hashes->data[i].key, varname) == 0)
+        if (!strcmp(vm->hash_names->data[i], varname))
         {
-            return vm->hashes->data[i].index;
+            return i;
         }
     }
     return -1;
@@ -419,14 +372,16 @@ Int hash_find(VirtualMachine *vm, char *varname)
 
 void hash_set(VirtualMachine *vm, char* varname, Int index)
 {
-    if (hash_find(vm, varname) != -1)
+    Int found = hash_find(vm, varname);
+    if (found != -1)
     {
-        hash_unset(vm, varname);
+        vm->hash_indexes->data[found] = index;
     }
-    Hash hash;
-    hash.key = str_duplicate(varname);
-    hash.index = index;
-    list_push(*vm->hashes, hash);
+    else 
+    {
+        list_push(*vm->hash_names, str_duplicate(varname));
+        list_push(*vm->hash_indexes, index);
+    }
 }
 
 void hash_unset(VirtualMachine *vm, char* varname)
@@ -434,9 +389,8 @@ void hash_unset(VirtualMachine *vm, char* varname)
     Int index = hash_find(vm, varname);
     if (index != -1)
     {
-        free(vm->hashes->data[index].key);
-        vm->hashes->data[index].key = NULL;
-        list_fast_remove(*vm->hashes, index);
+        free(list_fast_remove(*vm->hash_names, index));
+        list_fast_remove(*vm->hash_indexes, index);
     }
 }
 
@@ -447,8 +401,12 @@ VirtualMachine* make_vm()
     VirtualMachine *vm = (VirtualMachine*)malloc(sizeof(VirtualMachine));
     vm->stack = list_init(ValueList);
     vm->typestack = list_init(ByteList);
-    vm->hashes = list_init(HashList);
+    vm->hash_names = list_init(StringList);
+    vm->hash_indexes = list_init(IntList);
     vm->unused = list_init(IntList);
+
+    // @0 = null
+    register_var(vm, "null");
 
     return vm;
 }
@@ -494,16 +452,6 @@ Int new_builtin(VirtualMachine *vm, Function function)
     return id;
 }
 
-Int new_list(VirtualMachine *vm)
-{
-    Int id = new_var(vm);
-    vm->stack->data[id].pointer = list_init(IntList);
-    vm->typestack->data[id] = TYPE_LIST;
-    return id;
-}
-
-// var register
-
 Int register_var(VirtualMachine *vm, char* varname)
 {
     Int index = new_var(vm);
@@ -532,15 +480,7 @@ Int register_builtin(VirtualMachine *vm, char* varname, Function function)
     return index;
 }
 
-Int register_list(VirtualMachine *vm, char* varname)
-{
-    Int index = new_list(vm);
-    hash_set(vm, varname, index);
-    return index;
-}
-
 //frees
-
 void free_vm(VirtualMachine *vm)
 {
     Value value;
@@ -552,18 +492,14 @@ void free_vm(VirtualMachine *vm)
             case TYPE_STRING:
                 free(value.string);
                 break;
-            case TYPE_LIST:
-                list_free(*((IntList*)value.pointer));
-                break;
             default:
                 break;
         }
     }
 
-    while (vm->hashes->size > 0)
+    while (vm->hash_names->size > 0)
     {
-        Hash hash = list_pop(*vm->hashes);
-        free(hash.key);
+        free(list_pop(*vm->hash_names));
     }
 
     list_free(*vm->unused);
@@ -571,7 +507,8 @@ void free_vm(VirtualMachine *vm)
     list_free(*vm->stack);
     list_free(*vm->typestack);
 
-    list_free(*vm->hashes);
+    list_free(*vm->hash_names);
+    list_free(*vm->hash_indexes);
 
     free(vm);
 }
@@ -589,6 +526,7 @@ IntList* parse(void *_vm, char *cmd)
     while (splited->size > 0)
     {
         char* str = list_pop(*splited);
+        
         if (str[0] == '(')
         {
             if(str[1] == '@') //string
@@ -620,16 +558,16 @@ IntList* parse(void *_vm, char *cmd)
         }
         else //variable 
         {
-            int index = -1;
-            index = hash_find(vm, str);
+            int hashindex = -1;
+            hashindex = hash_find(vm, str);
 
-            if (index == -1) 
+            if (hashindex == -1) 
             {
-                printf("variable %s not found\n", str);
+                printf("BRUTER_ERROR: variable %s not found\n", str);
             }
             else 
             {
-                list_push(*result, index);
+                list_push(*result, vm->hash_indexes->data[hashindex]);
             }
         }
 
@@ -639,14 +577,20 @@ IntList* parse(void *_vm, char *cmd)
     return result;
 }
 
-Int interpret_args(VirtualMachine *vm, IntList *args)
+Int interpret(VirtualMachine *vm, char* cmd)
 {
+    IntList *args = parse(vm, cmd);
+
+    if (!args->size)
+    {
+        list_free(*args);
+        return -1;
+    }
+    
     Int func = list_shift(*args);
     Int result = -1;
-    Int etc = -1;
     if (func > -1)
     {
-        IntList  *_list;
         Function _function;
 
         switch (vm->typestack->data[func])
@@ -666,23 +610,8 @@ Int interpret_args(VirtualMachine *vm, IntList *args)
     }
     else 
     {
-        printf("error: %ld is not a function or script\n", func);
+        printf("BRUTER_ERROR: %ld is not a function or script\n", func);
     }
-    return result;
-}
-
-Int interpret(VirtualMachine *vm, char* cmd)
-{
-    IntList *args = parse(vm, cmd);
-
-    if (args->size == 0)
-    {
-        list_free(*args);
-        return -1;
-    }
-    
-    
-    Int result = interpret_args(vm, args);
     
     list_free(*args);
     
@@ -691,7 +620,7 @@ Int interpret(VirtualMachine *vm, char* cmd)
 
 Int eval(VirtualMachine *vm, char *cmd)
 {
-    if(strchr(cmd, ';') == NULL)
+    if(!strchr(cmd, ';')) // if == NULL
     {
         return interpret(vm, cmd);
     }
@@ -702,10 +631,9 @@ Int eval(VirtualMachine *vm, char *cmd)
     Int last = splited->size - 1;
     while (last >= 0)
     {
-        if (strlen(splited->data[last]) == 0)
+        if (!strlen(splited->data[last]))
         {
-            free(splited->data[last]);
-            list_pop(*splited);
+            free(list_pop(*splited));
         }
         else
         {
@@ -714,6 +642,7 @@ Int eval(VirtualMachine *vm, char *cmd)
             {
                 i++;
             }
+
             if (splited->data[last][i] == '\0')
             {
                 free(splited->data[last]);
@@ -729,7 +658,7 @@ Int eval(VirtualMachine *vm, char *cmd)
     {
         
         char *str = list_pop(*splited);
-        if (strlen(str) == 0)
+        if (!strlen(str))
         {
             free(str);
             continue;
@@ -756,71 +685,11 @@ void unuse_var(VirtualMachine *vm, Int index)
         case TYPE_STRING:
             free(data(index).string);
             break;
-        case TYPE_LIST:
-            list_free(*((IntList*)data(index).pointer));
-            break;
         default:
             break;
     }
-
-    // hashes associated to the index are not removed anymore
-
+    data(index).integer = 0;
     data_t(index) = TYPE_ANY;
     list_push(*vm->unused, index);
 }
 
-char* list_stringify(VirtualMachine* vm, IntList *list)
-{
-    char* _str = str_duplicate("(list: ");
-    char* strbak;
-    for (Int i = 0; i < list->size; i++)
-    {
-        switch (data_t(list->data[i]))
-        {
-        case TYPE_STRING:
-            strbak = _str;
-            _str = str_format("%s(@ %s)", _str, data(list->data[i]).string); 
-            free(strbak);
-            break;
-        case TYPE_NUMBER:
-            strbak = _str;
-            
-            if (data(list->data[i]).number == (Int)data(list->data[i]).number)
-            {
-                char* str = str_format("%ld", (Int)data(list->data[i]).number);
-                _str = str_concat(_str, str);
-                free(str);
-            }
-            else 
-            {
-                char* str = str_format("%lf", data(list->data[i]).number);
-                _str = str_concat(_str, str);
-                free(str);
-            }
-
-            free(strbak);
-            break;
-        case TYPE_LIST:
-            strbak = _str;
-            char* stringified = list_stringify(vm, (IntList*)data(list->data[i]).pointer);
-            _str = str_concat(_str, stringified);
-            free(strbak);
-            break;
-        default:
-            strbak = _str;
-            _str = str_format("%s%ld", _str, data(list->data[i]).integer);
-            free(strbak);
-            break;
-        }
-        if (i < list->size - 1)
-        {
-            strbak = _str;
-            _str = str_concat(_str, " ");
-            free(strbak);
-        }
-    }
-    strbak = _str;
-    _str = str_concat(_str, ")");
-    free(strbak);
-    return _str;
-}

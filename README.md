@@ -32,7 +32,7 @@
   - `any`, a integer, or a native function or anything;
   - `number`, a floating point number, float or double;
   - `string`, a string pointer;
-  - `list`, a list;
+  - `array`, a array, essentially a number;
 
 # Building instructions
 
@@ -46,24 +46,7 @@
     
     ./build.sh --debug
 
-    # you can also debug a specific file;
-
-    ./build.sh --debug-file path/to/bruter_file.br
-
     # cc option:
     # you can also define the path to a compiler;
 
     ./build.sh --cc path/to/compiler
-
-    # you can compile the dynamic libraries from build.sh as well;
-    
-    ./build.sh --lib path/to/lib.so
-
-  ## Dynamic libraries
-
-  dynamic libraries functions are built in the main.c file, while unload is a thing, all dynamic libs are auto-closed at exit;
-
-  | Function    | Description                              | Function Signature                           |
-  |-------------|------------------------------------------|----------------------------------------------|
-  | `load`   | load a library                           | `void function(string path);`                |
-  | `unload` | unload a library                         | `void function(string path);`                |
