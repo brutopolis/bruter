@@ -1,11 +1,17 @@
 #!/bin/bash
 
-# this is for linux, should work on macos and mingw also, though I haven't tested it
-# in future i might add build scripts for other platforms
+# this script is meant for linux,
+# all filepath are unix based, the commands are also unix based
+# should work well on mac, though i haven't tested it, and have no plans to do so.
+# mingw might work with some tweaks, but i haven't tested it, might do soon or later.
+
+# libbruter, it is, bruter.c and bruter.h are platform independent, and should(and need to) work on any platform that has a C compiler.
+# libbruter use no other libraries beside the standard C library
+# if libbruter is does not work on a platform, it is a bug, and should be reported.
 
 # usage function
 usage() {
-    echo "usage: $0 [--debug] [--debug-file] [--cc gcc] [--lib libfile.c] [-h || --help]"
+    echo "usage: $0 [--debug] [--cc gcc] [-h || --help] [--extra 'extra cc tags'] [--no-shared] [--no-static]"
     exit 1
 }
 
@@ -15,30 +21,23 @@ ORIGIN=$(pwd)
 # default values
 DEBUG=0
 CC="gcc -Wformat=0"
-MAIN="src/main.c"
-EXEC=""
+EXTRA=""
+NO_SHARED=0
+NO_STATIC=0
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --exec) EXEC="$2"; shift 2 ;;
         --debug) DEBUG=1; shift ;;
-        --debug-file) DEBUG=1; DEBUG_FILE="$2"; shift 2 ;;
         --cc) CC="$2"; shift 2 ;;
-        --lib) LIB="$2"; shift 2 ;;
+        --extra) EXTRA="$2"; shift 2 ;;
+        --no-shared) NO_SHARED=1; shift ;;
+        --no-static) NO_STATIC=1; shift ;;
         --help) usage ;;
         -h) usage ;;
         *) echo "unknown option: $1"; usage ;;
     esac
 done
-
-if [[ -n $LIB ]]; then
-    # replace .c with .so
-    LIB2=$(echo $LIB | sed 's/\.c/\.so/g')
-    $CC src/bruter.c $LIB -Iinclude -shared -o $LIB2 -O3 -lm -fPIC
-    exit;
-fi
-
 
 if [[ $DEBUG -eq 1 ]]; then
     DEBUGARGS='-g'
@@ -52,23 +51,12 @@ echo "compiler: $CC"
 rm -rf build
 mkdir -p build
 
-$CC $MAIN ./src/bruter.c -o build/bruter -O3 -lm -Iinclude $DEBUGARGS
-
-if [ -n "$DEBUG_FILE" ]; then
-    valgrind --tool=massif --stacks=yes --detailed-freq=1 --verbose  ./build/bruter $DEBUG_FILE
-    ms_print massif.out.* > ./build/massif-out.txt
-    rm -rf massif.out.*
-
-    valgrind \
-        --leak-check=full \
-        --show-leak-kinds=all \
-        --track-origins=yes \
-        --log-file=./build/valgrind-out.txt \
-        --verbose ./build/bruter $DEBUG_FILE
-    ls
-    cd ./build
+if [[ $NO_SHARED -eq 0 ]]; then # also build a shared library
+    echo "building shared library"
+    $CC src/bruter.c -o build/libbruter.so -shared -fPIC -O3 -lm -Iinclude $DEBUGARGS $EXTRA
 fi
 
-cd ..
-
-echo "done building."
+if [[ $NO_STATIC -eq 0 ]]; then
+    echo "building static library"
+    $CC src/bruter.c -o build/libbruter.a -c -O3 -lm -Iinclude $DEBUGARGS $EXTRA
+fi

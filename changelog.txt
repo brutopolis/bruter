@@ -1,4 +1,53 @@
+# bruter changelog https://github.com/jardimdanificado/bruter
 
+(05/04/2025) - version 0.7.9
+
+- lists macros now do use memmove instead of moving one by one;
+- TYPE_LIST removed;
+- new type TYPE_ARRAY;
+- TYPE_ARRAY treat arrays as a number element on the stack as list, the number is the amount of elements after it are part of the array;
+- NULL declaration moved to make_vm;
+- NULL is now null;
+- bruter and buxu are now a complementary projects;
+- bruter now is only the VM and the interpreter, check buxu for the cli, the stdlib and such;
+
+(24/03/2025) - version 0.7.8a
+
+- Value union extended with new properties: u8, u16, u32, u64, i8, i16, i32, i64, f32, f64;
+- Value.byte renamed to union.u8;
+- fixed hash_find, it was returning the stack index instead of the hash index;
+- vm->hashes has now been splited into vm->hash_names and vm->hash_indexes;
+- hash macro removed;
+- fixed some memory leaks;
+- fixed some bugs;
+- some optimizations;
+
+(23/03/2025) - version 0.7.8
+
+- c_list.h merged into bruter.h;
+- build.sh now only builds libbruter.a and libbruter.so;
+- build.sh now new options --no-static and --no-shared, as static and shared are built by default and can be found ./build/;
+- include folder removed, bruter.h is now under src/;
+- list_find renamed to list_ocurrences;
+- new macro list_find;
+- some README updates;
+- lots of cleanup;
+- some fixes;
+
+(21/03/2025) - version 0.7.7d
+
+- stdbool.h and stdint.h are now included in the header;
+- new macro "Byte", essentially a uint8_t;
+- bruter .so files are now loaded RTLD_GLOBAL, to make things faster;
+- main.c: vm and args are now global, that make easier to free them, in exceptions;
+- dyc.c removed;
+
+(15/03/2025) - version 0.7.7c
+
+- bruterc, a shell script with embedded bruter files, for compiling libs;
+- bruterc is just a wrapper for build.sh --lib with embedded files to be used from anywhere;
+- new option --no-bruterc in build.sh, if you just want to compile the interpreter;
+- leak when have two of more libs loaded fixed;
 
 (11/03/2025) - version 0.7.7b
 
