@@ -27,7 +27,7 @@
 #include <ctype.h>
 
 // version
-#define VERSION "0.7.9a"
+#define VERSION "0.8.0"
 
 // types
 #define TYPE_ANY 0
@@ -284,8 +284,6 @@ StringList* str_split_char(char *str, char delim);
 StringList* special_space_split(char *str);
 StringList* special_split(char *str, char delim);
 
-#define is_true(value, __type) (__type == value.integer == 0 ? 0 : 1)
-
 // variable
 
 VirtualMachine* make_vm();
@@ -308,9 +306,6 @@ Int hash_find(VirtualMachine *vm, char *key);
 void hash_set(VirtualMachine *vm, char *key, Int index);
 void hash_unset(VirtualMachine *vm, char *key);
 
-
-
-
 // macros
 #define data(index) (vm->stack->data[index])
 #define data_t(index) (vm->typestack->data[index])
@@ -324,6 +319,15 @@ void hash_unset(VirtualMachine *vm, char *key);
 
 Int interpret(VirtualMachine *vm, char* cmd);
 Int eval(VirtualMachine *vm, char *cmd);
+
+// pun macro for Value using the Value union
+// v.from = value; return v.to;
+#define pun(value, from, to) \
+({ \
+    Value v; \
+    v.from = value; \
+    v.to; \
+})
 
 #ifndef ARDUINO
 
