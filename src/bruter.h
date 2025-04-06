@@ -27,7 +27,7 @@
 #include <ctype.h>
 
 // version
-#define VERSION "0.7.9"
+#define VERSION "0.7.9a"
 
 // types
 #define TYPE_ANY 0
@@ -38,15 +38,16 @@
 // bruter use a union as universal type, and bruter is able to manipulate and use pointers direcly so we need to use the pointer size;
 #if __SIZEOF_POINTER__ == 8
     #define Int int64_t
+    #define UInt uint64_t
     #define Float double
 #else
+    #define UInt uint32_t
     #define Int int32_t
     #define Float float
 #endif
 
 #define Byte uint8_t
 
-// from bruter 0.7.7c include/c_list.h
 #define List(T) struct \
 { \
     T *data; \
@@ -152,8 +153,7 @@
 
 
 
-//remove element at index i and return it
-// Remove element at index i and return it
+// remove element at index i and return it
 #define list_remove(s, i) \
 ({ \
     typeof((s).data[i]) ret = (s).data[i]; \
@@ -162,7 +162,7 @@
     ret; \
 })
 
-//same as remove but does a swap and pop, faster but the order of the elements will change
+// same as remove but does a swap and pop, faster but the order of the elements will change
 #define list_fast_remove(s, i) \
 ({ \
     typeof((s).data[i]) ret = (s).data[i]; \
@@ -213,16 +213,17 @@
     (s).data[i]\
 )
 
-//Value
+// Value
 typedef union 
 {
     // these types depend on the size of the pointer
-    Float number;
-    Int integer;
+    Float f;
+    Int i;
+    UInt u;
 
     // these types are pointers
-    char* string;
-    void* pointer;
+    char* s;
+    void* p;
     
     // these types are arrays
     uint8_t u8[sizeof(Float)];
@@ -294,8 +295,8 @@ Int new_string(VirtualMachine *vm, char *str);
 Int new_builtin(VirtualMachine *vm, Function function);
 Int new_var(VirtualMachine *vm);
 
-Value value_duplicate(Value value, Byte type);
 
+Value value_duplicate(Value value, Byte type);
 Int register_var(VirtualMachine *vm, char* varname);
 Int register_string(VirtualMachine *vm, char* varname, char* string);
 Int register_number(VirtualMachine *vm, char* varname, Float number);

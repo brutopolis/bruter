@@ -3,6 +3,11 @@
 (06/04/2025) - version 0.7.9a
 
 - --cc is now --compiler and -cc;
+- new Value property: u;
+- Value.integer renamed to Value.i;
+- Value.number renamed to Value.f;
+- Value.string renamed to Value.s;
+- Value.pointer renamed to Value.p;
 
 (05/04/2025) - version 0.7.9
 

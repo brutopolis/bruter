@@ -346,10 +346,10 @@ Value value_duplicate(Value value, Byte type)
     switch (type)
     {
         case TYPE_STRING:
-            dup.string = str_duplicate(value.string);
+            dup.s = str_duplicate(value.s);
             break;
         default:
-            dup.integer = value.integer;
+            dup.i = value.i;
             break;
     }
 
@@ -421,7 +421,7 @@ Int new_var(VirtualMachine *vm)
     else
     {
         Value value;
-        value.pointer = NULL;
+        value.p = NULL;
         list_push(*vm->stack, value);
         list_push(*vm->typestack, TYPE_ANY);
         return vm->stack->size-1;
@@ -431,7 +431,7 @@ Int new_var(VirtualMachine *vm)
 Int new_number(VirtualMachine *vm, Float number)
 {
     Int id = new_var(vm);
-    vm->stack->data[id].number = number;
+    vm->stack->data[id].f = number;
     vm->typestack->data[id] = TYPE_NUMBER;
     return id;
 }
@@ -439,7 +439,7 @@ Int new_number(VirtualMachine *vm, Float number)
 Int new_string(VirtualMachine *vm, char *string)
 {
     Int id = new_var(vm);
-    vm->stack->data[id].string = str_duplicate(string);
+    vm->stack->data[id].s = str_duplicate(string);
     vm->typestack->data[id] = TYPE_STRING;
     return id;
 }
@@ -447,7 +447,7 @@ Int new_string(VirtualMachine *vm, char *string)
 Int new_builtin(VirtualMachine *vm, Function function)
 {
     Int id = new_var(vm);
-    vm->stack->data[id].pointer = function;
+    vm->stack->data[id].p = function;
     vm->typestack->data[id] = TYPE_ANY;
     return id;
 }
@@ -490,7 +490,7 @@ void free_vm(VirtualMachine *vm)
         switch (list_pop(*vm->typestack))
         {
             case TYPE_STRING:
-                free(value.string);
+                free(value.s);
                 break;
             default:
                 break;
@@ -596,7 +596,7 @@ Int interpret(VirtualMachine *vm, char* cmd)
         switch (vm->typestack->data[func])
         {
             case TYPE_ANY:
-                _function = vm->stack->data[func].pointer;
+                _function = vm->stack->data[func].p;
                 result = _function(vm, args);
                 list_unshift(*args, func);
                 break;
@@ -604,7 +604,7 @@ Int interpret(VirtualMachine *vm, char* cmd)
                 
             case TYPE_STRING:
                 // eval
-                result = eval(vm, data(func).string);
+                result = eval(vm, data(func).s);
                 break;
         }
     }
@@ -683,12 +683,12 @@ void unuse_var(VirtualMachine *vm, Int index)
     switch (data_t(index))
     {
         case TYPE_STRING:
-            free(data(index).string);
+            free(data(index).s);
             break;
         default:
             break;
     }
-    data(index).integer = 0;
+    data(index).i = 0;
     data_t(index) = TYPE_ANY;
     list_push(*vm->unused, index);
 }
