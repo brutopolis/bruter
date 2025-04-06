@@ -49,4 +49,4 @@
     # cc option:
     # you can also define the path to a compiler;
 
-    ./build.sh --cc path/to/compiler
+    ./build.sh -cc path/to/compiler
