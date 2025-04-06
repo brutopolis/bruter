@@ -261,6 +261,8 @@ typedef struct
     StringList *hash_names;
     IntList *hash_indexes;
 
+    // functions
+    IntList* (*parser)(void*, char*);
 } VirtualMachine;
 
 //Function
@@ -320,12 +322,8 @@ void hash_unset(VirtualMachine *vm, char *key);
 #define function(name) Int name(VirtualMachine *vm, IntList *args)
 #define init(name) void init_##name(VirtualMachine *vm)
 
-// eval
+Int interpret(VirtualMachine *vm, char* cmd);
 Int eval(VirtualMachine *vm, char *cmd);
-Int interpret(VirtualMachine *vm, char *cmd);
-
-// functions
-IntList* parse(void* _vm, char* cmd);
 
 #ifndef ARDUINO
 

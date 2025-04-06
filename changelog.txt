@@ -8,6 +8,7 @@
 - Value.number renamed to Value.f;
 - Value.string renamed to Value.s;
 - Value.pointer renamed to Value.p;
+- vm->parser is once again a thing;
 
 (05/04/2025) - version 0.7.9
 

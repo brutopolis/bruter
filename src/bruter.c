@@ -396,21 +396,6 @@ void hash_unset(VirtualMachine *vm, char* varname)
 
 //variable functions
 
-VirtualMachine* make_vm()
-{
-    VirtualMachine *vm = (VirtualMachine*)malloc(sizeof(VirtualMachine));
-    vm->stack = list_init(ValueList);
-    vm->typestack = list_init(ByteList);
-    vm->hash_names = list_init(StringList);
-    vm->hash_indexes = list_init(IntList);
-    vm->unused = list_init(IntList);
-
-    // @0 = null
-    register_var(vm, "null");
-
-    return vm;
-}
-
 // var new 
 Int new_var(VirtualMachine *vm)
 { 
@@ -514,7 +499,7 @@ void free_vm(VirtualMachine *vm)
 }
 
 // Parser functions
-IntList* parse(void *_vm, char *cmd) 
+IntList* default_parser(void *_vm, char *cmd) 
 {
     VirtualMachine* vm = (VirtualMachine*)_vm;
     IntList *result = list_init(IntList);
@@ -579,7 +564,7 @@ IntList* parse(void *_vm, char *cmd)
 
 Int interpret(VirtualMachine *vm, char* cmd)
 {
-    IntList *args = parse(vm, cmd);
+    IntList *args = vm->parser(vm, cmd);
 
     if (!args->size)
     {
@@ -693,3 +678,19 @@ void unuse_var(VirtualMachine *vm, Int index)
     list_push(*vm->unused, index);
 }
 
+VirtualMachine* make_vm()
+{
+    VirtualMachine *vm = (VirtualMachine*)malloc(sizeof(VirtualMachine));
+    vm->stack = list_init(ValueList);
+    vm->typestack = list_init(ByteList);
+    vm->hash_names = list_init(StringList);
+    vm->hash_indexes = list_init(IntList);
+    vm->unused = list_init(IntList);
+
+    vm->parser = default_parser;
+
+    // @0 = null
+    register_var(vm, "null");
+
+    return vm;
+}
