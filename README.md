@@ -29,10 +29,8 @@
 # Types
       
   BRUTER essentially has 4 types of data:
-  - `any`, a integer, or a native function or anything;
-  - `number`, a floating point number, float or double;
-  - `string`, a string pointer;
-  - `array`, a array, essentially a number;
+  - `any`, 4 or 8 bytes;
+  - `alloc`, a pointer, usually to a string;
 
 # Building instructions
 

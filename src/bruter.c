@@ -345,7 +345,7 @@ Value value_duplicate(Value value, Byte type)
 
     switch (type)
     {
-        case TYPE_STRING:
+        case TYPE_ALLOC:
             dup.s = str_duplicate(value.s);
             break;
         default:
@@ -417,7 +417,7 @@ Int new_number(VirtualMachine *vm, Float number)
 {
     Int id = new_var(vm);
     vm->stack->data[id].f = number;
-    vm->typestack->data[id] = TYPE_NUMBER;
+    vm->typestack->data[id] = TYPE_ANY;
     return id;
 }
 
@@ -425,7 +425,7 @@ Int new_string(VirtualMachine *vm, char *string)
 {
     Int id = new_var(vm);
     vm->stack->data[id].s = str_duplicate(string);
-    vm->typestack->data[id] = TYPE_STRING;
+    vm->typestack->data[id] = TYPE_ALLOC;
     return id;
 }
 
@@ -474,8 +474,8 @@ void free_vm(VirtualMachine *vm)
         value = list_pop(*vm->stack);
         switch (list_pop(*vm->typestack))
         {
-            case TYPE_STRING:
-                free(value.s);
+            case TYPE_ALLOC:
+                free(value.p);
                 break;
             default:
                 break;
@@ -511,51 +511,67 @@ IntList* default_parser(void *_vm, char *cmd)
     while (splited->size > 0)
     {
         char* str = list_pop(*splited);
-        
-        if (str[0] == '(')
+
+        switch (str[0])
         {
-            if(str[1] == '@') //string
-            {
-                char* temp = str + 2;
-                temp[strlen(temp) - 1] = '\0';
+            case '\'':
+            case '"':
+                char* temp = str_nduplicate(str + 1, strlen(str) - 2);
                 Int var = new_string(vm, temp);
-                list_push(*result, var);            
-            }
-            else
-            {
-                char* temp = str + 1;
-                temp[strlen(temp) - 1] = '\0';
-                Int index = eval(vm, temp);
-                list_push(*result, index);
-            }
+                list_push(*result, var);
+                free(temp);
+                break;
+            case '(':
+                if(str[1] == '@') //string
+                {
+                    char* temp = str + 2;
+                    temp[strlen(temp) - 1] = '\0';
+                    Int var = new_string(vm, temp);
+                    list_push(*result, var);            
+                }
+                else
+                {
+                    char* temp = str + 1;
+                    temp[strlen(temp) - 1] = '\0';
+                    Int index = eval(vm, temp);
+                    list_push(*result, index);
+                }
+                break;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            case '-':
+                if(strchr(str, '.')) // float
+                {
+                    Float number = atof(str);
+                    list_push(*result, pun(number, f, i));
+                }
+                else // int
+                {
+                    list_push(*result, atol(str));
+                }
+                break;
+            default:
+                {
+                    Int hashindex = hash_find(vm, str);
+                    if (hashindex == -1) 
+                    {
+                        printf("BRUTER_ERROR: variable %s not found\n", str);
+                    }
+                    else 
+                    {
+                        list_push(*result, vm->hash_indexes->data[hashindex]);
+                    }
+                }
+                break;
         }
-        else if (str[0] == '"' || str[0] == '\'') // string
-        {
-            char* temp = str_nduplicate(str + 1, strlen(str) - 2);
-            Int var = new_string(vm, temp);
-            list_push(*result, var);
-            free(temp);
-        }
-        else if (isdigit(str[0]) || (str[0] == '-' && isdigit(str[1]))) // number
-        {
-            Int var = new_number(vm, atof(str));
-            list_push(*result, var);
-        }
-        else //variable 
-        {
-            int hashindex = -1;
-            hashindex = hash_find(vm, str);
-
-            if (hashindex == -1) 
-            {
-                printf("BRUTER_ERROR: variable %s not found\n", str);
-            }
-            else 
-            {
-                list_push(*result, vm->hash_indexes->data[hashindex]);
-            }
-        }
-
         free(str);
     }
     list_free(*splited);
@@ -585,9 +601,8 @@ Int interpret(VirtualMachine *vm, char* cmd)
                 result = _function(vm, args);
                 list_unshift(*args, func);
                 break;
-
                 
-            case TYPE_STRING:
+            case TYPE_ALLOC:
                 // eval
                 result = eval(vm, data(func).s);
                 break;
@@ -667,8 +682,8 @@ void unuse_var(VirtualMachine *vm, Int index)
 {
     switch (data_t(index))
     {
-        case TYPE_STRING:
-            free(data(index).s);
+        case TYPE_ALLOC:
+            free(data(index).p);
             break;
         default:
             break;
