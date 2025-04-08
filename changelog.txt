@@ -11,6 +11,11 @@
 - Value.pointer renamed to Value.p;
 - vm->parser is once again a thing;
 - new macro: pun;
+- str_duplicate is now strdup and str_nduplicate is strndub;
+- unused string functions removed;
+- no more unuse_var;
+- no more vm->unused;
+- new_var and register_var refactored, other new_ and register_ functions removed;
 
 (05/04/2025) - version 0.7.9
 

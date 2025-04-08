@@ -254,7 +254,6 @@ typedef struct
 {
     ValueList *stack;
     ByteList *typestack;
-    IntList *unused;
     
     // hashes
     StringList *hash_names;
@@ -267,16 +266,12 @@ typedef Int (*Function)(VirtualMachine*, IntList*);
 typedef void (*InitFunction)(VirtualMachine*);
 
 //String
-char* str_duplicate(const char *str);
-char* str_nduplicate(const char *str, Int n);
-char* str_format(const char *fmt, ...);
-char* str_sub(const char *str, Int start, Int end);
-char* str_concat(const char *str1, const char *str2);
-char* str_replace(const char *str, const char *substr, const char *replacement);
-char* str_replace_all(const char *str, const char *substr, const char *replacement);
+#ifdef _WIN32
+#define strdup _strdup
+#endif
 
-StringList* str_split(char *str, char *delim);
-StringList* str_split_char(char *str, char delim);
+char* str_format(const char *fmt, ...);
+
 StringList* special_space_split(char *str);
 StringList* special_split(char *str, char delim);
 
@@ -284,19 +279,10 @@ StringList* special_split(char *str, char delim);
 
 VirtualMachine* make_vm();
 void free_vm(VirtualMachine *vm);
-void unuse_var(VirtualMachine *vm, Int index);
-
-Int new_number(VirtualMachine *vm, Float number);
-Int new_string(VirtualMachine *vm, char *str);
-Int new_builtin(VirtualMachine *vm, Function function);
-Int new_var(VirtualMachine *vm);
-
-
 Value value_duplicate(Value value, Byte type);
-Int register_var(VirtualMachine *vm, char* varname);
-Int register_string(VirtualMachine *vm, char* varname, char* string);
-Int register_number(VirtualMachine *vm, char* varname, Float number);
-Int register_builtin(VirtualMachine *vm, char* varname, Function function);
+
+Int new_var(VirtualMachine *vm, Byte type, Int content);
+Int register_var(VirtualMachine *vm, char* varname, Byte type, Int content);
 
 Int hash_find(VirtualMachine *vm, char *key);
 void hash_set(VirtualMachine *vm, char *key, Int index);
