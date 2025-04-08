@@ -1,11 +1,8 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
-(07/04/2025) - version 0.8.0
+(08/04/2025) - version 0.8.0
 
-- 
-
-(06/04/2025) - version 0.7.9a
-
+- now we have just 2 types: TYPE_DATA and TYPE_ALLOC;
 - --cc is now --compiler and -cc;
 - new Value property: u;
 - Value.integer renamed to Value.i;

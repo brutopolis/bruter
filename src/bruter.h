@@ -27,10 +27,10 @@
 #include <ctype.h>
 
 // version
-#define VERSION "0.8.0"
+#define VERSION "0.7.9a"
 
 // types
-#define TYPE_ANY 0
+#define TYPE_DATA 0
 #define TYPE_ALLOC 1
 
 // we use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
@@ -260,8 +260,6 @@ typedef struct
     StringList *hash_names;
     IntList *hash_indexes;
 
-    // functions
-    IntList* (*parser)(void*, char*);
 } VirtualMachine;
 
 //Function
@@ -274,7 +272,6 @@ char* str_nduplicate(const char *str, Int n);
 char* str_format(const char *fmt, ...);
 char* str_sub(const char *str, Int start, Int end);
 char* str_concat(const char *str1, const char *str2);
-Int str_find(const char *str, const char *substr);
 char* str_replace(const char *str, const char *substr, const char *replacement);
 char* str_replace_all(const char *str, const char *substr, const char *replacement);
 
@@ -316,8 +313,12 @@ void hash_unset(VirtualMachine *vm, char *key);
 #define function(name) Int name(VirtualMachine *vm, IntList *args)
 #define init(name) void init_##name(VirtualMachine *vm)
 
-Int interpret(VirtualMachine *vm, char* cmd);
+// eval
 Int eval(VirtualMachine *vm, char *cmd);
+Int interpret(VirtualMachine *vm, char *cmd);
+
+// functions
+IntList* parse(void* _vm, char* cmd);
 
 // pun macro for Value using the Value union
 // v.from = value; return v.to;

@@ -114,12 +114,6 @@ char* str_replace_all(const char *str, const char *substr, const char *replaceme
     return newstr;
 }
 
-
-Int str_find(const char *str, const char *substr)
-{
-    return strstr(str, substr) - str;
-}
-
 StringList* special_space_split(char *str)
 {
     StringList *splited = list_init(StringList);
@@ -396,6 +390,21 @@ void hash_unset(VirtualMachine *vm, char* varname)
 
 //variable functions
 
+VirtualMachine* make_vm()
+{
+    VirtualMachine *vm = (VirtualMachine*)malloc(sizeof(VirtualMachine));
+    vm->stack = list_init(ValueList);
+    vm->typestack = list_init(ByteList);
+    vm->hash_names = list_init(StringList);
+    vm->hash_indexes = list_init(IntList);
+    vm->unused = list_init(IntList);
+
+    // @0 = null
+    register_var(vm, "null");
+
+    return vm;
+}
+
 // var new 
 Int new_var(VirtualMachine *vm)
 { 
@@ -408,7 +417,7 @@ Int new_var(VirtualMachine *vm)
         Value value;
         value.p = NULL;
         list_push(*vm->stack, value);
-        list_push(*vm->typestack, TYPE_ANY);
+        list_push(*vm->typestack, TYPE_DATA);
         return vm->stack->size-1;
     }
 }
@@ -417,7 +426,7 @@ Int new_number(VirtualMachine *vm, Float number)
 {
     Int id = new_var(vm);
     vm->stack->data[id].f = number;
-    vm->typestack->data[id] = TYPE_ANY;
+    vm->typestack->data[id] = TYPE_DATA;
     return id;
 }
 
@@ -433,7 +442,7 @@ Int new_builtin(VirtualMachine *vm, Function function)
 {
     Int id = new_var(vm);
     vm->stack->data[id].p = function;
-    vm->typestack->data[id] = TYPE_ANY;
+    vm->typestack->data[id] = TYPE_DATA;
     return id;
 }
 
@@ -475,7 +484,7 @@ void free_vm(VirtualMachine *vm)
         switch (list_pop(*vm->typestack))
         {
             case TYPE_ALLOC:
-                free(value.p);
+                free(value.s);
                 break;
             default:
                 break;
@@ -499,7 +508,7 @@ void free_vm(VirtualMachine *vm)
 }
 
 // Parser functions
-IntList* default_parser(void *_vm, char *cmd) 
+IntList* parse(void *_vm, char *cmd) 
 {
     VirtualMachine* vm = (VirtualMachine*)_vm;
     IntList *result = list_init(IntList);
@@ -511,67 +520,51 @@ IntList* default_parser(void *_vm, char *cmd)
     while (splited->size > 0)
     {
         char* str = list_pop(*splited);
-
-        switch (str[0])
+        
+        if (str[0] == '(')
         {
-            case '\'':
-            case '"':
-                char* temp = str_nduplicate(str + 1, strlen(str) - 2);
+            if(str[1] == '@') //string
+            {
+                char* temp = str + 2;
+                temp[strlen(temp) - 1] = '\0';
                 Int var = new_string(vm, temp);
-                list_push(*result, var);
-                free(temp);
-                break;
-            case '(':
-                if(str[1] == '@') //string
-                {
-                    char* temp = str + 2;
-                    temp[strlen(temp) - 1] = '\0';
-                    Int var = new_string(vm, temp);
-                    list_push(*result, var);            
-                }
-                else
-                {
-                    char* temp = str + 1;
-                    temp[strlen(temp) - 1] = '\0';
-                    Int index = eval(vm, temp);
-                    list_push(*result, index);
-                }
-                break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            case '-':
-                if(strchr(str, '.')) // float
-                {
-                    Float number = atof(str);
-                    list_push(*result, pun(number, f, i));
-                }
-                else // int
-                {
-                    list_push(*result, atol(str));
-                }
-                break;
-            default:
-                {
-                    Int hashindex = hash_find(vm, str);
-                    if (hashindex == -1) 
-                    {
-                        printf("BRUTER_ERROR: variable %s not found\n", str);
-                    }
-                    else 
-                    {
-                        list_push(*result, vm->hash_indexes->data[hashindex]);
-                    }
-                }
-                break;
+                list_push(*result, var);            
+            }
+            else
+            {
+                char* temp = str + 1;
+                temp[strlen(temp) - 1] = '\0';
+                Int index = eval(vm, temp);
+                list_push(*result, index);
+            }
         }
+        else if (str[0] == '"' || str[0] == '\'') // string
+        {
+            char* temp = str_nduplicate(str + 1, strlen(str) - 2);
+            Int var = new_string(vm, temp);
+            list_push(*result, var);
+            free(temp);
+        }
+        else if (isdigit(str[0]) || (str[0] == '-' && isdigit(str[1]))) // number
+        {
+            Int var = new_number(vm, atof(str));
+            list_push(*result, var);
+        }
+        else //variable 
+        {
+            int hashindex = -1;
+            hashindex = hash_find(vm, str);
+
+            if (hashindex == -1) 
+            {
+                printf("BRUTER_ERROR: variable %s not found\n", str);
+            }
+            else 
+            {
+                list_push(*result, vm->hash_indexes->data[hashindex]);
+            }
+        }
+
         free(str);
     }
     list_free(*splited);
@@ -580,7 +573,7 @@ IntList* default_parser(void *_vm, char *cmd)
 
 Int interpret(VirtualMachine *vm, char* cmd)
 {
-    IntList *args = vm->parser(vm, cmd);
+    IntList *args = parse(vm, cmd);
 
     if (!args->size)
     {
@@ -596,11 +589,12 @@ Int interpret(VirtualMachine *vm, char* cmd)
 
         switch (vm->typestack->data[func])
         {
-            case TYPE_ANY:
+            case TYPE_DATA:
                 _function = vm->stack->data[func].p;
                 result = _function(vm, args);
                 list_unshift(*args, func);
                 break;
+
                 
             case TYPE_ALLOC:
                 // eval
@@ -683,29 +677,13 @@ void unuse_var(VirtualMachine *vm, Int index)
     switch (data_t(index))
     {
         case TYPE_ALLOC:
-            free(data(index).p);
+            free(data(index).s);
             break;
         default:
             break;
     }
     data(index).i = 0;
-    data_t(index) = TYPE_ANY;
+    data_t(index) = TYPE_DATA;
     list_push(*vm->unused, index);
 }
 
-VirtualMachine* make_vm()
-{
-    VirtualMachine *vm = (VirtualMachine*)malloc(sizeof(VirtualMachine));
-    vm->stack = list_init(ValueList);
-    vm->typestack = list_init(ByteList);
-    vm->hash_names = list_init(StringList);
-    vm->hash_indexes = list_init(IntList);
-    vm->unused = list_init(IntList);
-
-    vm->parser = default_parser;
-
-    // @0 = null
-    register_var(vm, "null");
-
-    return vm;
-}
