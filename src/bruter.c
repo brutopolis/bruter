@@ -330,7 +330,7 @@ IntList* parse(void *_vm, char *cmd)
         {
             if(str[1] == '@' && str[2] == '@') //string
             {
-                char* temp = str + 2;
+                char* temp = str + 3;
                 temp[strlen(temp) - 1] = '\0';
                 Int var = new_var(vm, TYPE_ALLOC, pun(strdup(temp), s, i));
                 list_push(*result, var);
