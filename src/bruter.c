@@ -384,6 +384,7 @@ IntList* parse(void *_vm, char *cmd)
             if (hashindex == -1) 
             {
                 printf("BRUTER_ERROR: variable %s not found\n", str);
+                list_push(*result, -1);
             }
             else 
             {
