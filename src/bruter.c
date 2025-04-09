@@ -328,7 +328,7 @@ IntList* parse(void *_vm, char *cmd)
         
         if (str[0] == '(')
         {
-            if(str[1] == '@') //string
+            if(str[1] == '@' && str[2] == '@') //string
             {
                 char* temp = str + 2;
                 temp[strlen(temp) - 1] = '\0';
@@ -343,6 +343,17 @@ IntList* parse(void *_vm, char *cmd)
                 list_push(*result, index);
             }
         }
+        else if (str[0] == '@')
+        {
+            if (strchr(str, '.')) // float
+            {
+                list_push(*result, pun((Float)atof(str+1), f, i));
+            }
+            else // int
+            {
+                list_push(*result, (Int)atol(str+1));
+            }
+        }
         else if (str[0] == '"' || str[0] == '\'') // string
         {
             char* temp = strndup(str + 1, strlen(str) - 2);
@@ -355,13 +366,13 @@ IntList* parse(void *_vm, char *cmd)
             if (strchr(str, '.')) // float
             {
                 Float f = atof(str);
-                Int var = new_var(vm, TYPE_DATA, pun(strdup(str), s, i));
+                Int var = new_var(vm, TYPE_DATA, pun(f, f, i));
                 list_push(*result, var);
             }
             else // int
             {
                 Int i = atol(str);
-                Int var = new_var(vm, TYPE_DATA, pun(strdup(str), s, i));
+                Int var = new_var(vm, TYPE_DATA, i);
                 list_push(*result, var);
             }
         }

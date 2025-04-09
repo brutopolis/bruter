@@ -16,6 +16,7 @@
 - no more unuse_var;
 - no more vm->unused;
 - new_var and register_var refactored, other new_ and register_ functions removed;
+- @ operator is back, and now also deal with negative numbers and floats as well;
 
 (05/04/2025) - version 0.7.9
 

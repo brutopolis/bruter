@@ -27,7 +27,7 @@
 #include <ctype.h>
 
 // version
-#define VERSION "0.7.9a"
+#define VERSION "0.8.0"
 
 // types
 #define TYPE_DATA 0
