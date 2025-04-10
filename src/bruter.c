@@ -270,7 +270,7 @@ Int new_var(VirtualMachine *vm, Byte type, Int content)
     Value value;
     value.i = content;
     list_push(*vm->stack, value);
-    list_push(*vm->typestack, TYPE_DATA);
+    list_push(*vm->typestack, type);
     return vm->stack->size-1;
 }
 
@@ -330,9 +330,7 @@ IntList* parse(void *_vm, char *cmd)
         {
             if(str[1] == '@' && str[2] == '@') //string
             {
-                char* temp = str + 3;
-                temp[strlen(temp) - 1] = '\0';
-                Int var = new_var(vm, TYPE_ALLOC, pun(strdup(temp), s, i));
+                Int var = new_var(vm, TYPE_ALLOC, pun(strndup(str+3, strlen(str)-4), s, i));
                 list_push(*result, var);
             }
             else
