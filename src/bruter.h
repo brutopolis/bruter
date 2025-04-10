@@ -27,7 +27,7 @@
 #include <ctype.h>
 
 // version
-#define VERSION "0.8.0"
+#define VERSION "0.8.0a"
 
 // types
 #define TYPE_DATA 0
@@ -279,7 +279,6 @@ StringList* special_split(char *str, char delim);
 
 VirtualMachine* make_vm();
 void free_vm(VirtualMachine *vm);
-Value value_duplicate(Value value, Byte type);
 
 Int new_var(VirtualMachine *vm, Byte type, Int content);
 Int register_var(VirtualMachine *vm, char* varname, Byte type, Int content);

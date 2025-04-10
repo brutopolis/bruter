@@ -1,6 +1,6 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
-(08/04/2025) - version 0.8.0
+(09/04/2025) - version 0.8.0a
 
 - now we have just 2 types: TYPE_DATA and TYPE_ALLOC;
 - --cc is now --compiler and -cc;
@@ -17,6 +17,7 @@
 - no more vm->unused;
 - new_var and register_var refactored, other new_ and register_ functions removed;
 - @ operator is back, and now also deal with negative numbers and floats as well;
+- moved internal file functions to buxu;
 
 (05/04/2025) - version 0.7.9
 
