@@ -30,13 +30,59 @@
 #define VERSION "0.8.0a"
 
 // types
-#define TYPE_DATA 0
-#define TYPE_ALLOC 1
+enum 
+{
+    TYPE_DATA,
+    TYPE_ALLOC,
+};
+
+#ifndef BIT_MATH
+#define BIT_MATH 1
+
+static inline uint8_t bit_get(uint8_t byte, uint8_t bit)
+{
+    return (byte >> bit) & 1;
+}
+
+static inline uint8_t bit_set(uint8_t byte, uint8_t bit)
+{
+    return byte | (1 << bit);
+}
+
+static inline uint8_t bit_clear(uint8_t byte, uint8_t bit)
+{
+    return byte & ~(1 << bit);
+}
+
+static inline uint8_t bit_toggle(uint8_t byte, uint8_t bit)
+{
+    return byte ^ (1 << bit);
+}
+
+#endif
+
+typedef struct 
+{
+    unsigned int alloc: 1;
+    unsigned int type: 7;
+} Type;
+
+typedef struct
+{
+    unsigned int bit0: 1;
+    unsigned int bit1: 1;
+    unsigned int bit2: 1;
+    unsigned int bit3: 1;
+    unsigned int bit4: 1;
+    unsigned int bit5: 1;
+    unsigned int bit6: 1;
+    unsigned int bit7: 1;
+} BitByte;
 
 // we use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
 // bruter use a union as universal type, and bruter is able to manipulate and use pointers direcly so we need to use the pointer size;
 #if __SIZEOF_POINTER__ == 8
-    #define Int int64_t
+    #define Int long
     #define UInt uint64_t
     #define Float double
 #else
@@ -215,6 +261,7 @@
 // Value
 typedef union 
 {
+    // below types are not avaliable in bittype
     // these types depend on the size of the pointer
     Float f;
     Int i;
@@ -234,13 +281,6 @@ typedef union
     int32_t i32[sizeof(Float) / 4];
 
     float f32[sizeof(Float) / 4];
-
-    #if __SIZEOF_POINTER__ == 8
-        uint64_t u64[sizeof(Float) / 8];
-        int64_t i64[sizeof(Float) / 8];
-        double f64[sizeof(Float) / 8];
-    #endif
-
 } Value;
 
 //List
@@ -314,11 +354,4 @@ IntList* parse(void* _vm, char* cmd);
     v.to; \
 })
 
-#ifndef ARDUINO
-
-char* readfile(char *filename);
-void writefile(char *filename, char *content);
-bool file_exists(char *filename);
-
-#endif
 #endif
