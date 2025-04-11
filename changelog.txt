@@ -1,11 +1,6 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
-(11/04/2025) - version 0.8.0b
-
-- removed Value.u64, Value.i64 and Value.f64;
-
-
-(09/04/2025) - version 0.8.0a
+(11/04/2025) - version 0.8.0a
 
 - now we have just 2 types: TYPE_DATA and TYPE_ALLOC;
 - --cc is now --compiler and -cc;
@@ -14,7 +9,6 @@
 - Value.number renamed to Value.f;
 - Value.string renamed to Value.s;
 - Value.pointer renamed to Value.p;
-- vm->parser is once again a thing;
 - new macro: pun;
 - str_duplicate is now strdup and str_nduplicate is strndub;
 - unused string functions removed;
@@ -23,6 +17,7 @@
 - new_var and register_var refactored, other new_ and register_ functions removed;
 - @ operator is back, and now also deal with negative numbers and floats as well;
 - moved internal file functions to buxu;
+- removed Value.u64, Value.i64 and Value.f64;
 
 (05/04/2025) - version 0.7.9
 
