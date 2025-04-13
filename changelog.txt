@@ -1,6 +1,6 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
-(11/04/2025) - version 0.8.0a
+(13/04/2025) - version 0.8.0a
 
 - now we have just 2 types: TYPE_DATA and TYPE_ALLOC;
 - --cc is now --compiler and -cc;
@@ -18,6 +18,10 @@
 - @ operator is back, and now also deal with negative numbers and floats as well;
 - moved internal file functions to buxu;
 - removed Value.u64, Value.i64 and Value.f64;
+- new typing system using bitfields;
+- some fixes;
+
+TODO: create a new splitter that use \0 for split and return a list of pointers to the same string, avoinding some allocs & frees;
 
 (05/04/2025) - version 0.7.9
 

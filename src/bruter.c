@@ -2,7 +2,7 @@
 
 //string functions
 #ifdef _WIN32
-char* strndup(const char *str, Int n)
+char* strndup(const char *str, UInt n)
 {
     char *dup = (char*)malloc(n + 1);
     for (Int i = 0; i < n; i++)
@@ -187,18 +187,18 @@ VirtualMachine* make_vm()
 {
     VirtualMachine *vm = (VirtualMachine*)malloc(sizeof(VirtualMachine));
     vm->stack = list_init(ValueList);
-    vm->typestack = list_init(ByteList);
+    vm->typestack = list_init(TypeList);
     vm->hash_names = list_init(StringList);
     vm->hash_indexes = list_init(IntList);
 
     // @0 = null
-    register_var(vm, "null", 0, 0);
+    register_var(vm, "null", TYPE_DATA, 0);
 
     return vm;
 }
 
 // var new 
-Int new_var(VirtualMachine *vm, Byte type, Int content)
+Int new_var(VirtualMachine *vm, Type type, Int content)
 {
     Value value;
     value.i = content;
@@ -207,7 +207,7 @@ Int new_var(VirtualMachine *vm, Byte type, Int content)
     return vm->stack->size-1;
 }
 
-Int register_var(VirtualMachine *vm, char* varname, Byte type, Int content)
+Int register_var(VirtualMachine *vm, char* varname, Type type, Int content)
 {
     Int index = new_var(vm, type, content);
     hash_set(vm, varname, index);
@@ -221,12 +221,10 @@ void free_vm(VirtualMachine *vm)
     while (vm->stack->size > 0)
     {
         value = list_pop(*vm->stack);
-        switch (list_pop(*vm->typestack))
+        switch (list_pop(*vm->typestack).alloc)
         {
-            case TYPE_ALLOC:
-                free(value.s);
-                break;
-            default:
+            case 1:
+                free(value.p);
                 break;
         }
     }
@@ -263,7 +261,7 @@ IntList* parse(void *_vm, char *cmd)
         {
             if(str[1] == '@' && str[2] == '@') //string
             {
-                Int var = new_var(vm, TYPE_ALLOC, pun(strndup(str+3, strlen(str)-4), s, i));
+                Int var = new_var(vm, TYPE_STRING, pun(strndup(str+3, strlen(str)-4), s, i));
                 list_push(*result, var);
             }
             else
@@ -288,7 +286,7 @@ IntList* parse(void *_vm, char *cmd)
         else if (str[0] == '"' || str[0] == '\'') // string
         {
             char* temp = strndup(str + 1, strlen(str) - 2);
-            Int var = new_var(vm, TYPE_ALLOC, pun(temp, s, i));
+            Int var = new_var(vm, TYPE_STRING, pun(temp, s, i));
             list_push(*result, var);
             //free(temp);
         }
@@ -297,7 +295,7 @@ IntList* parse(void *_vm, char *cmd)
             if (strchr(str, '.')) // float
             {
                 Float f = atof(str);
-                Int var = new_var(vm, TYPE_DATA, pun(f, f, i));
+                Int var = new_var(vm, TYPE_FLOAT, pun(f, f, i));
                 list_push(*result, var);
             }
             else // int
@@ -345,18 +343,38 @@ Int interpret(VirtualMachine *vm, char* cmd)
     {
         Function _function;
 
-        switch (vm->typestack->data[func])
+        switch (vm->typestack->data[func].exec)
         {
-            case TYPE_DATA:
-                _function = vm->stack->data[func].p;
-                result = _function(vm, args);
-                list_unshift(*args, func);
+            case 1:
+                switch (vm->typestack->data[func].string)
+                {
+                    case 1:
+                        switch (vm->typestack->data[func].alloc)
+                        {
+                            case 1:
+                                result = eval(vm, vm->stack->data[func].s);
+                                list_unshift(*args, func);
+                                break;
+
+                            case 0:
+                                result = eval(vm, vm->stack->data[func].i8);
+                                list_unshift(*args, func);
+                                break;
+                        }
+                        break;
+
+                    case 0:
+                        _function = vm->stack->data[func].p;
+                        result = _function(vm, args);
+                        list_unshift(*args, func);
+                        break;
+                }
                 break;
 
                 
-            case TYPE_ALLOC:
-                // eval
-                result = eval(vm, data(func).s);
+            default:
+                printf("BRUTER_ERROR: this value is not executable\n");
+                result = -1;
                 break;
         }
     }

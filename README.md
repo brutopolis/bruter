@@ -9,7 +9,7 @@
 
 - `()` = expression
 
-- `(@ )` = string delimiter
+- `(@@ )` = string delimiter
 
 - `""` = string delimiter
 
@@ -24,11 +24,10 @@
     command (command (command ...));
     command variable_1 variable_2 ...;
     command name;
-    "script whatever";
 
 # Types
       
-  BRUTER essentially has 4 types of data:
+  BRUTER essentially has 2 types of data:
   - `any`, 4 or 8 bytes;
   - `alloc`, a pointer, usually to a string;
 

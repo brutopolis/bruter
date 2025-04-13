@@ -29,13 +29,6 @@
 // version
 #define VERSION "0.8.0a"
 
-// types
-enum 
-{
-    TYPE_DATA,
-    TYPE_ALLOC,
-};
-
 #ifndef BIT_MATH
 #define BIT_MATH 1
 
@@ -60,24 +53,6 @@ static inline uint8_t bit_toggle(uint8_t byte, uint8_t bit)
 }
 
 #endif
-
-typedef struct 
-{
-    unsigned int alloc: 1;
-    unsigned int type: 7;
-} Type;
-
-typedef struct
-{
-    unsigned int bit0: 1;
-    unsigned int bit1: 1;
-    unsigned int bit2: 1;
-    unsigned int bit3: 1;
-    unsigned int bit4: 1;
-    unsigned int bit5: 1;
-    unsigned int bit6: 1;
-    unsigned int bit7: 1;
-} BitByte;
 
 // we use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
 // bruter use a union as universal type, and bruter is able to manipulate and use pointers direcly so we need to use the pointer size;
@@ -196,8 +171,6 @@ typedef struct
     } \
 } while (0)
 
-
-
 // remove element at index i and return it
 #define list_remove(s, i) \
 ({ \
@@ -283,17 +256,35 @@ typedef union
     float f32[sizeof(Float) / 4];
 } Value;
 
+typedef struct 
+{
+    unsigned int alloc: 1;
+    unsigned int exec: 1;
+    unsigned int string: 1;
+    unsigned int floating_point: 1;
+    unsigned int other: 4;
+} Type;
+
+
+
+#define TYPE_ALLOC (Type){.alloc = 1, .exec = 0, .string = 0, .floating_point = 0, .other = 0}
+#define TYPE_STRING (Type){.alloc = 1, .exec = 0, .string = 1, .floating_point = 0, .other = 0}
+#define TYPE_SCRIPT (Type){.alloc = 1, .exec = 1, .string = 1, .floating_point = 0, .other = 0}
+#define TYPE_FUNC (Type){.alloc = 0, .exec = 1, .string = 0, .floating_point = 0, .other = 0}
+#define TYPE_DATA (Type){.alloc = 0, .exec = 0, .string = 0, .floating_point = 0, .other = 0}
+#define TYPE_FLOAT (Type){.alloc = 0, .exec = 0, .string = 0, .floating_point = 1, .other = 0}
+
 //List
 typedef List(Value) ValueList;
 typedef List(char*) StringList;
 typedef List(Int) IntList;
-typedef List(Byte) ByteList;
+typedef List(Type) TypeList;
 
 
 typedef struct
 {
     ValueList *stack;
-    ByteList *typestack;
+    TypeList *typestack;
     
     // hashes
     StringList *hash_names;
@@ -308,6 +299,7 @@ typedef void (*InitFunction)(VirtualMachine*);
 //String
 #ifdef _WIN32
 #define strdup _strdup
+char* strndup(const char *str, UInt n);
 #endif
 
 char* str_format(const char *fmt, ...);
@@ -320,8 +312,8 @@ StringList* special_split(char *str, char delim);
 VirtualMachine* make_vm();
 void free_vm(VirtualMachine *vm);
 
-Int new_var(VirtualMachine *vm, Byte type, Int content);
-Int register_var(VirtualMachine *vm, char* varname, Byte type, Int content);
+Int new_var(VirtualMachine *vm, Type type, Int content);
+Int register_var(VirtualMachine *vm, char* varname, Type type, Int content);
 
 Int hash_find(VirtualMachine *vm, char *key);
 void hash_set(VirtualMachine *vm, char *key, Int index);
