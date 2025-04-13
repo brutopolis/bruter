@@ -192,24 +192,24 @@ VirtualMachine* make_vm()
     vm->hash_indexes = list_init(IntList);
 
     // @0 = null
-    register_var(vm, "null", TYPE_DATA, 0);
+    register_var(vm, "null", TYPE_DATA);
 
     return vm;
 }
 
 // var new 
-Int new_var(VirtualMachine *vm, Type type, Int content)
+Int new_var(VirtualMachine *vm, Type type)
 {
     Value value;
-    value.i = content;
+    value.p = NULL;
     list_push(*vm->stack, value);
     list_push(*vm->typestack, type);
     return vm->stack->size-1;
 }
 
-Int register_var(VirtualMachine *vm, char* varname, Type type, Int content)
+Int register_var(VirtualMachine *vm, char* varname, Type type)
 {
-    Int index = new_var(vm, type, content);
+    Int index = new_var(vm, type);
     hash_set(vm, varname, index);
     return index;
 }
@@ -250,19 +250,23 @@ IntList* parse(void *_vm, char *cmd)
     IntList *result = list_init(IntList);
     
     StringList *splited = special_space_split(cmd);
-    list_reverse(*splited);
-
-    //Int current = 0;
-    while (splited->size > 0)
+    char* str = NULL;
+    Int i = 0;
+    for (i = 0; i < splited->size; i++)
     {
-        char* str = list_pop(*splited);
+        str = splited->data[i];
         
         if (str[0] == '(')
         {
             if(str[1] == '@' && str[2] == '@') //string
             {
-                Int var = new_var(vm, TYPE_STRING, pun(strndup(str+3, strlen(str)-4), s, i));
+                int len = strlen(str);
+                memmove(str, str + 3, len - 4);
+                str[len - 4] = '\0';
+                Int var = new_var(vm, TYPE_STRING);
+                vm->stack->data[var].s = str; 
                 list_push(*result, var);
+                continue;
             }
             else
             {
@@ -285,9 +289,12 @@ IntList* parse(void *_vm, char *cmd)
         }
         else if (str[0] == '"' || str[0] == '\'') // string
         {
-            char* temp = strndup(str + 1, strlen(str) - 2);
-            Int var = new_var(vm, TYPE_STRING, pun(temp, s, i));
+            memmove(str, str + 1, strlen(str) - 2);
+            str[strlen(str) - 2] = '\0';
+            Int var = new_var(vm, TYPE_STRING);
+            data(var).s = str;
             list_push(*result, var);
+            continue;
             //free(temp);
         }
         else if (isdigit(str[0]) || str[0] == '-') // number
@@ -295,13 +302,15 @@ IntList* parse(void *_vm, char *cmd)
             if (strchr(str, '.')) // float
             {
                 Float f = atof(str);
-                Int var = new_var(vm, TYPE_FLOAT, pun(f, f, i));
+                Int var = new_var(vm, TYPE_FLOAT);
+                data(var).f = f;
                 list_push(*result, var);
             }
             else // int
             {
                 Int i = atol(str);
-                Int var = new_var(vm, TYPE_DATA, i);
+                Int var = new_var(vm, TYPE_DATA);
+                data(var).i = i;
                 list_push(*result, var);
             }
         }
@@ -397,11 +406,11 @@ Int eval(VirtualMachine *vm, char *cmd)
 
     StringList *splited = special_split(cmd, ';');
 
-    // remove empty or whitespace only strings using isspace
+    // remove empty or whitespace-only strings using isspace
     Int last = splited->size - 1;
-    while (last >= 0)
+    for (; last >= 0; last--)
     {
-        if (!strlen(splited->data[last]))
+        if (strlen(splited->data[last]) == 0)
         {
             free(list_pop(*splited));
         }
@@ -422,24 +431,18 @@ Int eval(VirtualMachine *vm, char *cmd)
         last--;
     }
 
-    list_reverse(*splited);
     Int result = -1;
-    while (splited->size > 0)
-    {
-        
-        char *str = list_pop(*splited);
-        if (!strlen(str))
-        {
-            free(str);
-            continue;
-        }
+    char* str = NULL;
+    for (Int i = 0; i < splited->size; i++)
+    {        
+        str = splited->data[i];
         result = interpret(vm, str);
         free(str);
         if (result > 0)
         {
-            while (splited->size > 0)
+            for (Int j = i + 1; j < splited->size; j++)
             {
-                free(list_pop(*splited));
+                free(splited->data[j]);
             }
             break;
         }

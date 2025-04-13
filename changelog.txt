@@ -10,7 +10,7 @@
 - Value.string renamed to Value.s;
 - Value.pointer renamed to Value.p;
 - new macro: pun;
-- str_duplicate is now strdup and str_nduplicate is strndub;
+- str_duplicate is now strdup and str_nduplicate is strndup;
 - unused string functions removed;
 - no more unuse_var;
 - no more vm->unused;
@@ -21,7 +21,7 @@
 - new typing system using bitfields;
 - some fixes;
 
-TODO: create a new splitter that use \0 for split and return a list of pointers to the same string, avoinding some allocs & frees;
+TODO: create a new splitter that use \0 for split and return a list of pointers to the same string, avoiding some allocs & frees;
 
 (05/04/2025) - version 0.7.9
 

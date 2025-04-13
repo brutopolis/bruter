@@ -312,8 +312,8 @@ StringList* special_split(char *str, char delim);
 VirtualMachine* make_vm();
 void free_vm(VirtualMachine *vm);
 
-Int new_var(VirtualMachine *vm, Type type, Int content);
-Int register_var(VirtualMachine *vm, char* varname, Type type, Int content);
+Int new_var(VirtualMachine *vm, Type type);
+Int register_var(VirtualMachine *vm, char* varname, Type type);
 
 Int hash_find(VirtualMachine *vm, char *key);
 void hash_set(VirtualMachine *vm, char *key, Int index);
