@@ -278,7 +278,17 @@ IntList* parse(void *_vm, char *cmd)
         }
         else if (str[0] == '@')
         {
-            if (strchr(str, '.')) // float
+            if (str[1] == '@')
+            {
+                int len = strlen(str);
+                memmove(str, str + 2, len - 3);
+                str[len - 3] = '\0';
+                Int var = new_var(vm, TYPE_STRING);
+                vm->stack->data[var].s = str;
+                list_push(*result, var);
+                continue;
+            }
+            else if (strchr(str, '.')) // float
             {
                 list_push(*result, pun((Float)atof(str+1), f, i));
             }
@@ -299,7 +309,28 @@ IntList* parse(void *_vm, char *cmd)
         }
         else if (isdigit(str[0]) || str[0] == '-') // number
         {
-            if (strchr(str, '.')) // float
+            if (str[0] == '0' && str[1] == 'x') // hex
+            {
+                Int i = strtol(str, NULL, 16);
+                Int var = new_var(vm, TYPE_DATA);
+                data(var).i = i;
+                list_push(*result, var);
+            }
+            else if (str[0] == '0' && str[1] == 'b') // bin
+            {
+                Int i = strtol(str, NULL, 2);
+                Int var = new_var(vm, TYPE_DATA);
+                data(var).i = i;
+                list_push(*result, var);
+            }
+            else if (str[0] == '0' && str[1] == 'o') // oct
+            {
+                Int i = strtol(str, NULL, 8);
+                Int var = new_var(vm, TYPE_DATA);
+                data(var).i = i;
+                list_push(*result, var);
+            }
+            else if (strchr(str, '.')) // float
             {
                 Float f = atof(str);
                 Int var = new_var(vm, TYPE_FLOAT);

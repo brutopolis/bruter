@@ -17,6 +17,8 @@
 
 - `;` = end of command separator
 
+- `@@` = string delimiter
+
 # Usage
 
     command;
@@ -24,10 +26,16 @@
     command (command (command ...));
     command variable_1 variable_2 ...;
     command name;
+    command @@name;
+    command 0b00000000;
+    command 0x00000000;
+    command 0o00000000;
+    command 0.000000;
+    command 0;
 
 # Types
       
-  BRUTER dont have types in the conventional way, bruter has a byte for each variable, this byte exemplifies how the variable is treated;
+  BRUTER dont have types in the conventional way, bruter has a byte for each variable, this byte define how the variable will be treated by the vm;
 
     struct 
     {
@@ -52,11 +60,6 @@
     
     ./build.sh
 
-    # debug build;
+    # for more options, run the build script with the --help flag;
     
-    ./build.sh --debug
-
-    # cc option:
-    # you can also define the path to a compiler;
-
-    ./build.sh -cc path/to/compiler
+    ./build.sh --help
