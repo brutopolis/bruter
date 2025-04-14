@@ -1,5 +1,25 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
+(13/04/2025) - version 0.8.0a
+
+- --cc is now --compiler and -cc;
+- new Value property: u;
+- Value.integer renamed to Value.i;
+- Value.number renamed to Value.f;
+- Value.string renamed to Value.s;
+- Value.pointer renamed to Value.p;
+- new macro: pun;
+- str_duplicate is now strdup and str_nduplicate is strndup;
+- unused string functions removed;
+- no more unuse_var;
+- no more vm->unused;
+- new_var and register_var refactored, other new_ and register_ functions removed;
+- @ operator is back, and now also deal with negative numbers and floats as well;
+- moved internal file functions to buxu;
+- removed Value.u64, Value.i64 and Value.f64;
+- new typing system using bitfields;
+- some fixes;
+
 (05/04/2025) - version 0.7.9
 
 - lists macros now do use memmove instead of moving one by one;

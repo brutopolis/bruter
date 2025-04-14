@@ -27,26 +27,47 @@
 #include <ctype.h>
 
 // version
-#define VERSION "0.7.9"
+#define VERSION "0.8.0a"
 
-// types
-#define TYPE_ANY 0
-#define TYPE_NUMBER 1
-#define TYPE_STRING 2
+#ifndef BIT_MATH
+#define BIT_MATH 1
+
+static inline uint8_t bit_get(uint8_t byte, uint8_t bit)
+{
+    return (byte >> bit) & 1;
+}
+
+static inline uint8_t bit_set(uint8_t byte, uint8_t bit)
+{
+    return byte | (1 << bit);
+}
+
+static inline uint8_t bit_clear(uint8_t byte, uint8_t bit)
+{
+    return byte & ~(1 << bit);
+}
+
+static inline uint8_t bit_toggle(uint8_t byte, uint8_t bit)
+{
+    return byte ^ (1 << bit);
+}
+
+#endif
 
 // we use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
 // bruter use a union as universal type, and bruter is able to manipulate and use pointers direcly so we need to use the pointer size;
 #if __SIZEOF_POINTER__ == 8
-    #define Int int64_t
+    #define Int long
+    #define UInt uint64_t
     #define Float double
 #else
+    #define UInt uint32_t
     #define Int int32_t
     #define Float float
 #endif
 
 #define Byte uint8_t
 
-// from bruter 0.7.7c include/c_list.h
 #define List(T) struct \
 { \
     T *data; \
@@ -150,10 +171,7 @@
     } \
 } while (0)
 
-
-
-//remove element at index i and return it
-// Remove element at index i and return it
+// remove element at index i and return it
 #define list_remove(s, i) \
 ({ \
     typeof((s).data[i]) ret = (s).data[i]; \
@@ -162,7 +180,7 @@
     ret; \
 })
 
-//same as remove but does a swap and pop, faster but the order of the elements will change
+// same as remove but does a swap and pop, faster but the order of the elements will change
 #define list_fast_remove(s, i) \
 ({ \
     typeof((s).data[i]) ret = (s).data[i]; \
@@ -213,16 +231,18 @@
     (s).data[i]\
 )
 
-//Value
+// Value
 typedef union 
 {
+    // below types are not avaliable in bittype
     // these types depend on the size of the pointer
-    Float number;
-    Int integer;
+    Float f;
+    Int i;
+    UInt u;
 
     // these types are pointers
-    char* string;
-    void* pointer;
+    char* s;
+    void* p;
     
     // these types are arrays
     uint8_t u8[sizeof(Float)];
@@ -234,27 +254,37 @@ typedef union
     int32_t i32[sizeof(Float) / 4];
 
     float f32[sizeof(Float) / 4];
-
-    #if __SIZEOF_POINTER__ == 8
-        uint64_t u64[sizeof(Float) / 8];
-        int64_t i64[sizeof(Float) / 8];
-        double f64[sizeof(Float) / 8];
-    #endif
-
 } Value;
+
+typedef struct 
+{
+    unsigned int alloc: 1;
+    unsigned int exec: 1;
+    unsigned int string: 1;
+    unsigned int floating: 1;
+    unsigned int other: 4;
+} Type;
+
+
+
+#define TYPE_ALLOC (Type){.alloc = 1, .exec = 0, .string = 0, .floating = 0, .other = 0}
+#define TYPE_STRING (Type){.alloc = 1, .exec = 0, .string = 1, .floating = 0, .other = 0}
+#define TYPE_SCRIPT (Type){.alloc = 1, .exec = 1, .string = 1, .floating = 0, .other = 0}
+#define TYPE_FUNC (Type){.alloc = 0, .exec = 1, .string = 0, .floating = 0, .other = 0}
+#define TYPE_DATA (Type){.alloc = 0, .exec = 0, .string = 0, .floating = 0, .other = 0}
+#define TYPE_FLOAT (Type){.alloc = 0, .exec = 0, .string = 0, .floating = 1, .other = 0}
 
 //List
 typedef List(Value) ValueList;
 typedef List(char*) StringList;
 typedef List(Int) IntList;
-typedef List(Byte) ByteList;
+typedef List(Type) TypeList;
 
 
 typedef struct
 {
     ValueList *stack;
-    ByteList *typestack;
-    IntList *unused;
+    TypeList *typestack;
     
     // hashes
     StringList *hash_names;
@@ -267,46 +297,27 @@ typedef Int (*Function)(VirtualMachine*, IntList*);
 typedef void (*InitFunction)(VirtualMachine*);
 
 //String
-char* str_duplicate(const char *str);
-char* str_nduplicate(const char *str, Int n);
-char* str_format(const char *fmt, ...);
-char* str_sub(const char *str, Int start, Int end);
-char* str_concat(const char *str1, const char *str2);
-Int str_find(const char *str, const char *substr);
-char* str_replace(const char *str, const char *substr, const char *replacement);
-char* str_replace_all(const char *str, const char *substr, const char *replacement);
+#ifdef _WIN32
+#define strdup _strdup
+char* strndup(const char *str, UInt n);
+#endif
 
-StringList* str_split(char *str, char *delim);
-StringList* str_split_char(char *str, char delim);
+char* str_format(const char *fmt, ...);
+
 StringList* special_space_split(char *str);
 StringList* special_split(char *str, char delim);
-
-#define is_true(value, __type) (__type == value.integer == 0 ? 0 : 1)
 
 // variable
 
 VirtualMachine* make_vm();
 void free_vm(VirtualMachine *vm);
-void unuse_var(VirtualMachine *vm, Int index);
 
-Int new_number(VirtualMachine *vm, Float number);
-Int new_string(VirtualMachine *vm, char *str);
-Int new_builtin(VirtualMachine *vm, Function function);
-Int new_var(VirtualMachine *vm);
-
-Value value_duplicate(Value value, Byte type);
-
-Int register_var(VirtualMachine *vm, char* varname);
-Int register_string(VirtualMachine *vm, char* varname, char* string);
-Int register_number(VirtualMachine *vm, char* varname, Float number);
-Int register_builtin(VirtualMachine *vm, char* varname, Function function);
+Int new_var(VirtualMachine *vm, Type type);
+Int register_var(VirtualMachine *vm, char* varname, Type type);
 
 Int hash_find(VirtualMachine *vm, char *key);
 void hash_set(VirtualMachine *vm, char *key, Int index);
 void hash_unset(VirtualMachine *vm, char *key);
-
-
-
 
 // macros
 #define data(index) (vm->stack->data[index])
@@ -326,11 +337,13 @@ Int interpret(VirtualMachine *vm, char *cmd);
 // functions
 IntList* parse(void* _vm, char* cmd);
 
-#ifndef ARDUINO
+// pun macro for Value using the Value union
+// v.from = value; return v.to;
+#define pun(value, from, to) \
+({ \
+    Value v; \
+    v.from = value; \
+    v.to; \
+})
 
-char* readfile(char *filename);
-void writefile(char *filename, char *content);
-bool file_exists(char *filename);
-
-#endif
 #endif

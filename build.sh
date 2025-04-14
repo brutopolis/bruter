@@ -11,7 +11,7 @@
 
 # usage function
 usage() {
-    echo "usage: $0 [--debug] [--cc gcc] [-h || --help] [--extra 'extra cc tags'] [--no-shared] [--no-static]"
+    echo "usage: $0 [--debug] [-cc || --compiler gcc] [-h || --help] [--extra 'extra cc tags'] [--no-shared] [--no-static]"
     exit 1
 }
 
@@ -29,7 +29,8 @@ NO_STATIC=0
 while [[ $# -gt 0 ]]; do
     case $1 in
         --debug) DEBUG=1; shift ;;
-        --cc) CC="$2"; shift 2 ;;
+        -cc) CC="$2"; shift 2 ;;
+        --compile) CC="$2"; shift 2 ;;
         --extra) EXTRA="$2"; shift 2 ;;
         --no-shared) NO_SHARED=1; shift ;;
         --no-static) NO_STATIC=1; shift ;;
