@@ -261,18 +261,18 @@ typedef struct
     unsigned int alloc: 1;
     unsigned int exec: 1;
     unsigned int string: 1;
-    unsigned int floating_point: 1;
+    unsigned int floating: 1;
     unsigned int other: 4;
 } Type;
 
 
 
-#define TYPE_ALLOC (Type){.alloc = 1, .exec = 0, .string = 0, .floating_point = 0, .other = 0}
-#define TYPE_STRING (Type){.alloc = 1, .exec = 0, .string = 1, .floating_point = 0, .other = 0}
-#define TYPE_SCRIPT (Type){.alloc = 1, .exec = 1, .string = 1, .floating_point = 0, .other = 0}
-#define TYPE_FUNC (Type){.alloc = 0, .exec = 1, .string = 0, .floating_point = 0, .other = 0}
-#define TYPE_DATA (Type){.alloc = 0, .exec = 0, .string = 0, .floating_point = 0, .other = 0}
-#define TYPE_FLOAT (Type){.alloc = 0, .exec = 0, .string = 0, .floating_point = 1, .other = 0}
+#define TYPE_ALLOC (Type){.alloc = 1, .exec = 0, .string = 0, .floating = 0, .other = 0}
+#define TYPE_STRING (Type){.alloc = 1, .exec = 0, .string = 1, .floating = 0, .other = 0}
+#define TYPE_SCRIPT (Type){.alloc = 1, .exec = 1, .string = 1, .floating = 0, .other = 0}
+#define TYPE_FUNC (Type){.alloc = 0, .exec = 1, .string = 0, .floating = 0, .other = 0}
+#define TYPE_DATA (Type){.alloc = 0, .exec = 0, .string = 0, .floating = 0, .other = 0}
+#define TYPE_FLOAT (Type){.alloc = 0, .exec = 0, .string = 0, .floating = 1, .other = 0}
 
 //List
 typedef List(Value) ValueList;
