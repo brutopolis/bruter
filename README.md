@@ -37,9 +37,7 @@
 
   BRUTER dont have types, everything is a sequence of 4 or 8 bytes, depending on the system;
 
-  BRUTER does not keep a track of what the use meant to each variable, it just stores the data, and is up to the user to keep track of what is what if needed;
-
-  the only thing that BRUTER keeps track of is the allocated memories, anything before the "NULL" variable is tracked to be freed;
+  BRUTER does not keep a track of what the user meant to each variable, it just stores the data, and is up to the user to keep track of what is what if needed;
 
   the "NULL" variable is a special variable that is used to mark the end of the allocated memory, modifing it will cause undefined behavior;
 
