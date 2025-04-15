@@ -54,10 +54,10 @@ mkdir -p build
 
 if [[ $NO_SHARED -eq 0 ]]; then # also build a shared library
     echo "building shared library"
-    $CC src/bruter.c -o build/libbruter.so -shared -fPIC -O3 -lm -Iinclude $DEBUGARGS $EXTRA
+    $CC src/bruter.c -o build/libbruter.so -shared -fPIC -O3 -Iinclude $DEBUGARGS $EXTRA
 fi
 
 if [[ $NO_STATIC -eq 0 ]]; then
     echo "building static library"
-    $CC src/bruter.c -o build/libbruter.a -c -O3 -lm -Iinclude $DEBUGARGS $EXTRA
+    $CC src/bruter.c -o build/libbruter.a -c -O3 -Iinclude $DEBUGARGS $EXTRA
 fi
