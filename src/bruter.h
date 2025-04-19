@@ -23,6 +23,7 @@
 #include <time.h>
 #include <float.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 // version
 #define VERSION "0.8.1"

@@ -1,6 +1,6 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
-(14/04/2025) - version 0.8.1
+(19/04/2025) - version 0.8.1
 
 - some of the code been rewritten;
 - there are no more types, no more hash_names neither hash_indexes;
@@ -11,6 +11,8 @@
 - new macro: hash;
 - bit, hex and octal numbers are now supported: 0b, 0x and 0o;
 - variables before the "NULL" variable are now considered as a memory allocation, and will be freed at the end of the program;
+- inttypes.h is now included in the header;
+- no more %ld;
 - some README.md updates;
 
 (13/04/2025) - version 0.8.0a

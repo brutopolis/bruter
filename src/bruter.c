@@ -134,7 +134,7 @@ void list_insert(List *list, Int i, Value value)
     } 
     else 
     {
-        printf("BRUTER_ERROR: index %ld out of range in list of size %ld\n", i, list->size);
+        printf("BRUTER_ERROR: index %" PRIdPTR "  out of range in list of size %" PRIdPTR " \n", i, list->size);
         exit(EXIT_FAILURE);
     }
 }
@@ -340,7 +340,7 @@ void hash_set(VirtualMachine *vm, char* varname, Int index)
     Int found = hash_find(vm, varname);
     if (index > vm->values->size || index < 0)
     {
-        printf("BRUTER_ERROR: index %ld out of range in hash of size %ld\n", index, vm->values->size);
+        printf("BRUTER_ERROR: index %" PRIdPTR "  out of range in hash of size %" PRIdPTR" \n", index, vm->values->size);
         exit(EXIT_FAILURE);
     }
 
@@ -600,7 +600,7 @@ Int interpret(VirtualMachine *vm, char* cmd)
     }
     else 
     {
-        printf("BRUTER_ERROR: %ld is not a function or script\n", func);
+        printf("BRUTER_ERROR: %" PRIdPTR " is not a function or script\n", func);
     }
     
     list_free(args);
