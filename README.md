@@ -34,23 +34,12 @@
     command 0;
 
 # Types
-      
-  BRUTER dont have types in the conventional way, bruter has a byte for each variable, this byte define how the variable will be treated by the vm;
 
-    struct 
-    {
-        unsigned int alloc: 1;
-        unsigned int exec: 1;
-        unsigned int string: 1;
-        unsigned int floating: 1;
-        unsigned int other: 4;
-    };
+  BRUTER dont have types, everything is a sequence of 4 or 8 bytes, depending on the system;
 
-  alloc: this bit indicate whether the variable is a pointer or not;
-  exec: this bit indicate whether the variable is executable or not;
-  string: this bit indicate whether the variable is a string or not;
-  floating: this bit indicate whether the variable is a floating point number or not;
-  other: this value is not really used, do whatever you want with it;
+  BRUTER does not keep a track of what the user meant to each variable, it just stores the data, and is up to the user to keep track of what is what if needed;
+
+  the "NULL" variable is a special variable that is used to mark the end of the allocated memory, modifing it will cause undefined behavior;
 
 # Building instructions
 
