@@ -26,12 +26,7 @@
 #include <inttypes.h>
 
 // version
-#define VERSION "0.8.1"
-
-#ifndef BIT_MATH
-#define BIT_MATH 1
-
-#endif
+#define VERSION "0.8.2"
 
 typedef intptr_t Int;
 typedef uintptr_t UInt;
@@ -117,7 +112,7 @@ VirtualMachine* make_vm(Int size);
 void free_vm(VirtualMachine *vm);
 
 Int new_var(VirtualMachine *vm, char* varname);
-Int new_first_var(VirtualMachine *vm, char* varname);
+Int new_block(VirtualMachine *vm, char* varname, Int size);
 
 Int hash_find(VirtualMachine *vm, char *varname);
 void hash_set(VirtualMachine *vm, char* varname, Int index);

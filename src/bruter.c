@@ -397,33 +397,27 @@ Int new_var(VirtualMachine *vm, char* varname)
     return vm->values->size-1;
 }
 
-Int new_first_var(VirtualMachine *vm, char* varname)
+Int new_block(VirtualMachine *vm, char* varname, Int size)// allocate size slots and 
 {
     char* namestr = (varname == NULL) ? NULL : str_duplicate(varname);
 
-    Value value;
-    value.p = NULL;
-    list_unshift(vm->values, value);
-    list_unshift(vm->hashes, (Value){.s = namestr});
-    return 0;
+    list_push(vm->values, (Value){.i = 0});
+    list_push(vm->hashes, (Value){.s = namestr});
+
+    Int index = vm->values->size - 1;
+    
+    for (Int i = 0; i < size-1; i++)
+    {
+        list_push(vm->values, (Value){.i = 0});
+        list_push(vm->hashes, (Value){.s = NULL});
+    }
+    
+    return index;
 }
 
 //frees
 void free_vm(VirtualMachine *vm)
 {
-    
-    for (Int i = 0; i < vm->values->size; i++)
-    {
-        if (vm->hashes->data[i].s != NULL && strcmp(vm->hashes->data[i].s, "NULL") == 0)
-        {
-            break;
-        }
-        else
-        {
-            free(vm->values->data[i].p);
-        }
-    }
-
     for (Int i = 0; i < vm->values->size; i++)
     {
         if (vm->hashes->data[i].s != NULL)
@@ -455,19 +449,15 @@ List* parse(void *_vm, char *cmd)
         {
             if(str[1] == '@' && str[2] == '@') //string
             {
-                int len = strlen(str);
-                memmove(str, str + 3, len - 4);
-                str[len - 4] = '\0';
+                Int len = strlen(str);
+                Int blocks = (len+1) / sizeof(void*);
+                Int var = new_block(vm, NULL, blocks);
+                memcpy(&vm->values->data[var].u8[0], str + 3, len - 4);
+                ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 4] = '\0';
 
-                Int var = new_first_var(vm, NULL);
-                for (Int j = 0; j < result->size; j++)
-                {
-                    result->data[j].i += 1;
-                }
-                
-                vm->values->data[var].s = str; 
                 list_push(result, (Value){.i = var});
-                continue;
+                
+                //continue;
             }
             else
             {
@@ -478,23 +468,7 @@ List* parse(void *_vm, char *cmd)
         }
         else if (str[0] == '@')
         {
-            if (str[1] == '@')
-            {
-                int len = strlen(str);
-                memmove(str, str + 2, len - 3);
-                str[len - 3] = '\0';
-                
-                Int var = new_first_var(vm, NULL);
-                for (Int j = 0; j < result->size; j++)
-                {
-                    result->data[j].i += 1;
-                }
-
-                vm->values->data[0].s = str;
-                list_push(result, (Value){.i = var});
-                continue;
-            }
-            else if (strchr(str, '.')) // float
+            if (strchr(str, '.')) // float
             {
                 list_push(result, (Value){.f = atof(str + 1)});
             }
@@ -505,18 +479,16 @@ List* parse(void *_vm, char *cmd)
         }
         else if (str[0] == '"' || str[0] == '\'') // string
         {
-            memmove(str, str + 1, strlen(str) - 2);
-            str[strlen(str) - 2] = '\0';
+            Int len = strlen(str);
+            Int blocks = (len+1) / sizeof(void*);
+            Int var = new_block(vm, NULL, blocks);
             
-            Int var = new_first_var(vm, NULL);
-            for (Int j = 0; j < result->size; j++)
-            {
-                result->data[j].i += 1;
-            }
-            
-            data(var).s = str;
+            memcpy(&vm->values->data[var].u8[0], str + 1, len - 2);
+            ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 2] = '\0';
+
             list_push(result, (Value){.i = var});
-            continue;
+
+            //continue;
             //free(temp);
         }
         else if (isdigit(str[0]) || str[0] == '-') // number

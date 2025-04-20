@@ -1,5 +1,13 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
+(20/04/2025) - version 0.8.2
+
+- strings system is completely reworked;
+- NULL is now ALWAYS @0;
+- @@word operator removed;
+- no variable is set to auto free at the end of the program anymore;
+- strings are now allocated in the values list itself instead of using a new allocation for each string;
+
 (19/04/2025) - version 0.8.1
 
 - some of the code been rewritten;
