@@ -7,7 +7,8 @@
 - @@word operator removed;
 - no variable is set to auto free at the end of the program anymore;
 - strings are now allocated in the values list itself instead of using a new allocation for each string;
-- @ operator removed
+- @ operator removed;
+- (@@) operator replaced by (@);
 
 (19/04/2025) - version 0.8.1
 

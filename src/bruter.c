@@ -447,7 +447,7 @@ List* parse(void *_vm, char *cmd)
         
         if (str[0] == '(')
         {
-            if(str[1] == '@' && str[2] == '@') //string
+            if(str[1] == '@') //string
             {
                 Int len = strlen(str);
                 Int blocks = (len+1) / sizeof(void*);
