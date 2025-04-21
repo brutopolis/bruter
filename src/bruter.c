@@ -452,8 +452,8 @@ List* parse(void *_vm, char *cmd)
                 Int len = strlen(str);
                 Int blocks = (len+1) / sizeof(void*);
                 Int var = new_block(vm, NULL, blocks);
-                memcpy(&vm->values->data[var].u8[0], str + 3, len - 4);
-                ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 4] = '\0';
+                memcpy(&vm->values->data[var].u8[0], str + 2, len - 3);
+                ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 3] = '\0';
 
                 list_push(result, (Value){.i = var});
                 
