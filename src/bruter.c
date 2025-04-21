@@ -466,17 +466,6 @@ List* parse(void *_vm, char *cmd)
                 list_push(result, (Value){.i = eval(vm, temp)});
             }
         }
-        else if (str[0] == '@')
-        {
-            if (strchr(str, '.')) // float
-            {
-                list_push(result, (Value){.f = atof(str + 1)});
-            }
-            else // int
-            {
-                list_push(result, (Value){.i = atol(str + 1)});
-            }
-        }
         else if (str[0] == '"' || str[0] == '\'') // string
         {
             Int len = strlen(str);
