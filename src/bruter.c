@@ -523,8 +523,7 @@ List* parse(void *_vm, char *cmd)
                 ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 3] = '\0';
 
                 list_push(result, (Value){.i = var});
-                
-                //continue;
+            
             }
             else
             {
@@ -543,9 +542,6 @@ List* parse(void *_vm, char *cmd)
             ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 2] = '\0';
 
             list_push(result, (Value){.i = var});
-
-            //continue;
-            //free(temp);
         }
         else if (isdigit(str[0]) || str[0] == '-') // number
         {

@@ -10,9 +10,6 @@
 - @ operator removed;
 - (@@) operator replaced by (@);
 
-- IDEA: maybe i should separate the preprocessor, and make the interpreter only recognize simple statements with no parenthesis;
-- and a preprocessor which take cares of the parenthesis multiple spaces, new lines etc;
-
 (19/04/2025) - version 0.8.1
 
 - some of the code been rewritten;
