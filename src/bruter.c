@@ -1,5 +1,72 @@
 #include "bruter.h"
 
+// file stuff
+char* readfile(char *filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        return NULL;
+    }
+
+    char *code = (char*)malloc(1);
+    if (code == NULL)
+    {
+        printf("BRUTER_ERROR: could not allocate memory for file\n");
+        fclose(file);
+        return NULL;
+    }
+
+    code[0] = '\0';
+
+    char *line = NULL;
+    size_t len = 0;
+    while (getline(&line, &len, file) != -1)
+    {
+        size_t new_size = strlen(code) + strlen(line) + 1;
+        char *temp = realloc(code, new_size);
+        if (temp == NULL)
+        {
+            printf("BRUTER_ERROR: could not reallocate memory while reading file\n");
+            free(code);
+            free(line);
+            fclose(file);
+            return NULL;
+        }
+        code = temp;
+        strcat(code, line);
+    }
+
+    free(line);
+    fclose(file);
+    return code;
+}
+
+void writefile(char *filename, char *code)
+{
+    FILE *file = fopen(filename, "w");
+    if (file == NULL)
+    {
+        return;
+    }
+
+    fprintf(file, "%s", code);
+    fclose(file);
+}
+
+bool file_exists(char* filename)
+{
+    FILE *file = fopen(filename, "r");
+    if (file == NULL)
+    {
+        return false;
+    }
+
+    fclose(file);
+    return true;
+}
+
+// string stuff
 char* str_duplicate(const char *str)
 {
     Int len = strlen(str);
@@ -447,34 +514,22 @@ List* parse(void *_vm, char *cmd)
         
         if (str[0] == '(')
         {
-            if(str[1] == '@' && str[2] == '@') //string
+            if(str[1] == '@') //string
             {
                 Int len = strlen(str);
                 Int blocks = (len+1) / sizeof(void*);
                 Int var = new_block(vm, NULL, blocks);
-                memcpy(&vm->values->data[var].u8[0], str + 3, len - 4);
-                ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 4] = '\0';
+                memcpy(&vm->values->data[var].u8[0], str + 2, len - 3);
+                ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 3] = '\0';
 
                 list_push(result, (Value){.i = var});
-                
-                //continue;
+            
             }
             else
             {
                 char* temp = str + 1;
                 temp[strlen(temp) - 1] = '\0';
                 list_push(result, (Value){.i = eval(vm, temp)});
-            }
-        }
-        else if (str[0] == '@')
-        {
-            if (strchr(str, '.')) // float
-            {
-                list_push(result, (Value){.f = atof(str + 1)});
-            }
-            else // int
-            {
-                list_push(result, (Value){.i = atol(str + 1)});
             }
         }
         else if (str[0] == '"' || str[0] == '\'') // string
@@ -487,9 +542,6 @@ List* parse(void *_vm, char *cmd)
             ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 2] = '\0';
 
             list_push(result, (Value){.i = var});
-
-            //continue;
-            //free(temp);
         }
         else if (isdigit(str[0]) || str[0] == '-') // number
         {

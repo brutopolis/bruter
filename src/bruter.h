@@ -107,6 +107,12 @@ char* str_format(const char *fmt, ...);
 List* special_space_split(char *str);
 List* special_split(char *str, char delim);
 
+#ifndef ARDUINO
+char* readfile(char *filename);
+bool file_exists(char* filename);
+void writefile(char *filename, char *code);
+#endif
+
 // variable
 VirtualMachine* make_vm(Int size);
 void free_vm(VirtualMachine *vm);
@@ -120,12 +126,13 @@ void hash_unset(VirtualMachine *vm, char* varname);
 
 // macros
 #define data(index) (vm->values->data[index])
+#define data_s(index) (&vm->values->data[index].u8[0])
 
 #define hash(index) (vm->hashes->data[index].s)
 
 #define arg(index) (vm->values->data[args->data[index].i])
 #define arg_i(index) (args->data[index].i)
-
+#define arg_s(index) (&vm->values->data[args->data[index].i].u8[0])
 
 #define function(name) Int name(VirtualMachine *vm, List *args)
 #define init(name) void init_##name(VirtualMachine *vm)
