@@ -107,6 +107,12 @@ char* str_format(const char *fmt, ...);
 List* special_space_split(char *str);
 List* special_split(char *str, char delim);
 
+#ifndef ARDUINO
+char* readfile(char *filename);
+bool file_exists(char* filename);
+void writefile(char *filename, char *code);
+#endif
+
 // variable
 VirtualMachine* make_vm(Int size);
 void free_vm(VirtualMachine *vm);

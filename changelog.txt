@@ -1,6 +1,6 @@
 # bruter changelog https://github.com/jardimdanificado/bruter
 
-(21/04/2025) - version 0.8.2
+(23/04/2025) - version 0.8.2
 
 - strings system is completely reworked;
 - NULL is now ALWAYS @0;
@@ -9,6 +9,9 @@
 - strings are now allocated in the values list itself instead of using a new allocation for each string;
 - @ operator removed;
 - (@@) operator replaced by (@);
+
+- IDEA: maybe i should separate the preprocessor, and make the interpreter only recognize simple statements with no parenthesis;
+- and a preprocessor which take cares of the parenthesis multiple spaces, new lines etc;
 
 (19/04/2025) - version 0.8.1
 
