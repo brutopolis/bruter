@@ -539,7 +539,7 @@ List* parse(void *_vm, char *cmd)
             Int res = eval(vm, temp);
             list_push(result, (Value){.i = res});
             
-            data_h(res) = varname;
+            data_l(res) = varname;
             varname = NULL;
         }
         else if (str[0] == '@') // @label, this will not be pushed but the name will be saved for the next arg
@@ -561,7 +561,7 @@ List* parse(void *_vm, char *cmd)
 
             list_push(result, (Value){.i = var});
 
-            data_h(var) = varname;
+            data_l(var) = varname;
             varname = NULL;
         }
         else if ((str[0] >= '0' && str[0] <= '9') || str[0] == '-') // number
@@ -570,7 +570,7 @@ List* parse(void *_vm, char *cmd)
             data(index) = parse_number(str);
             list_push(result, (Value){.i = index});
             
-            data_h(index) = varname;
+            data_l(index) = varname;
             varname = NULL;
         }
         else //variable 
