@@ -139,7 +139,7 @@ void hash_unset(VirtualMachine *vm, char* varname);
 
 // eval
 Int eval(VirtualMachine *vm, char *cmd);
-Int interpret(VirtualMachine *vm, char *cmd);
+Int interpret(VirtualMachine *vm, char *cmd, List* _args);
 
 // functions
 List* parse(void* _vm, char* cmd);

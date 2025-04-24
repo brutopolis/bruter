@@ -585,9 +585,19 @@ List* parse(void *_vm, char *cmd)
     return result;
 }
 
-Int interpret(VirtualMachine *vm, char* cmd)
+Int interpret(VirtualMachine *vm, char* cmd, List* _args)
 {
-    List *args = parse(vm, cmd);
+    List *args;
+
+    if (_args != NULL)
+    {
+        args = _args;
+    }
+    else 
+    {
+        args = parse(vm, cmd);
+    }
+    
 
     if (!args->size)
     {
@@ -618,7 +628,7 @@ Int eval(VirtualMachine *vm, char *cmd)
 {
     if(!strchr(cmd, ';')) // if == NULL
     {
-        return interpret(vm, cmd);
+        return interpret(vm, cmd, NULL);
     }
 
     List *splited = special_split(cmd, ';');
@@ -653,7 +663,7 @@ Int eval(VirtualMachine *vm, char *cmd)
     for (Int i = 0; i < splited->size; i++)
     {        
         str = splited->data[i].s;
-        result = interpret(vm, str);
+        result = interpret(vm, str, NULL);
         free(str);
         if (result > 0)
         {
