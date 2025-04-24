@@ -9,11 +9,7 @@
 
 - `()` = expression
 
-- `(@@ )` = string delimiter
-
-- `""` = string delimiter
-
-- `''` = string delimiter
+- `{}` = string delimiter
 
 - `;` = end of command separator
 

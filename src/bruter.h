@@ -26,7 +26,7 @@
 #include <inttypes.h>
 
 // version
-#define VERSION "0.8.2"
+#define VERSION "0.8.3"
 
 typedef intptr_t Int;
 typedef uintptr_t UInt;

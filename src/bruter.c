@@ -274,7 +274,7 @@ char* str_format(const char *format, ...)
 
 List* special_space_split(char *str)
 {
-    List *splited = list_init(0);
+    List *splited = list_init(sizeof(void*));
     
     int i = 0;
     while (str[i] != '\0')
@@ -299,25 +299,21 @@ List* special_space_split(char *str)
             list_push(splited, (Value){.s = tmp});
             i = j + 1;
         }
-        else if (str[i] == '"')
+        else if (str[i] == '{')
         {
             int j = i;
-            j++;
-            while (str[j] != '"' && str[j] != '\0')
+            int count = 1;
+            while (count != 0)
             {
                 j++;
-            }
-            char *tmp = str_nduplicate(str + i, j - i + 1);
-            list_push(splited, (Value){.s = tmp});
-            i = j + 1;
-        }
-        else if (str[i] == '\'')
-        {
-            int j = i;
-            j++;
-            while (str[j] != '\'' && str[j] != '\0')
-            {
-                j++;
+                if (str[j] == '{')
+                {
+                    count++;
+                }
+                else if (str[j] == '}')
+                {
+                    count--;
+                }
             }
             char *tmp = str_nduplicate(str + i, j - i + 1);
             list_push(splited, (Value){.s = tmp});
@@ -344,34 +340,34 @@ List* special_space_split(char *str)
 
 List* special_split(char *str, char delim)
 {
-    List *splited = list_init(2);
+    List *splited = list_init(sizeof(void*));
     
     int recursion = 0;
-    bool inside_double_quotes = 0;
-    bool inside_single_quotes = 0;
+    int curly = 0;
+    
     int i = 0;
     int last_i = 0;
 
     while (str[i] != '\0')
     {
-        if (str[i] == '(' && !inside_double_quotes && !inside_single_quotes)
+        if (str[i] == '(' && !curly)
         {
             recursion++;
         }
-        else if (str[i] == ')' && !inside_double_quotes && !inside_single_quotes)
+        else if (str[i] == ')' && !curly)
         {
             recursion--;
         }
-        else if (str[i] == '"' && !recursion && !inside_single_quotes)
+        else if (str[i] == '{' && !recursion)
         {
-            inside_double_quotes = !inside_double_quotes;
+            curly++;
         }
-        else if (str[i] == '\'' && !recursion && !inside_double_quotes)
+        else if (str[i] == '}' && !recursion)
         {
-            inside_single_quotes = !inside_single_quotes;
+            curly--;
         }
 
-        if (str[i] == delim && !recursion && !inside_double_quotes && !inside_single_quotes)
+        if (str[i] == delim && !recursion && !curly)
         {
             char* tmp = str_nduplicate(str + last_i, i - last_i);
             list_push(splited, (Value){.s = tmp});
@@ -503,7 +499,7 @@ void free_vm(VirtualMachine *vm)
 List* parse(void *_vm, char *cmd) 
 {
     VirtualMachine* vm = (VirtualMachine*)_vm;
-    List *result = list_init(0);
+    List *result = list_init(sizeof(void*));
     
     List *splited = special_space_split(cmd);
     char* str = NULL;
@@ -514,25 +510,11 @@ List* parse(void *_vm, char *cmd)
         
         if (str[0] == '(')
         {
-            if(str[1] == '@') //string
-            {
-                Int len = strlen(str);
-                Int blocks = (len+1) / sizeof(void*);
-                Int var = new_block(vm, NULL, blocks);
-                memcpy(&vm->values->data[var].u8[0], str + 2, len - 3);
-                ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 3] = '\0';
-
-                list_push(result, (Value){.i = var});
-            
-            }
-            else
-            {
-                char* temp = str + 1;
-                temp[strlen(temp) - 1] = '\0';
-                list_push(result, (Value){.i = eval(vm, temp)});
-            }
+            char* temp = str + 1;
+            temp[strlen(temp) - 1] = '\0';
+            list_push(result, (Value){.i = eval(vm, temp)});
         }
-        else if (str[0] == '"' || str[0] == '\'') // string
+        else if (str[0] == '{') // string
         {
             Int len = strlen(str);
             Int blocks = (len+1) / sizeof(void*);

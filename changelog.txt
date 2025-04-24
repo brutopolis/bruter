@@ -1,4 +1,9 @@
-# bruter changelog https://github.com/jardimdanificado/bruter
+# bruter changelog https://github.com/brutopolis/bruter
+
+(24/04/2025) - version 0.8.3
+
+- say goodbye to the '' "" and (@) delimiters
+- welcome back {} demiliter for string, it is the only string delimiter now, and supports recursion of course;
 
 (23/04/2025) - version 0.8.2
 
