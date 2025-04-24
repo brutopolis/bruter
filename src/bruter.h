@@ -127,8 +127,8 @@ void hash_unset(VirtualMachine *vm, char* varname);
 // macros
 #define data(index) (vm->values->data[index])
 #define data_s(index) (&vm->values->data[index].u8[0])
+#define data_h(index) (vm->hashes->data[index].s)
 
-#define hash(index) (vm->hashes->data[index].s)
 
 #define arg(index) (vm->values->data[args->data[index].i])
 #define arg_i(index) (args->data[index].i)

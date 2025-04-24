@@ -19,18 +19,29 @@
     command ...;
     command (command (command ...));
     command variable_1 variable_2 ...;
-    command name;
+    command {string};
+    command @name value;
     command 0b00000000;
     command 0x00000000;
     command 0o00000000;
     command 0.000000;
     command 0;
 
-# Types
+# Concept
 
-  BRUTER dont have types, everything is a sequence of 4 or 8 bytes, depending on the system;
+  BRUTER does not have types, everything is a sequence of 4 or 8 bytes, depending on the system;
 
   BRUTER does not keep a track of what the user meant to each variable, it just stores the data, it is up to the user to keep track of what is what if needed;
+
+  BRUTER does have only 2 delimiters (expression) and {string};
+
+  NO support escape sequences or anything like that, every byte is exactly what it is;
+
+  BRUTER CANT create a string with unmatched delimiters, what makes it impossible to create a string with a close delimiter unmatched, thats intended, bruter is meant to be as raw as possible;
+
+  BRUTER does not have a garbage collector, it is up to the user to free the memory when needed;
+
+  BRUTER does not have a AST, it is structure is already a tree, so it is not needed;
 
 # Building instructions
 

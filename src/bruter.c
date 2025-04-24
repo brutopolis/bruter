@@ -442,9 +442,6 @@ VirtualMachine* make_vm(Int size)
     vm->values = list_init(size);
     vm->hashes = list_init(size);
 
-    // @0 = null
-    new_var(vm, "NULL");
-
     return vm;
 }
 
@@ -495,6 +492,32 @@ void free_vm(VirtualMachine *vm)
     free(vm);
 }
 
+Value parse_number(char *str)
+{
+    Value result;
+    if (str[0] == '0' && str[1] == 'x') // hex
+    {
+        result.i = strtol(str+2, NULL, 16);
+    }
+    else if (str[0] == '0' && str[1] == 'b') // bin
+    {
+        result.i = strtol(str+2, NULL, 2);
+    }
+    else if (str[0] == '0' && str[1] == 'o') // oct
+    {
+        result.i = strtol(str+2, NULL, 8);
+    }
+    else if (strchr(str, '.')) // float
+    {
+        result.f = atof(str);
+    }
+    else // int
+    {
+        result.i = atol(str);
+    }
+    return result;
+}
+
 // Parser functions
 List* parse(void *_vm, char *cmd) 
 {
@@ -503,6 +526,7 @@ List* parse(void *_vm, char *cmd)
     
     List *splited = special_space_split(cmd);
     char* str = NULL;
+    char* varname = NULL;
     Int i = 0;
     for (i = 0; i < splited->size; i++)
     {
@@ -512,56 +536,42 @@ List* parse(void *_vm, char *cmd)
         {
             char* temp = str + 1;
             temp[strlen(temp) - 1] = '\0';
-            list_push(result, (Value){.i = eval(vm, temp)});
+            Int res = eval(vm, temp);
+            list_push(result, (Value){.i = res});
+            
+            data_h(res) = varname;
+            varname = NULL;
+        }
+        else if (str[0] == '@') // @label, this will not be pushed but the name will be saved for the next arg
+        {
+            memmove(str, str + 1, strlen(str));
+            free(varname); // free the old varname
+            varname = str;
+            continue;
         }
         else if (str[0] == '{') // string
         {
             Int len = strlen(str);
             Int blocks = (len+1) / sizeof(void*);
-            Int var = new_block(vm, NULL, blocks);
+            
+            Int var = new_block(vm, NULL, blocks); // we wont set the name yet, this would generate a extra alloc when we can simply reuse the varname
             
             memcpy(&vm->values->data[var].u8[0], str + 1, len - 2);
             ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 2] = '\0';
 
             list_push(result, (Value){.i = var});
+
+            data_h(var) = varname;
+            varname = NULL;
         }
-        else if (isdigit(str[0]) || str[0] == '-') // number
+        else if ((str[0] >= '0' && str[0] <= '9') || str[0] == '-') // number
         {
-            if (str[0] == '0' && str[1] == 'x') // hex
-            {
-                Int i = strtol(str+2, NULL, 16);
-                Int var = new_var(vm, NULL);
-                data(var).i = i;
-                list_push(result, (Value){.i = var});
-            }
-            else if (str[0] == '0' && str[1] == 'b') // bin
-            {
-                Int i = strtol(str+2, NULL, 2);
-                Int var = new_var(vm, NULL);
-                data(var).i = i;
-                list_push(result, (Value){.i = var});
-            }
-            else if (str[0] == '0' && str[1] == 'o') // oct
-            {
-                Int i = strtol(str+2, NULL, 8);
-                Int var = new_var(vm, NULL);
-                data(var).i = i;
-                list_push(result, (Value){.i = var});
-            }
-            else if (strchr(str, '.')) // float
-            {
-                Float f = atof(str);
-                Int var = new_var(vm, NULL);
-                data(var).f = f;
-                list_push(result, (Value){.i = var});
-            }
-            else // int
-            {
-                Int i = atol(str);
-                Int var = new_var(vm, NULL);
-                data(var).i = i;
-                list_push(result, (Value){.i = var});
-            }
+            Int index = new_var(vm, NULL);
+            data(index) = parse_number(str);
+            list_push(result, (Value){.i = index});
+            
+            data_h(index) = varname;
+            varname = NULL;
         }
         else //variable 
         {
@@ -581,6 +591,9 @@ List* parse(void *_vm, char *cmd)
 
         free(str);
     }
+
+    free(varname);
+
     list_free(splited);
     return result;
 }
@@ -598,7 +611,6 @@ Int interpret(VirtualMachine *vm, char* cmd, List* _args)
         args = parse(vm, cmd);
     }
     
-
     if (!args->size)
     {
         list_free(args);
@@ -614,7 +626,7 @@ Int interpret(VirtualMachine *vm, char* cmd, List* _args)
         result = _function(vm, args);
         list_unshift(args, (Value){.p = _function});
     }
-    else 
+    else if (func) // if func is not 0
     {
         printf("BRUTER_ERROR: %" PRIdPTR " is not a function or script\n", func);
     }
