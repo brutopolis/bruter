@@ -466,7 +466,7 @@ Int new_block(VirtualMachine *vm, char* varname, Int size)// allocate size slots
 
     Int index = vm->values->size - 1;
     
-    for (Int i = 0; i < size-1; i++)
+    for (Int i = 0; i < size; i++)
     {
         list_push(vm->values, (Value){.i = 0});
         list_push(vm->labels, (Value){.s = NULL});
@@ -552,12 +552,14 @@ List* parse(void *_vm, char *cmd)
         else if (str[0] == '{') // string
         {
             Int len = strlen(str);
-            Int blocks = (len+1) / sizeof(void*);
-            
-            Int var = new_block(vm, NULL, blocks); // we wont set the name yet, this would generate a extra alloc when we can simply reuse the varname
-            
-            memcpy(&vm->values->data[var].u8[0], str + 1, len - 2);
-            ((uint8_t*)vm->values->data)[(var*sizeof(void*)) + len - 2] = '\0';
+            Int real_len = len - 2;
+            Int total_len = real_len + 1;
+            Int blocks = (total_len + sizeof(void*) - 1) / sizeof(void*);
+
+            Int var = new_block(vm, NULL, blocks);
+
+            memcpy(&vm->values->data[var].u8[0], str + 1, real_len);
+            vm->values->data[var].u8[real_len] = '\0';
 
             list_push(result, (Value){.i = var});
 
