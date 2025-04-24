@@ -384,13 +384,13 @@ List* special_split(char *str, char delim)
     return splited;
 }
 
-//hash functions
+//label functions
 
-Int hash_find(VirtualMachine *vm, char *varname)
+Int label_find(VirtualMachine *vm, char *varname)
 {
-    for (Int i = 0; i < vm->hashes->size; i++)
+    for (Int i = 0; i < vm->labels->size; i++)
     {
-        if (vm->hashes->data[i].s != NULL && strcmp(vm->hashes->data[i].s, varname) == 0)
+        if (vm->labels->data[i].s != NULL && strcmp(vm->labels->data[i].s, varname) == 0)
         {
             return i;
         }
@@ -398,34 +398,34 @@ Int hash_find(VirtualMachine *vm, char *varname)
     return -1;
 }
 
-void hash_set(VirtualMachine *vm, char* varname, Int index)
+void label_set(VirtualMachine *vm, char* varname, Int index)
 {
-    Int found = hash_find(vm, varname);
+    Int found = label_find(vm, varname);
     if (index > vm->values->size || index < 0)
     {
-        printf("BRUTER_ERROR: index %" PRIdPTR "  out of range in hash of size %" PRIdPTR" \n", index, vm->values->size);
+        printf("BRUTER_ERROR: index %" PRIdPTR "  out of range in label of size %" PRIdPTR" \n", index, vm->values->size);
         exit(EXIT_FAILURE);
     }
 
     if (found != -1)
     {
-        vm->hashes->data[index].s = vm->hashes->data[found].s;
-        vm->hashes->data[found].s = NULL;
+        vm->labels->data[index].s = vm->labels->data[found].s;
+        vm->labels->data[found].s = NULL;
     }
     else 
     {
 
-        vm->hashes->data[index].s = str_duplicate(varname);
+        vm->labels->data[index].s = str_duplicate(varname);
     }
 }
 
-void hash_unset(VirtualMachine *vm, char* varname)
+void label_unset(VirtualMachine *vm, char* varname)
 {
-    Int index = hash_find(vm, varname);
+    Int index = label_find(vm, varname);
     if (index != -1)
     {
-        free(vm->hashes->data[index].s);
-        vm->hashes->data[index].s = NULL;
+        free(vm->labels->data[index].s);
+        vm->labels->data[index].s = NULL;
     }
 }
 
@@ -440,7 +440,7 @@ VirtualMachine* make_vm(Int size)
         exit(EXIT_FAILURE);
     }
     vm->values = list_init(size);
-    vm->hashes = list_init(size);
+    vm->labels = list_init(size);
 
     return vm;
 }
@@ -453,7 +453,7 @@ Int new_var(VirtualMachine *vm, char* varname)
     Value value;
     value.p = NULL;
     list_push(vm->values, value);
-    list_push(vm->hashes, (Value){.s = namestr});
+    list_push(vm->labels, (Value){.s = namestr});
     return vm->values->size-1;
 }
 
@@ -462,14 +462,14 @@ Int new_block(VirtualMachine *vm, char* varname, Int size)// allocate size slots
     char* namestr = (varname == NULL) ? NULL : str_duplicate(varname);
 
     list_push(vm->values, (Value){.i = 0});
-    list_push(vm->hashes, (Value){.s = namestr});
+    list_push(vm->labels, (Value){.s = namestr});
 
     Int index = vm->values->size - 1;
     
     for (Int i = 0; i < size-1; i++)
     {
         list_push(vm->values, (Value){.i = 0});
-        list_push(vm->hashes, (Value){.s = NULL});
+        list_push(vm->labels, (Value){.s = NULL});
     }
     
     return index;
@@ -480,14 +480,14 @@ void free_vm(VirtualMachine *vm)
 {
     for (Int i = 0; i < vm->values->size; i++)
     {
-        if (vm->hashes->data[i].s != NULL)
+        if (vm->labels->data[i].s != NULL)
         {
-            free(vm->hashes->data[i].s);
+            free(vm->labels->data[i].s);
         }
     }
 
     list_free(vm->values);
-    list_free(vm->hashes);
+    list_free(vm->labels);
 
     free(vm);
 }
@@ -575,17 +575,17 @@ List* parse(void *_vm, char *cmd)
         }
         else //variable 
         {
-            Int hashindex = -1;
-            hashindex = hash_find(vm, str);
+            Int labelindex = -1;
+            labelindex = label_find(vm, str);
 
-            if (hashindex == -1) 
+            if (labelindex == -1) 
             {
                 printf("BRUTER_ERROR: variable %s not found\n", str);
                 list_push(result, (Value){.i = -1});
             }
             else 
             {
-                list_push(result, (Value){.i = hashindex});
+                list_push(result, (Value){.i = labelindex});
             }
         }
 

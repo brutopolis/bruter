@@ -6,8 +6,11 @@
 - welcome back {} demiliter for string, it is the only string delimiter now, and supports recursion of course;
 - labels introduced, a easy way to name values, and keep track of them;
 - label example: @name value;
-- name is saved for the next call, and assigned to the value's hash slot;
+- name is saved for the next call, and assigned to the value's label slot;
 - "NULL" does not exist anymore;
+- hashes are now called labels, which is a more apropriate name, beside that, they are the same;
+- no more hash() macro;
+- new macros data_l and arg_l, both for getting the label of a value;
 
 (23/04/2025) - version 0.8.2
 

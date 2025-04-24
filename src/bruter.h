@@ -90,7 +90,7 @@ void list_reverse(List *list);
 
 typedef struct
 {
-    List *hashes;
+    List *labels;
     List *values;
 } VirtualMachine;
 
@@ -120,19 +120,20 @@ void free_vm(VirtualMachine *vm);
 Int new_var(VirtualMachine *vm, char* varname);
 Int new_block(VirtualMachine *vm, char* varname, Int size);
 
-Int hash_find(VirtualMachine *vm, char *varname);
-void hash_set(VirtualMachine *vm, char* varname, Int index);
-void hash_unset(VirtualMachine *vm, char* varname);
+Int label_find(VirtualMachine *vm, char *varname);
+void label_set(VirtualMachine *vm, char* varname, Int index);
+void label_unset(VirtualMachine *vm, char* varname);
 
 // macros
-#define data(index) (vm->values->data[index])
-#define data_s(index) (&vm->values->data[index].u8[0])
-#define data_h(index) (vm->hashes->data[index].s)
+#define data(index) (vm->values->data[index]) // generic
+#define data_s(index) (&vm->values->data[index].u8[0]) // string
+#define data_l(index) (vm->labels->data[index].s) // label
 
 
-#define arg(index) (vm->values->data[args->data[index].i])
-#define arg_i(index) (args->data[index].i)
-#define arg_s(index) (&vm->values->data[args->data[index].i].u8[0])
+#define arg(index) (vm->values->data[args->data[index].i]) // generic
+#define arg_i(index) (args->data[index].i) // int
+#define arg_s(index) (&vm->values->data[args->data[index].i].u8[0]) // string
+#define arg_l(index) (vm->labels->data[args->data[index].i].s) // label
 
 #define function(name) Int name(VirtualMachine *vm, List *args)
 #define init(name) void init_##name(VirtualMachine *vm)

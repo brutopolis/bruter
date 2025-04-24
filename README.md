@@ -37,7 +37,7 @@
 
   NO support escape sequences or anything like that, every byte is exactly what it is;
 
-  BRUTER CANT create a string with unmatched delimiters, what makes it impossible to create a string with a close delimiter unmatched, thats intended, bruter is meant to be as raw as possible;
+  BRUTER CANT create a string with unmatched delimiters, for every { there must be a } and vice versa;
 
   BRUTER does not have a garbage collector, it is up to the user to free the memory when needed;
 
