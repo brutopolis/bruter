@@ -457,8 +457,13 @@ Int new_var(VirtualMachine *vm, char* varname)
     return vm->values->size-1;
 }
 
-Int new_block(VirtualMachine *vm, char* varname, Int size)// allocate size slots and 
+Int new_block(VirtualMachine *vm, char* varname, Int size)
 {
+    if (!size)
+    {
+        return -1;
+    }
+
     char* namestr = (varname == NULL) ? NULL : str_duplicate(varname);
 
     list_push(vm->values, (Value){.i = 0});
@@ -466,7 +471,7 @@ Int new_block(VirtualMachine *vm, char* varname, Int size)// allocate size slots
 
     Int index = vm->values->size - 1;
     
-    for (Int i = 0; i < size; i++)
+    for (Int i = 0; i < size-1; i++)
     {
         list_push(vm->values, (Value){.i = 0});
         list_push(vm->labels, (Value){.s = NULL});
@@ -554,9 +559,9 @@ List* parse(void *_vm, char *cmd)
             Int len = strlen(str);
             Int real_len = len - 2;
             Int total_len = real_len + 1;
-            Int blocks = (total_len + sizeof(void*) - 1) / sizeof(void*);
+            Int block = (total_len + sizeof(void*) - 1) / sizeof(void*);
 
-            Int var = new_block(vm, NULL, blocks);
+            Int var = new_block(vm, NULL, block);
 
             memcpy(&vm->values->data[var].u8[0], str + 1, real_len);
             vm->values->data[var].u8[real_len] = '\0';
