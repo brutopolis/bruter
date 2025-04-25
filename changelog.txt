@@ -1,6 +1,6 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(24/04/2025) - version 0.8.3
+(25/04/2025) - version 0.8.3
 
 - say goodbye to the '' "" and (@) delimiters
 - welcome back {} demiliter for string, it is the only string delimiter now, and supports recursion of course;
@@ -12,6 +12,10 @@
 - no more hash() macro;
 - new macros data_l and arg_l, both for getting the label of a value;
 - the parser now deals with \) and \} correctly;
+
+TODO: move back the label system to a separated table for it, bcause using the label slot system make each byte occupy 2;
+      if we use a table for labels each label will cost 16bytes,  with the new string system this reserve a lot of space for the labels, which arent really used;
+      if all values have a label, each byte will cost 3bytes, but with the new string system this is a very very weird situation only with small or no strings at all;
 
 (23/04/2025) - version 0.8.2
 
