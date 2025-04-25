@@ -11,6 +11,7 @@
 - hashes are now called labels, which is a more apropriate name, beside that, they are the same;
 - no more hash() macro;
 - new macros data_l and arg_l, both for getting the label of a value;
+- the parser now deals with \) and \} correctly;
 
 (23/04/2025) - version 0.8.2
 

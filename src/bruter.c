@@ -286,11 +286,11 @@ List* special_space_split(char *str)
             while (count != 0)
             {
                 j++;
-                if (str[j] == '(')
+                if (str[j] == '(' && (j == 0 || str[j-1] != '\\'))  // não conta se for escapado
                 {
                     count++;
                 }
-                else if (str[j] == ')')
+                else if (str[j] == ')' && (j == 0 || str[j-1] != '\\'))  // não conta se for escapado
                 {
                     count--;
                 }
@@ -306,11 +306,11 @@ List* special_space_split(char *str)
             while (count != 0)
             {
                 j++;
-                if (str[j] == '{')
+                if (str[j] == '{' && (j == 0 || str[j-1] != '\\'))  // não conta se for escapado
                 {
                     count++;
                 }
-                else if (str[j] == '}')
+                else if (str[j] == '}' && (j == 0 || str[j-1] != '\\'))  // não conta se for escapado
                 {
                     count--;
                 }
@@ -350,19 +350,19 @@ List* special_split(char *str, char delim)
 
     while (str[i] != '\0')
     {
-        if (str[i] == '(' && !curly)
+        if (str[i] == '(' && (i == 0 || str[i-1] != '\\') && !curly)
         {
             recursion++;
         }
-        else if (str[i] == ')' && !curly)
+        else if (str[i] == ')' && (i == 0 || str[i-1] != '\\') && !curly)
         {
             recursion--;
         }
-        else if (str[i] == '{' && !recursion)
+        else if (str[i] == '{' && (i == 0 || str[i-1] != '\\') && !recursion)
         {
             curly++;
         }
-        else if (str[i] == '}' && !recursion)
+        else if (str[i] == '}' && (i == 0 || str[i-1] != '\\') && !recursion)
         {
             curly--;
         }
@@ -383,6 +383,7 @@ List* special_split(char *str, char delim)
     }
     return splited;
 }
+
 
 //label functions
 
