@@ -533,6 +533,7 @@ List* parse(void *_vm, char *cmd)
             list_push(result, (Value){.i = res});
             
             data_l(res) = new_string(vm, varname, str);
+            free(varname); // we dont need it after new_string
             varname = NULL;
         }
         else if (str[0] == '@') // @label, this will not be pushed but the name will be saved for the next arg
@@ -548,6 +549,8 @@ List* parse(void *_vm, char *cmd)
             str[len - 1] = '\0';
 
             list_push(result, (Value){.i = new_string(vm, varname, str + 1)});
+            free(varname); // we dont need it after new_string
+            varname = NULL;
         }
         else if ((str[0] >= '0' && str[0] <= '9') || str[0] == '-') // number
         {
@@ -556,6 +559,7 @@ List* parse(void *_vm, char *cmd)
             list_push(result, (Value){.i = index});
             
             data_l(index) = new_string(vm, varname, str);
+            free(varname); // we dont need it after new_string
             varname = NULL;
         }
         else //variable 
