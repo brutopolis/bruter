@@ -389,45 +389,18 @@ List* special_split(char *str, char delim)
 
 Int label_find(VirtualMachine *vm, char *varname)
 {
+    if (varname == NULL)
+    {
+        return -1;
+    }
     for (Int i = 0; i < vm->labels->size; i++)
     {
-        if (vm->labels->data[i].s != NULL && strcmp(vm->labels->data[i].s, varname) == 0)
+        if (data_l(i) > -1 && strcmp((data_ls(i)), varname) == 0)
         {
             return i;
         }
     }
     return -1;
-}
-
-void label_set(VirtualMachine *vm, char* varname, Int index)
-{
-    Int found = label_find(vm, varname);
-    if (index > vm->values->size || index < 0)
-    {
-        printf("BRUTER_ERROR: index %" PRIdPTR "  out of range in label of size %" PRIdPTR" \n", index, vm->values->size);
-        exit(EXIT_FAILURE);
-    }
-
-    if (found != -1)
-    {
-        vm->labels->data[index].s = vm->labels->data[found].s;
-        vm->labels->data[found].s = NULL;
-    }
-    else 
-    {
-
-        vm->labels->data[index].s = str_duplicate(varname);
-    }
-}
-
-void label_unset(VirtualMachine *vm, char* varname)
-{
-    Int index = label_find(vm, varname);
-    if (index != -1)
-    {
-        free(vm->labels->data[index].s);
-        vm->labels->data[index].s = NULL;
-    }
 }
 
 //variable functions
@@ -449,12 +422,12 @@ VirtualMachine* make_vm(Int size)
 // var new 
 Int new_var(VirtualMachine *vm, char* varname)
 {
-    char* namestr = (varname == NULL) ? NULL : str_duplicate(varname);
+    Int name_index = (varname == NULL) ? -1 : new_string(vm, NULL, varname);
 
     Value value;
     value.p = NULL;
     list_push(vm->values, value);
-    list_push(vm->labels, (Value){.s = namestr});
+    list_push(vm->labels, (Value){.i = name_index});
     return vm->values->size-1;
 }
 
@@ -465,33 +438,47 @@ Int new_block(VirtualMachine *vm, char* varname, Int size)
         return -1;
     }
 
-    char* namestr = (varname == NULL) ? NULL : str_duplicate(varname);
+    Int name_index = (varname == NULL) ? -1 : new_string(vm, NULL, varname);
 
     list_push(vm->values, (Value){.i = 0});
-    list_push(vm->labels, (Value){.s = namestr});
+    list_push(vm->labels, (Value){.i = name_index});
 
     Int index = vm->values->size - 1;
     
     for (Int i = 0; i < size-1; i++)
     {
         list_push(vm->values, (Value){.i = 0});
-        list_push(vm->labels, (Value){.s = NULL});
+        list_push(vm->labels, (Value){.i = -1});
     }
     
     return index;
 }
 
+Int new_string(VirtualMachine *vm, char* varname, char* str)
+{
+
+    Int len = strlen(str);
+
+    Int blocks = (len + 1 + sizeof(void*) - 1) / sizeof(void*);
+
+    Int var = new_block(vm, NULL, blocks);
+
+    memcpy(&vm->values->data[var].u8[0], str, len);
+
+    vm->values->data[var].u8[len] = '\0';
+
+    if (varname != NULL)
+    {
+        data_l(var) = new_string(vm, NULL, varname);
+    }
+
+    return var;
+}
+
+
 //frees
 void free_vm(VirtualMachine *vm)
 {
-    for (Int i = 0; i < vm->values->size; i++)
-    {
-        if (vm->labels->data[i].s != NULL)
-        {
-            free(vm->labels->data[i].s);
-        }
-    }
-
     list_free(vm->values);
     list_free(vm->labels);
 
@@ -545,7 +532,7 @@ List* parse(void *_vm, char *cmd)
             Int res = eval(vm, temp);
             list_push(result, (Value){.i = res});
             
-            data_l(res) = varname;
+            data_l(res) = new_string(vm, varname, str);
             varname = NULL;
         }
         else if (str[0] == '@') // @label, this will not be pushed but the name will be saved for the next arg
@@ -558,19 +545,9 @@ List* parse(void *_vm, char *cmd)
         else if (str[0] == '{') // string
         {
             Int len = strlen(str);
-            Int real_len = len - 2;
-            Int total_len = real_len + 1;
-            Int block = (total_len + sizeof(void*) - 1) / sizeof(void*);
+            str[len - 1] = '\0';
 
-            Int var = new_block(vm, NULL, block);
-
-            memcpy(&vm->values->data[var].u8[0], str + 1, real_len);
-            vm->values->data[var].u8[real_len] = '\0';
-
-            list_push(result, (Value){.i = var});
-
-            data_l(var) = varname;
-            varname = NULL;
+            list_push(result, (Value){.i = new_string(vm, varname, str + 1)});
         }
         else if ((str[0] >= '0' && str[0] <= '9') || str[0] == '-') // number
         {
@@ -578,7 +555,7 @@ List* parse(void *_vm, char *cmd)
             data(index) = parse_number(str);
             list_push(result, (Value){.i = index});
             
-            data_l(index) = varname;
+            data_l(index) = new_string(vm, varname, str);
             varname = NULL;
         }
         else //variable 

@@ -10,12 +10,11 @@
 - "NULL" does not exist anymore;
 - hashes are now called labels, which is a more apropriate name, beside that, they are the same;
 - no more hash() macro;
-- new macros data_l and arg_l, both for getting the label of a value;
 - the parser now deals with \) and \} correctly;
-
-TODO: move back the label system to a separated table for it, bcause using the label slot system make each byte occupy 2;
-      if we use a table for labels each label will cost 16bytes,  with the new string system this reserve a lot of space for the labels, which arent really used;
-      if all values have a label, each byte will cost 3bytes, but with the new string system this is a very very weird situation only with small or no strings at all;
+- label_set and label_unset are not a thing anymore;
+- new macros: data_l and arg_l, both for getting the INDEX of the slot;
+- new macros: data_ls and arg_ls, both get NAME STRING of the slot;
+- labels strings are also stored direclty in the vm->values list like the strings;
 
 (23/04/2025) - version 0.8.2
 
