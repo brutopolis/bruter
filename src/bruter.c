@@ -384,105 +384,42 @@ List* special_split(char *str, char delim)
     return splited;
 }
 
-
-//label functions
-
-Int label_find(VirtualMachine *vm, char *varname)
-{
-    if (varname == NULL)
-    {
-        return -1;
-    }
-    for (Int i = 0; i < vm->labels->size; i++)
-    {
-        if (data_l(i) > -1 && strcmp((data_ls(i)), varname) == 0)
-        {
-            return i;
-        }
-    }
-    return -1;
-}
-
-//variable functions
-
-VirtualMachine* make_vm(Int size)
-{
-    VirtualMachine *vm = (VirtualMachine*)malloc(sizeof(VirtualMachine));
-    if (vm == NULL)
-    {
-        printf("BRUTER_ERROR: failed to allocate memory for VirtualMachine\n");
-        exit(EXIT_FAILURE);
-    }
-    vm->values = list_init(size);
-    vm->labels = list_init(size);
-
-    return vm;
-}
-
 // var new 
-Int new_var(VirtualMachine *vm, char* varname)
+Int new_var(List *vm)
 {
-    Int name_index = (varname == NULL) ? -1 : new_string(vm, NULL, varname);
-
     Value value;
     value.p = NULL;
-    list_push(vm->values, value);
-    list_push(vm->labels, (Value){.i = name_index});
-    return vm->values->size-1;
+    list_push(vm, value);
+    return vm->size-1;
 }
 
-Int new_block(VirtualMachine *vm, char* varname, Int size)
+Int new_block(List *vm, Int size)
 {
     if (!size)
     {
         return -1;
     }
 
-    Int name_index = (varname == NULL) ? -1 : new_string(vm, NULL, varname);
+    list_push(vm, (Value){.i = 0});
 
-    list_push(vm->values, (Value){.i = 0});
-    list_push(vm->labels, (Value){.i = name_index});
-
-    Int index = vm->values->size - 1;
+    Int index = vm->size - 1;
     
     for (Int i = 0; i < size-1; i++)
     {
-        list_push(vm->values, (Value){.i = 0});
-        list_push(vm->labels, (Value){.i = -1});
+        list_push(vm, (Value){.i = 0});
     }
     
     return index;
 }
 
-Int new_string(VirtualMachine *vm, char* varname, char* str)
+Int new_string(List *vm, char* str)
 {
-
     Int len = strlen(str);
-
     Int blocks = (len + 1 + sizeof(void*) - 1) / sizeof(void*);
-
-    Int var = new_block(vm, NULL, blocks);
-
-    memcpy(&vm->values->data[var].u8[0], str, len);
-
-    vm->values->data[var].u8[len] = '\0';
-
-    if (varname != NULL)
-    {
-        data_l(var) = new_string(vm, NULL, varname);
-    }
-
+    Int var = new_block(vm, blocks);
+    memcpy(&vm->data[var].u8[0], str, len);
+    vm->data[var].u8[len] = '\0';
     return var;
-}
-
-
-//frees
-void free_vm(VirtualMachine *vm)
-{
-    list_free(vm->values);
-    list_free(vm->labels);
-
-    free(vm);
 }
 
 Value parse_number(char *str)
@@ -514,12 +451,11 @@ Value parse_number(char *str)
 // Parser functions
 List* parse(void *_vm, char *cmd) 
 {
-    VirtualMachine* vm = (VirtualMachine*)_vm;
+    List* vm = (List*)_vm;
     List *result = list_init(sizeof(void*));
     
     List *splited = special_space_split(cmd);
     char* str = NULL;
-    char* varname = NULL;
     Int i = 0;
     for (i = 0; i < splited->size; i++)
     {
@@ -531,63 +467,33 @@ List* parse(void *_vm, char *cmd)
             temp[strlen(temp) - 1] = '\0';
             Int res = eval(vm, temp);
             list_push(result, (Value){.i = res});
-            
-            data_l(res) = new_string(vm, varname, str);
-            free(varname); // we dont need it after new_string
-            varname = NULL;
-        }
-        else if (str[0] == '@') // @label, this will not be pushed but the name will be saved for the next arg
-        {
-            memmove(str, str + 1, strlen(str));
-            free(varname); // free the old varname
-            varname = str;
-            continue;
         }
         else if (str[0] == '{') // string
         {
             Int len = strlen(str);
             str[len - 1] = '\0';
 
-            list_push(result, (Value){.i = new_string(vm, varname, str + 1)});
-            free(varname); // we dont need it after new_string
-            varname = NULL;
+            list_push(result, (Value){.i = new_string(vm, str + 1)});
         }
         else if ((str[0] >= '0' && str[0] <= '9') || str[0] == '-') // number
         {
-            Int index = new_var(vm, NULL);
-            data(index) = parse_number(str);
+            Int index = new_var(vm);
+            vm->data[index] = parse_number(str);
             list_push(result, (Value){.i = index});
-            
-            data_l(index) = new_string(vm, varname, str);
-            free(varname); // we dont need it after new_string
-            varname = NULL;
         }
-        else //variable 
+        else
         {
-            Int labelindex = -1;
-            labelindex = label_find(vm, str);
-
-            if (labelindex == -1) 
-            {
-                printf("BRUTER_ERROR: variable %s not found\n", str);
-                list_push(result, (Value){.i = -1});
-            }
-            else 
-            {
-                list_push(result, (Value){.i = labelindex});
-            }
+            // just ignore the string
         }
 
         free(str);
     }
 
-    free(varname);
-
     list_free(splited);
     return result;
 }
 
-Int interpret(VirtualMachine *vm, char* cmd, List* _args)
+Int interpret(List *vm, char* cmd, List* _args)
 {
     List *args;
 
@@ -611,7 +517,7 @@ Int interpret(VirtualMachine *vm, char* cmd, List* _args)
     if (func > -1)
     {
         Function _function;
-        _function = vm->values->data[func].p;
+        _function = vm->data[func].p;
         result = _function(vm, args);
         list_unshift(args, (Value){.p = _function});
     }
@@ -625,7 +531,7 @@ Int interpret(VirtualMachine *vm, char* cmd, List* _args)
     return result;
 }
 
-Int eval(VirtualMachine *vm, char *cmd)
+Int eval(List *vm, char *cmd)
 {
     if(!strchr(cmd, ';')) // if == NULL
     {

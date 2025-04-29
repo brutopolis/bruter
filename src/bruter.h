@@ -88,15 +88,10 @@ Int list_ocurrences(List *list, Value value);
 Int list_find(List *list, Value value);
 void list_reverse(List *list);
 
-typedef struct
-{
-    List *labels;
-    List *values;
-} VirtualMachine;
 
 //Function
-typedef Int (*Function)(VirtualMachine*, List*);
-typedef void (*InitFunction)(VirtualMachine*);
+typedef Int (*Function)(List*, List*);
+typedef void (*InitFunction)(List*);
 
 //String
 char* str_duplicate(const char *str);
@@ -107,42 +102,24 @@ char* str_format(const char *fmt, ...);
 List* special_space_split(char *str);
 List* special_split(char *str, char delim);
 
-#ifndef ARDUINO
-char* readfile(char *filename);
-bool file_exists(char* filename);
-void writefile(char *filename, char *code);
-#endif
-
 // variable
-VirtualMachine* make_vm(Int size);
-void free_vm(VirtualMachine *vm);
+Int new_var(List *vm);
+Int new_block(List *vm, Int size);
+Int new_string(List *vm, char* str);
 
-Int new_var(VirtualMachine *vm, char* varname);
-Int new_block(VirtualMachine *vm, char* varname, Int size);
-Int new_string(VirtualMachine *vm, char* varname, char* str);
+#define function(name) Int name(List *vm, List *args)
+#define init(name) void init_##name(List *vm)
 
-Int label_find(VirtualMachine *vm, char *varname);
+#define data(index) vm->data[index]
+#define data_s(index) &vm->data[index].u8[0]
+#define arg(index) vm->data[args->data[index].i]
+#define arg_s(index) &vm->data[args->data[index].i].u8[0]
+#define arg_i(index) args->data[index].i
 
-// macros
-#define data(index) (vm->values->data[index]) // generic
-#define data_s(index) (&vm->values->data[index].u8[0]) // string
-#define data_l(index) (vm->labels->data[index].i) // label
-#define data_ls(index) (data_s(data_l(index))) // string from label
-
-
-#define arg(index) (vm->values->data[args->data[index].i]) // generic
-#define arg_i(index) (args->data[index].i) // int
-#define arg_s(index) (&vm->values->data[args->data[index].i].u8[0]) // string
-#define arg_l(index) (vm->labels->data[args->data[index].i].i) // label
-#define arg_ls(index) (data_s(data_l(args->data[index].i))) // string from label
-
-
-#define function(name) Int name(VirtualMachine *vm, List *args)
-#define init(name) void init_##name(VirtualMachine *vm)
 
 // eval
-Int eval(VirtualMachine *vm, char *cmd);
-Int interpret(VirtualMachine *vm, char *cmd, List* _args);
+Int eval(List *vm, char *cmd);
+Int interpret(List *vm, char *cmd, List* _args);
 
 // functions
 List* parse(void* _vm, char* cmd);
