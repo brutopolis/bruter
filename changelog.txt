@@ -2,7 +2,11 @@
 
 (29/04/2025) - version 0.8.4
 
-- full rework of the vm;
+- full rework;
+- parse, interpret, string functions, new_ functions, labels, macros and everything thats not part of the list system been moved to buxu;
+- interpret function is now called list_call;
+- bruter still doing functions calls and such, but you need to make the lists manually, which is not hard at all, but;
+- you can also use buxu, its basically the old bruter, those removed features like parsing, labeling and such are now part of buxu;
 
 (25/04/2025) - version 0.8.3
 

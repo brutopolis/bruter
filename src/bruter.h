@@ -1,9 +1,6 @@
 // libbruter
-// libbruter use no other libraries beside the standard C library
+// libbruter use no other libraries beside the standard C99 libraries
 // if libbruter does not work on a platform, it is a bug, and should be reported.
-// it is meant to be compatible even with arduino and wasm, both tested.
-// so any platform that has a standard C library should be able to compile and run libbruter.
-// even non-gcc-like compilers like cl.exe are expected to work.
 
 #ifndef BRUTER_H
 #define BRUTER_H 1
@@ -12,27 +9,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <limits.h>
-
-// standard library
 #include <string.h>
-#include <math.h>
-#include <time.h>
-#include <float.h>
-#include <ctype.h>
 #include <inttypes.h>
 
 // version
-#define VERSION "0.8.3"
+#define VERSION "0.8.4"
 
 typedef intptr_t Int;
 typedef uintptr_t UInt;
 
-// we use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
-// bruter use a union as universal type, and bruter is able to manipulate and use pointers direcly so we need to use the pointer size;
+// BRUTER use Int and Float instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
+// BRUTER use a union as universal type, and BRUTER is able to manipulate and use pointers direcly so we need to use the pointer size;
 #if INTPTR_MAX == INT64_MAX
 typedef double Float;
 #else
@@ -53,7 +40,7 @@ typedef union
     char* s;
     void* p;
     
-    // these types are arrays
+    // these types are int arrays
     uint8_t u8[sizeof(Float)];
     uint16_t u16[sizeof(Float) / 2];
     uint32_t u32[sizeof(Float) / 4];
@@ -87,41 +74,11 @@ Value list_fast_remove(List *list, Int i);
 Int list_ocurrences(List *list, Value value);
 Int list_find(List *list, Value value);
 void list_reverse(List *list);
-
+Int list_call(List *context, List* args);
 
 //Function
 typedef Int (*Function)(List*, List*);
-typedef void (*InitFunction)(List*);
 
-//String
-char* str_duplicate(const char *str);
-char* str_nduplicate(const char *str, UInt n);
-
-char* str_format(const char *fmt, ...);
-
-List* special_space_split(char *str);
-List* special_split(char *str, char delim);
-
-// variable
-Int new_var(List *vm);
-Int new_block(List *vm, Int size);
-Int new_string(List *vm, char* str);
-
-#define function(name) Int name(List *vm, List *args)
-#define init(name) void init_##name(List *vm)
-
-#define data(index) vm->data[index]
-#define data_s(index) &vm->data[index].u8[0]
-#define arg(index) vm->data[args->data[index].i]
-#define arg_s(index) &vm->data[args->data[index].i].u8[0]
-#define arg_i(index) args->data[index].i
-
-
-// eval
-Int eval(List *vm, char *cmd);
-Int interpret(List *vm, char *cmd, List* _args);
-
-// functions
-List* parse(void* _vm, char* cmd);
+#define function(name) Int name(List *context, List *args)
 
 #endif
