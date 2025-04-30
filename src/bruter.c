@@ -166,7 +166,7 @@ Int list_call(List *context, List* args)
         return -1;
     }
     
-    Int func = list_shift(args).i;
+    Int func = args->data[0].i;
     Int result = -1;
     if (func > -1)
     {
@@ -380,23 +380,23 @@ void table_reverse(List *table)
     }
 }
 
-Value table_get(List *table, char* key)
+Int table_get(List *table, char* key)
 {
     for (Int i = 0; i < table->size; i++)
     {
-        if (strcmp(table->keys[i], key) == 0)
+        if (table->keys[i] && strcmp(table->keys[i], key) == 0)
         {
-            return table->data[i];
+            return i;
         }
     }
-    return (Value){.i = -1};
+    return -1;
 }
 
 void table_set(List *table, char* key, Value value)
 {
     for (Int i = 0; i < table->size; i++)
     {
-        if (strcmp(table->keys[i], key) == 0)
+        if (table->keys[i] && strcmp(table->keys[i], key) == 0)
         {
             table->data[i] = value;
             return;
@@ -414,8 +414,7 @@ Int table_call(List *context, List* args)
         table_free(args);
         return -1;
     }
-    
-    Int func = table_shift(args).i;
+    Int func = args->data[0].i;
     Int result = -1;
     if (func > -1)
     {

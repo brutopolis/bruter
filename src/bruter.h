@@ -92,7 +92,7 @@ Value   table_fast_remove(List *list, Int i);
 Int     table_ocurrences(List *list, Value value);
 Int     table_find(List *list, Value value);
 void    table_reverse(List *list);
-Value   table_get(List *table, char* key);
+Int     table_get(List *table, char* key);
 void    table_set(List *table, char* key, Value value);
 Int     table_call(List *context, List* args);
 
