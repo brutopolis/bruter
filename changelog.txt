@@ -9,8 +9,8 @@
 - you can also use buxu, its basically the old bruter, those removed features like parsing, labeling and such are now part of buxu;
 - List type now does have a property called keys, which is meant for tables, it wont be initialized unless you init it with table_keys;
 - tables and lists share the same struct, but tables init the List.keys, while lists just set it to NULL;
-- for every list_* function there is a table_* alternative;
-- new functions table_get and table_set, two functions not avaliable as list_*, they deal with the keys;
+- every list function also works with tables;
+- new function list_set, this only works for tables;
 
 (25/04/2025) - version 0.8.3
 
