@@ -1,6 +1,18 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(24/04/2025) - version 0.8.3
+(29/04/2025) - version 0.8.4
+
+- full rework;
+- parse, interpret, string functions, new_ functions, labels, macros and everything thats not part of the list system been moved to buxu;
+- interpret function is now called list_call;
+- bruter still doing functions calls and such, but you need to make the lists manually, which is not hard at all, but;
+- you can also use buxu, its basically the old bruter, those removed features like parsing, labeling and such are now part of buxu;
+- List type now does have a property called keys, which is meant for tables, it wont be initialized unless you init it with table_keys;
+- tables and lists share the same struct, but tables init the List.keys, while lists just set it to NULL;
+- every list function also works with tables;
+- new function list_set, this only works for tables;
+
+(25/04/2025) - version 0.8.3
 
 - say goodbye to the '' "" and (@) delimiters
 - welcome back {} demiliter for string, it is the only string delimiter now, and supports recursion of course;
@@ -10,7 +22,11 @@
 - "NULL" does not exist anymore;
 - hashes are now called labels, which is a more apropriate name, beside that, they are the same;
 - no more hash() macro;
-- new macros data_l and arg_l, both for getting the label of a value;
+- the parser now deals with \) and \} correctly;
+- label_set and label_unset are not a thing anymore;
+- new macros: data_l and arg_l, both for getting the INDEX of the slot;
+- new macros: data_ls and arg_ls, both get NAME STRING of the slot;
+- labels strings are also stored direclty in the vm->values list like the strings;
 
 (23/04/2025) - version 0.8.2
 
