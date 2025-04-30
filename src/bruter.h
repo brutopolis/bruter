@@ -55,26 +55,46 @@ typedef union
 typedef struct 
 {
     Value *data;
+    char **keys;
     Int size;
     Int capacity;
 } List;
 
-List *list_init(Int size);
-void list_free(List *list);
-void list_double(List *list);
-void list_half(List *list);
-void list_push(List *list, Value value);
-void list_unshift(List *list, Value value);
-Value list_pop(List *list);
-Value list_shift(List *list);
-void list_swap(List *list, Int i1, Int i2);
-void list_insert(List *list, Int i, Value value);
-Value list_remove(List *list, Int i);
-Value list_fast_remove(List *list, Int i);
-Int list_ocurrences(List *list, Value value);
-Int list_find(List *list, Value value);
-void list_reverse(List *list);
-Int list_call(List *context, List* args);
+List   *list_init(Int size);
+void    list_free(List *list);
+void    list_double(List *list);
+void    list_half(List *list);
+void    list_push(List *list, Value value);
+void    list_unshift(List *list, Value value);
+Value   list_pop(List *list);
+Value   list_shift(List *list);
+void    list_swap(List *list, Int i1, Int i2);
+void    list_insert(List *list, Int i, Value value);
+Value   list_remove(List *list, Int i);
+Value   list_fast_remove(List *list, Int i);
+Int     list_ocurrences(List *list, Value value);
+Int     list_find(List *list, Value value);
+void    list_reverse(List *list);
+Int     list_call(List *context, List* args);
+
+List  *table_init(Int size);
+void    table_free(List *list);
+void    table_double(List *list);
+void    table_half(List *list);
+void    table_push(List *list, Value value, char* key);
+void    table_unshift(List *list, Value value, char* key);
+void    table_insert(List *list, Int i, Value value, char* key);
+Value   table_remove(List *list, Int i);
+Value   table_pop(List *list);
+Value   table_shift(List *list);
+void    table_swap(List *list, Int i1, Int i2);
+Value   table_fast_remove(List *list, Int i);
+Int     table_ocurrences(List *list, Value value);
+Int     table_find(List *list, Value value);
+void    table_reverse(List *list);
+Value   table_get(List *table, char* key);
+void    table_set(List *table, char* key, Value value);
+Int     table_call(List *context, List* args);
 
 //Function
 typedef Int (*Function)(List*, List*);

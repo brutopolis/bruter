@@ -21,6 +21,7 @@ List *list_init(Int size)
     
     list->size = 0;
     list->capacity = size;
+    list->keys = NULL;
     return list;
 }
 
@@ -166,6 +167,255 @@ Int list_call(List *context, List* args)
     }
     
     Int func = list_shift(args).i;
+    Int result = -1;
+    if (func > -1)
+    {
+        Function _function = context->data[func].p;
+        result = _function(context, args);
+    }
+    else
+    {
+        printf("BRUTER_ERROR: %" PRIdPTR " is not a function\n", func);
+    }
+    
+    return result;
+}
+
+// tables functions
+
+List *table_init(Int size)
+{
+    List *table = (List*)malloc(sizeof(List));
+    
+    if (table == NULL)
+    {
+        printf("BRUTER_ERROR: failed to allocate memory for List\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    table->data = (size == 0) ? NULL : (Value*)malloc(size * sizeof(Value));
+    table->keys = (size == 0) ? NULL : (char**)malloc(size * sizeof(char*));
+    
+    if (size > 0 && table->data == NULL)
+    {
+        printf("BRUTER_ERROR: failed to allocate memory for List data\n");
+        free(table);
+        exit(EXIT_FAILURE);
+    }
+    
+    table->keys = (char**)malloc(size * sizeof(char*));
+    
+    if (size > 0 && table->keys == NULL)
+    {
+        printf("BRUTER_ERROR: failed to allocate memory for List keys\n");
+        free(table->data);
+        free(table);
+        exit(EXIT_FAILURE);
+    }
+    
+    table->size = 0;
+    table->capacity = size;
+    return table;
+}
+
+void table_free(List *table)
+{
+    free(table->data);
+    for (Int i = 0; i < table->size; i++)
+    {
+        if (table->keys[i] != NULL)
+        {
+            free(table->keys[i]);
+        }
+    }
+    free(table->keys);
+    free(table);
+}
+
+void table_double(List *table)
+{
+    table->capacity = table->capacity == 0 ? 1 : table->capacity * 2;
+    table->data = realloc(table->data, table->capacity * sizeof(Value));
+    table->keys = realloc(table->keys, table->capacity * sizeof(char*));
+}
+
+void table_half(List *table)
+{
+    table->capacity /= 2;
+    table->data = realloc(table->data, table->capacity * sizeof(Value));
+    table->keys = realloc(table->keys, table->capacity * sizeof(char*));
+    if (table->size > table->capacity)
+    {
+        table->size = table->capacity;
+    }
+}
+
+void table_push(List *table, Value value, char* key)
+{
+    if (table->size == table->capacity)
+    {
+        table_double(table);
+    }
+    table->data[table->size] = value;
+    table->keys[table->size] = key;
+    table->size++;
+}
+
+void table_unshift(List *table, Value value, char* key)
+{
+    if (table->size == table->capacity)
+    {
+        table_double(table);
+    }
+    memmove(&(table->data[1]), &(table->data[0]), table->size * sizeof(Value));
+    memmove(&(table->keys[1]), &(table->keys[0]), table->size * sizeof(char*));
+    table->data[0] = value;
+    table->keys[0] = key;
+    table->size++;
+}
+
+void table_insert(List *table, Int i, Value value, char* key)
+{
+    if (table->size == table->capacity)
+    {
+        table_double(table);
+    }
+    if (i <= table->size) 
+    {
+        memmove(&(table->data[i + 1]), &(table->data[i]), (table->size - i) * sizeof(Value));
+        memmove(&(table->keys[i + 1]), &(table->keys[i]), (table->size - i) * sizeof(char*));
+        table->data[i] = value;
+        table->keys[i] = key;
+        table->size++;
+    } 
+    else 
+    {
+        printf("BRUTER_ERROR: index %" PRIdPTR " out of range in table of size %" PRIdPTR " \n", i, table->size);
+        exit(EXIT_FAILURE);
+    }
+}
+
+Value table_pop(List *table)
+{
+    free(table->keys[table->size - 1]);
+    table->keys[table->size - 1] = NULL;
+    return table->data[--table->size];
+}
+
+Value table_shift(List *table)
+{
+    Value ret = table->data[0];
+    free(table->keys[0]);
+    table->keys[0] = NULL;
+    if (table->size > 1) 
+    {
+        memmove(&(table->data[0]), &(table->data[1]), (table->size - 1) * sizeof(Value));
+        memmove(&(table->keys[0]), &(table->keys[1]), (table->size - 1) * sizeof(char*));
+    }
+    table->size--;
+    return ret;
+}
+
+void table_swap(List *table, Int i1, Int i2)
+{
+    Value tmp = table->data[i1];
+    table->data[i1] = table->data[i2];
+    table->data[i2] = tmp;
+    
+    char* tmp_key = table->keys[i1];
+    table->keys[i1] = table->keys[i2];
+    table->keys[i2] = tmp_key;
+}
+
+Value table_remove(List *table, Int i)
+{
+    Value ret = table->data[i];
+    free(table->keys[i]);
+    table->keys[i] = NULL;
+    memmove(&(table->data[i]), &(table->data[i + 1]), (table->size - (i) - 1) * sizeof(Value));
+    memmove(&(table->keys[i]), &(table->keys[i + 1]), (table->size - (i) - 1) * sizeof(char*));
+    table->size--;
+    return ret;
+}
+
+Value table_fast_remove(List *table, Int i)
+{
+    Value ret = table->data[i];
+    free(table->keys[i]);
+    table->keys[i] = NULL;
+    table_swap(table, i, table->size - 1);
+    table_pop(table);
+    return ret;
+}
+
+Int table_ocurrences(List *table, Value value)
+{
+    Int i = 0;
+    while (i < table->size && table->data[i].i != value.i)
+    {
+        i++;
+    }
+    return i == table->size ? -1 : i;
+}
+
+Int table_find(List *table, Value value)
+{
+    Int i = -1;
+    for (Int j = 0; j < table->size; j++)
+    {
+        if (table->data[j].i == value.i)
+        {
+            i = j;
+            break;
+        }
+    }
+    return i;
+}
+
+void table_reverse(List *table)
+{
+    for (Int i = 0; i < table->size / 2; i++)
+    {
+        table_swap(table, i, table->size - i - 1);
+    }
+}
+
+Value table_get(List *table, char* key)
+{
+    for (Int i = 0; i < table->size; i++)
+    {
+        if (strcmp(table->keys[i], key) == 0)
+        {
+            return table->data[i];
+        }
+    }
+    return (Value){.i = -1};
+}
+
+void table_set(List *table, char* key, Value value)
+{
+    for (Int i = 0; i < table->size; i++)
+    {
+        if (strcmp(table->keys[i], key) == 0)
+        {
+            table->data[i] = value;
+            return;
+        }
+    }
+    
+    // if not found, add it
+    table_push(table, value, key);
+}
+
+Int table_call(List *context, List* args)
+{
+    if (!args->size)
+    {
+        table_free(args);
+        return -1;
+    }
+    
+    Int func = table_shift(args).i;
     Int result = -1;
     if (func > -1)
     {
