@@ -89,7 +89,10 @@ void list_unshift(List *list, Value value, char* key)
     if (list->keys != NULL)
     {
         memmove(&(list->keys[1]), &(list->keys[0]), list->size * sizeof(char*));
-        list->keys[0] = key;
+        int len = strlen(key);
+        list->keys[0] = malloc(len + 1);
+        strncpy(list->keys[0], key, len);
+        list->keys[0][len] = '\0';
     }
     list->size++;
 }
@@ -107,7 +110,10 @@ void list_insert(List *list, Int i, Value value, char* key)
         if (list->keys != NULL)
         {
             memmove(&(list->keys[i + 1]), &(list->keys[i]), (list->size - i) * sizeof(char*));
-            list->keys[i] = key;
+            int len = strlen(key);
+            list->keys[0] = malloc(len + 1);
+            strncpy(list->keys[0], key, len);
+            list->keys[0][len] = '\0';
         }
         list->size++;
     } 
