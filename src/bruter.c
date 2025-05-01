@@ -22,6 +22,13 @@ List *list_init(Int size, bool istable)
     list->size = 0;
     list->capacity = size;
     list->keys = istable ? (char**)malloc(size * sizeof(char*)) : NULL;
+    if (istable)
+    {
+        for (Int i = 0; i < size; i++)
+        {
+            list->keys[i] = NULL;
+        }
+    }
     return list;
 }
 
@@ -71,9 +78,13 @@ void list_push(List *list, Value value, char* key)
         list_double(list);
     }
     list->data[list->size] = value;
-    if (list->keys != NULL)
+
+    if (list->keys != NULL && key != NULL)
     {
-        list->keys[list->size] = key;
+        int len = strlen(key);
+        list->keys[list->size] = malloc(len + 1);
+        strncpy(list->keys[list->size], key, len);
+        list->keys[list->size][len] = '\0';
     }
     list->size++;
 }
@@ -86,7 +97,7 @@ void list_unshift(List *list, Value value, char* key)
     }
     memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(Value));
     list->data[0] = value;
-    if (list->keys != NULL)
+    if (list->keys != NULL && key != NULL)
     {
         memmove(&(list->keys[1]), &(list->keys[0]), list->size * sizeof(char*));
         int len = strlen(key);
@@ -107,7 +118,7 @@ void list_insert(List *list, Int i, Value value, char* key)
     {
         memmove(&(list->data[i + 1]), &(list->data[i]), (list->size - i) * sizeof(Value));
         list->data[i] = value;
-        if (list->keys != NULL)
+        if (list->keys != NULL && key != NULL)
         {
             memmove(&(list->keys[i + 1]), &(list->keys[i]), (list->size - i) * sizeof(char*));
             int len = strlen(key);
@@ -203,7 +214,7 @@ Int list_occurrences(List *list, Value value)
 Int list_find(List *list, Value value, char* key)
 {
     Int i = -1;
-    if (key != NULL)
+    if (key && list->keys)
     {
         for (Int j = 0; j < list->size; j++)
         {
