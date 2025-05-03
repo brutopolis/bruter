@@ -74,17 +74,11 @@ Value   list_shift(List *list);
 Value   list_remove(List *list, Int i);
 void    list_swap(List *list, Int i1, Int i2);
 Value   list_fast_remove(List *list, Int i);
-Int     list_occurrences(List *list, Value value);
 Int     list_find(List *list, Value value, char* key);
 void    list_reverse(List *list);
-Int     list_call(List *context, List* args);
+Value   list_call(List *list);
 
 // only for tables
 void    list_set(List *table, char* key, Value value);
-
-//Function
-typedef Int (*Function)(List*, List*);
-
-#define function(name) Int name(List *context, List *args)
 
 #endif
