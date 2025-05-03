@@ -201,16 +201,6 @@ void list_swap(List *list, Int i1, Int i2)
     }
 }
 
-Int list_occurrences(List *list, Value value)
-{
-    Int i = 0;
-    while (i < list->size && list->data[i].i != value.i)
-    {
-        i++;
-    }
-    return i == list->size ? -1 : i;
-}
-
 Int list_find(List *list, Value value, char* key)
 {
     Int i = -1;
@@ -228,6 +218,11 @@ Int list_find(List *list, Value value, char* key)
     }
     else 
     {
+        if (key)
+        {
+            printf("BRUTER_WARNING: you provided a key in list_find but the list is not a table\n");
+        } 
+
         for (Int j = 0; j < list->size; j++)
         {
             if (list->data[j].i == value.i)
@@ -248,10 +243,10 @@ void list_reverse(List *list)
     }
 }
 
-Int list_call(List *context, List* args)
+Value list_call(List *list)
 {
-    Function _function = args->data[0].p;
-    return _function(context, args);
+    Value(*_function)(List*) = list->data[0].p;
+    return _function(list);
 }
 
 // only for tables 
