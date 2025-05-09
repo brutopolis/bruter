@@ -1,6 +1,6 @@
 #include "bruter.h"
 
-List *list_init(Int size, bool istable)
+List *list_init(Int size)
 {
     List *list = (List*)malloc(sizeof(List));
     
@@ -21,14 +21,7 @@ List *list_init(Int size, bool istable)
     
     list->size = 0;
     list->capacity = size;
-    list->keys = istable ? (char**)malloc(size * sizeof(char*)) : NULL;
-    if (istable)
-    {
-        for (Int i = 0; i < size; i++)
-        {
-            list->keys[i] = NULL;
-        }
-    }
+    list->keys = NULL;
     return list;
 }
 
@@ -71,61 +64,40 @@ void list_half(List *list)
     }
 }
 
-void list_push(List *list, Value value, char* key)
+void list_push(List *list, Value value)
 {
     if (list->size == list->capacity)
     {
         list_double(list);
     }
-    list->data[list->size] = value;
 
-    if (list->keys != NULL && key != NULL)
-    {
-        int len = strlen(key);
-        list->keys[list->size] = malloc(len + 1);
-        strncpy(list->keys[list->size], key, len);
-        list->keys[list->size][len] = '\0';
-    }
+    list->data[list->size] = value;
     list->size++;
 }
 
-void list_unshift(List *list, Value value, char* key)
+void list_unshift(List *list, Value value)
 {
     if (list->size == list->capacity)
     {
         list_double(list);
     }
+
     memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(Value));
     list->data[0] = value;
-    if (list->keys != NULL && key != NULL)
-    {
-        memmove(&(list->keys[1]), &(list->keys[0]), list->size * sizeof(char*));
-        int len = strlen(key);
-        list->keys[0] = malloc(len + 1);
-        strncpy(list->keys[0], key, len);
-        list->keys[0][len] = '\0';
-    }
     list->size++;
 }
 
-void list_insert(List *list, Int i, Value value, char* key)
+void list_insert(List *list, Int i, Value value)
 {
     if (list->size == list->capacity)
     {
         list_double(list);
     }
+
     if (i <= list->size) 
     {
         memmove(&(list->data[i + 1]), &(list->data[i]), (list->size - i) * sizeof(Value));
         list->data[i] = value;
-        if (list->keys != NULL && key != NULL)
-        {
-            memmove(&(list->keys[i + 1]), &(list->keys[i]), (list->size - i) * sizeof(char*));
-            int len = strlen(key);
-            list->keys[0] = malloc(len + 1);
-            strncpy(list->keys[0], key, len);
-            list->keys[0][len] = '\0';
-        }
         list->size++;
     } 
     else 
@@ -201,38 +173,16 @@ void list_swap(List *list, Int i1, Int i2)
     }
 }
 
-Int list_find(List *list, Value value, char* key)
+Int list_find(List *list, Value value)
 {
-    Int i = -1;
-    if (key && list->keys)
+    for (Int i = 0; i < list->size; i++)
     {
-        for (Int j = 0; j < list->size; j++)
+        if (list->data[i].i == value.i)
         {
-            if (list->keys[j] && strcmp(list->keys[j], key) == 0)
-            {
-                i = j;
-                break;
-            }
-        }
-        return i;
-    }
-    else 
-    {
-        if (key)
-        {
-            printf("BRUTER_WARNING: you provided a key in list_find but the list is not a table\n");
-        } 
-
-        for (Int j = 0; j < list->size; j++)
-        {
-            if (list->data[j].i == value.i)
-            {
-                i = j;
-                break;
-            }
+            return i;
         }
     }
-    return i;
+    return -1;
 }
 
 void list_reverse(List *list)
@@ -243,18 +193,48 @@ void list_reverse(List *list)
     }
 }
 
-Value list_call(List *list)
+// pass NULL for context if you want to call a function directly
+// if context exist, the return will be always an int, because it return the index of the result in context
+Value list_call(List *context, List *list)
 {
-    Value(*_function)(List*) = list->data[0].p;
-    return _function(list);
+    Value(*_function)(List*, List*);
+    if (context)
+    {
+        _function = context->data[list->data[0].i].p;
+        return (Value){.i = _function(context, list).i};
+    }
+    else 
+    {
+        _function = list->data[0].p;
+        return _function(NULL, list);
+    }
+}
+
+// only for tables
+List *table_init(Int size)
+{
+    List *list = list_init(size);
+    list->keys = (char**)malloc(size * sizeof(char*));
+    for (Int i = 0; i < size; i++)
+    {
+        list->keys[i] = NULL;
+    }
+    if (list->keys == NULL)
+    {
+        printf("BRUTER_ERROR: failed to allocate memory for List keys\n");
+        free(list->data);
+        free(list);
+        exit(EXIT_FAILURE);
+    }
+    return list;
 }
 
 // only for tables 
-void list_set(List *table, char* key, Value value)
+void table_set(List *table, char* key, Value value)
 {
     if (table->keys == 0)
     {
-        printf("BRUTER_ERROR: list_set called on a non-table\n");
+        printf("BRUTER_ERROR: list_table_set called on a non-table\n");
         return;
     }
 
@@ -268,5 +248,94 @@ void list_set(List *table, char* key, Value value)
     }
     
     // if not found, add it
-    list_push(table, value, key);
+    table_push(table, value, key);
+}
+
+// only for tables 
+Int table_find(List *table, char* key)
+{
+    if (table->keys == 0)
+    {
+        printf("BRUTER_ERROR: table_find called on a non-table\n");
+        return -1;
+    }
+    else if (!key)
+    {
+        printf("BRUTER_ERROR: table_find called with NULL key\n");
+        return -1;
+    }
+
+    for (Int i = 0; i < table->size; i++)
+    {
+        if (table->keys[i] && strcmp(table->keys[i], key) == 0)
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+void table_push(List *list, Value value, char* key)
+{
+    if (list->size == list->capacity)
+    {
+        list_double(list);
+    }
+    list->data[list->size] = value;
+
+    if (list->keys != NULL && key != NULL)
+    {
+        int len = strlen(key);
+        list->keys[list->size] = malloc(len + 1);
+        strncpy(list->keys[list->size], key, len);
+        list->keys[list->size][len] = '\0';
+    }
+    list->size++;
+}
+
+void table_unshift(List *list, Value value, char* key)
+{
+    if (list->size == list->capacity)
+    {
+        list_double(list);
+    }
+    memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(Value));
+    list->data[0] = value;
+    if (list->keys != NULL && key != NULL)
+    {
+        memmove(&(list->keys[1]), &(list->keys[0]), list->size * sizeof(char*));
+        int len = strlen(key);
+        list->keys[0] = malloc(len + 1);
+        strncpy(list->keys[0], key, len);
+        list->keys[0][len] = '\0';
+    }
+    list->size++;
+}
+
+void table_insert(List *list, Int i, Value value, char* key)
+{
+    if (list->size == list->capacity)
+    {
+        list_double(list);
+    }
+    if (i <= list->size) 
+    {
+        memmove(&(list->data[i + 1]), &(list->data[i]), (list->size - i) * sizeof(Value));
+        list->data[i] = value;
+        if (list->keys != NULL && key != NULL)
+        {
+            memmove(&(list->keys[i + 1]), &(list->keys[i]), (list->size - i) * sizeof(char*));
+            int len = strlen(key);
+            list->keys[0] = malloc(len + 1);
+            strncpy(list->keys[0], key, len);
+            list->keys[0][len] = '\0';
+        }
+        list->size++;
+    } 
+    else 
+    {
+        printf("BRUTER_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR " \n", i, list->size);
+        exit(EXIT_FAILURE);
+    }
 }
