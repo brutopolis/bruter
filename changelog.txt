@@ -1,5 +1,10 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(09/05/2025) - version 0.8.5
+
+- list_call now can receive a context to be used;
+- new functions: table_init, table_set, table_push, table_unshift, table_insert;
+
 (29/04/2025) - version 0.8.4
 
 - full rework;
