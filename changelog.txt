@@ -1,5 +1,9 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(17/05/2025) - version 0.8.5a
+
+- new function list_copy, it copies the list;
+
 (09/05/2025) - version 0.8.5
 
 - list_call now can receive a context to be used;

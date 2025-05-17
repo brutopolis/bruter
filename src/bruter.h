@@ -81,6 +81,9 @@ void    list_reverse(List *list);
 // if context is not NULL, the result will be always an int, because it return the index of the result in context
 Value   list_call(List *context, List *list);
 
+// not implemented yet
+List   *list_copy(List *list);
+
 // only for tables
 List   *table_init(Int size);
 void    table_set(List *table, char* key, Value value);

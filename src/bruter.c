@@ -193,6 +193,22 @@ void list_reverse(List *list)
     }
 }
 
+List* list_copy(List *list)
+{
+    List *copy = list_init(list->capacity);
+    for (Int i = 0; i < list->size; i++)
+    {
+        copy->data[i] = list->data[i];
+        if (list->keys != NULL)
+        {
+            copy->keys[i] = malloc(strlen(list->keys[i]) + 1);
+            strcpy(copy->keys[i], list->keys[i]);
+        }
+    }
+    copy->size = list->size;
+    return copy;
+}
+
 // pass NULL for context if you want to call a function directly
 // if context exist, the return will be always an int, because it return the index of the result in context
 Value list_call(List *context, List *list)
