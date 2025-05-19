@@ -2,8 +2,9 @@
 
 (19/05/2025) - version 0.8.6
 
-- improved safety for list and table functions, if a list is passed to a function that expect a table, it will work perfectly;
+- lists and tables share the same functions once again, just like it was but safer;
 - when table, duplicate and init will set all the allocated memory for keys to NULL;
+- removed Byte type;
 - some fixes;
 
 (17/05/2025) - version 0.8.5a
