@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 // version
-#define VERSION "0.8.4"
+#define VERSION "0.8.6"
 
 typedef intptr_t Int;
 typedef uintptr_t UInt;
@@ -26,8 +26,6 @@ typedef double Float;
 #else
 typedef float Float;
 #endif
-
-typedef uint8_t Byte;
 
 // Value
 typedef union 
@@ -52,6 +50,7 @@ typedef union
 
     float f32[sizeof(Float) / 4];
 } Value;
+#define VALUE(type, value) (Value){.type = value}
 
 typedef struct 
 {
@@ -62,33 +61,28 @@ typedef struct
 } List;
 
 // List functions(also work for tables as tables are just lists with keys)
-List   *list_init(Int size);
+List   *list_init(Int size, bool is_table);
 void    list_free(List *list);
 void    list_double(List *list);
 void    list_half(List *list);
-void    list_push(List *list, Value value);
-void    list_unshift(List *list, Value value);
-void    list_insert(List *list, Int i, Value value);
+void    list_push(List *list, Value value, char* key);
+void    list_unshift(List *list, Value value, char* key);
+void    list_insert(List *list, Int i, Value value, char* key);
 Value   list_pop(List *list);
 Value   list_shift(List *list);
 Value   list_remove(List *list, Int i);
 Value   list_fast_remove(List *list, Int i);
 void    list_swap(List *list, Int i1, Int i2);
-Int     list_find(List *list, Value value);
+Int     list_find(List *list, Value value, char* key);
 void    list_reverse(List *list);
 // if context is NULL, it will call direcly from list->data[0].p and the result itself
 // if context is not NULL, it will call from context->data[list->data[0].i].p and return the index of the result in context
 // if context is not NULL, the result will be always an int, because it return the index of the result in context
 Value   list_call(List *context, List *list);
 
-// only for tables
-List   *table_init(Int size);
-void    table_set(List *table, char* key, Value value);
-Int     table_find(List *table, char* key);
-void    table_push(List *list, Value value, char* key);
-void    table_unshift(List *list, Value value, char* key);
-void    table_insert(List *list, Int i, Value value, char* key);
+// experimental
+List   *list_copy(List *list);
 
-#define list_function(name) Int name(List *context, List *args)
+#define LIST_FUNCTION(name) Int name(List *context, List *args)
 
 #endif
