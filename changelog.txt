@@ -1,5 +1,11 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(19/05/2025) - version 0.8.6
+
+- improved safety for list and table functions, if a list is passed to a function that expect a table, it will work perfectly;
+- when table, duplicate and init will set all the allocated memory for keys to NULL;
+- some fixes;
+
 (17/05/2025) - version 0.8.5a
 
 - new function list_copy, it copies the list;

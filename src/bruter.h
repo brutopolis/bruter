@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 // version
-#define VERSION "0.8.4"
+#define VERSION "0.8.6"
 
 typedef intptr_t Int;
 typedef uintptr_t UInt;
@@ -81,7 +81,7 @@ void    list_reverse(List *list);
 // if context is not NULL, the result will be always an int, because it return the index of the result in context
 Value   list_call(List *context, List *list);
 
-// not implemented yet
+// experimental
 List   *list_copy(List *list);
 
 // only for tables

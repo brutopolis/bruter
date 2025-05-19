@@ -46,6 +46,7 @@ void list_double(List *list)
     if (list->keys != NULL)
     {
         list->keys = realloc(list->keys, list->capacity * sizeof(char*));
+        memset(list->keys + list->size, 0, (list->capacity - list->size) * sizeof(char*));
     }
 }
 
@@ -71,6 +72,11 @@ void list_push(List *list, Value value)
         list_double(list);
     }
 
+    if (list->keys != NULL)
+    {
+        list->keys[list->size] = NULL;
+    }
+
     list->data[list->size] = value;
     list->size++;
 }
@@ -80,6 +86,12 @@ void list_unshift(List *list, Value value)
     if (list->size == list->capacity)
     {
         list_double(list);
+    }
+
+    if (list->keys != NULL)
+    {
+        memmove(&(list->keys[1]), &(list->keys[0]), list->size * sizeof(char*));
+        list->keys[0] = NULL;
     }
 
     memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(Value));
@@ -99,6 +111,11 @@ void list_insert(List *list, Int i, Value value)
         memmove(&(list->data[i + 1]), &(list->data[i]), (list->size - i) * sizeof(Value));
         list->data[i] = value;
         list->size++;
+        if (list->keys != NULL)
+        {
+            memmove(&(list->keys[i + 1]), &(list->keys[i]), (list->size - i) * sizeof(char*));
+            list->keys[i] = NULL;
+        }
     } 
     else 
     {
@@ -230,11 +247,8 @@ Value list_call(List *context, List *list)
 List *table_init(Int size)
 {
     List *list = list_init(size);
-    list->keys = (char**)malloc(size * sizeof(char*));
-    for (Int i = 0; i < size; i++)
-    {
-        list->keys[i] = NULL;
-    }
+    list->keys = (char**)calloc(size, sizeof(char*)); // we need all keys to be NULL
+    
     if (list->keys == NULL)
     {
         printf("BRUTER_ERROR: failed to allocate memory for List keys\n");
@@ -300,12 +314,19 @@ void table_push(List *list, Value value, char* key)
     }
     list->data[list->size] = value;
 
-    if (list->keys != NULL && key != NULL)
+    if (list->keys != NULL)
     {
-        int len = strlen(key);
-        list->keys[list->size] = malloc(len + 1);
-        strncpy(list->keys[list->size], key, len);
-        list->keys[list->size][len] = '\0';
+        if (key != NULL)
+        {
+            int len = strlen(key);
+            list->keys[list->size] = malloc(len + 1);
+            strncpy(list->keys[list->size], key, len);
+            list->keys[list->size][len] = '\0';
+        }
+        else 
+        {
+            list->keys[list->size] = NULL;
+        }
     }
     list->size++;
 }
@@ -318,13 +339,22 @@ void table_unshift(List *list, Value value, char* key)
     }
     memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(Value));
     list->data[0] = value;
-    if (list->keys != NULL && key != NULL)
+    
+    
+    if (list->keys != NULL)
     {
         memmove(&(list->keys[1]), &(list->keys[0]), list->size * sizeof(char*));
-        int len = strlen(key);
-        list->keys[0] = malloc(len + 1);
-        strncpy(list->keys[0], key, len);
-        list->keys[0][len] = '\0';
+        if (key != NULL)
+        {
+            int len = strlen(key);
+            list->keys[0] = malloc(len + 1);
+            strncpy(list->keys[0], key, len);
+            list->keys[0][len] = '\0';
+        }
+        else 
+        {
+            list->keys[0] = NULL;
+        }
     }
     list->size++;
 }
@@ -339,13 +369,20 @@ void table_insert(List *list, Int i, Value value, char* key)
     {
         memmove(&(list->data[i + 1]), &(list->data[i]), (list->size - i) * sizeof(Value));
         list->data[i] = value;
-        if (list->keys != NULL && key != NULL)
+        if (list->keys != NULL)
         {
             memmove(&(list->keys[i + 1]), &(list->keys[i]), (list->size - i) * sizeof(char*));
-            int len = strlen(key);
-            list->keys[0] = malloc(len + 1);
-            strncpy(list->keys[0], key, len);
-            list->keys[0][len] = '\0';
+            if (key != NULL)
+            {
+                int len = strlen(key);
+                list->keys[i] = malloc(len + 1);
+                strncpy(list->keys[i], key, len);
+                list->keys[i][len] = '\0';
+            }
+            else 
+            {
+                list->keys[i] = NULL;
+            }
         }
         list->size++;
     } 
