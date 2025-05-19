@@ -83,6 +83,6 @@ Value   list_call(List *context, List *list);
 // experimental
 List   *list_copy(List *list);
 
-#define list_function(name) Int name(List *context, List *args)
+#define LIST_FUNCTION(name) Int name(List *context, List *args)
 
 #endif

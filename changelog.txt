@@ -4,6 +4,8 @@
 
 - lists and tables share the same functions once again, just like it was but safer;
 - when table, duplicate and init will set all the allocated memory for keys to NULL;
+- new macro VALUE(type, value), it will create a new value of the type and set the value;
+- all macros are now uppercase;
 - removed Byte type;
 - some fixes;
 
