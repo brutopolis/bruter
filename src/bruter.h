@@ -65,15 +65,15 @@ List   *list_init(Int size, bool is_table);
 void    list_free(List *list);
 void    list_double(List *list);
 void    list_half(List *list);
-void    list_push(List *list, Value value, char* key);
-void    list_unshift(List *list, Value value, char* key);
-void    list_insert(List *list, Int i, Value value, char* key);
+void    list_push(List *list, Value value, const char* key);
+void    list_unshift(List *list, Value value, const char* key);
+void    list_insert(List *list, Int i, Value value, const char* key);
 Value   list_pop(List *list);
 Value   list_shift(List *list);
 Value   list_remove(List *list, Int i);
 Value   list_fast_remove(List *list, Int i);
 void    list_swap(List *list, Int i1, Int i2);
-Int     list_find(List *list, Value value, char* key);
+Int     list_find(List *list, Value value, const char* key);
 void    list_reverse(List *list);
 // if context is NULL, it will call direcly from list->data[0].p and the result itself
 // if context is not NULL, it will call from context->data[list->data[0].i].p and return the index of the result in context

@@ -81,7 +81,7 @@ void list_half(List *list)
     }
 }
 
-void list_push(List *list, Value value, char* key)
+void list_push(List *list, Value value, const char* key)
 {
     if (list->size == list->capacity)
     {
@@ -106,7 +106,7 @@ void list_push(List *list, Value value, char* key)
     list->size++;
 }
 
-void list_unshift(List *list, Value value, char* key)
+void list_unshift(List *list, Value value, const char* key)
 {
     if (list->size == list->capacity)
     {
@@ -133,7 +133,8 @@ void list_unshift(List *list, Value value, char* key)
     }
     list->size++;
 }
-void list_insert(List *list, Int i, Value value, char* key)
+
+void list_insert(List *list, Int i, Value value, const char* key)
 {
     if (list->size == list->capacity)
     {
@@ -233,7 +234,7 @@ void list_swap(List *list, Int i1, Int i2)
     }
 }
 
-Int list_find(List *list, Value value, char* key)
+Int list_find(List *list, Value value, const char* key)
 {
     if (list->keys != NULL && key != NULL)
     {
