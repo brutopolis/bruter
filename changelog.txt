@@ -1,9 +1,12 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(27/05/2025) - version 0.8.6a
+(27/05/2025) - version 0.8.7
 
 - all list_* are now prefixed as  bruter_*;
 - all LIST_* macros are now prefixed as BRUTER_*;
+- every function is now declared and defined static inline(though, the compiler might not inline them anyway);
+- bruter is now a header-only library, you can just include bruter.h and use it;
+- some safety checks added;
 
 (19/05/2025) - version 0.8.6
 
