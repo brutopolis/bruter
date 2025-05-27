@@ -1,5 +1,10 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(27/05/2025) - version 0.8.6a
+
+- all list_* are now prefixed as  bruter_*;
+- all LIST_* macros are now prefixed as BRUTER_*;
+
 (19/05/2025) - version 0.8.6
 
 - lists and tables share the same functions once again, just like it was but safer;
