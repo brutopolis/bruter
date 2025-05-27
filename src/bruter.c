@@ -1,20 +1,20 @@
 #include "bruter.h"
 
-List *list_init(Int size, bool is_table)
+BruterList *bruter_init(BruterInt size, bool is_table)
 {
-    List *list = (List*)malloc(sizeof(List));
+    BruterList *list = (BruterList*)malloc(sizeof(BruterList));
     
     if (list == NULL)
     {
-        printf("BRUTER_ERROR: failed to allocate memory for List\n");
+        printf("BRUTER_ERROR: failed to allocate memory for BruterList\n");
         exit(EXIT_FAILURE);
     }
     
-    list->data = (size == 0) ? NULL : (Value*)malloc(size * sizeof(Value));
+    list->data = (size == 0) ? NULL : (BruterValue*)malloc(size * sizeof(BruterValue));
     
     if (size > 0 && list->data == NULL)
     {
-        printf("BRUTER_ERROR: failed to allocate memory for List data\n");
+        printf("BRUTER_ERROR: failed to allocate memory for BruterList data\n");
         free(list);
         exit(EXIT_FAILURE);
     }
@@ -27,7 +27,7 @@ List *list_init(Int size, bool is_table)
         list->keys = (char**)calloc(size, sizeof(char*)); // we need all keys to be NULL
         if (list->keys == NULL)
         {
-            printf("BRUTER_ERROR: failed to allocate memory for List keys\n");
+            printf("BRUTER_ERROR: failed to allocate memory for BruterList keys\n");
             free(list->data);
             free(list);
             exit(EXIT_FAILURE);
@@ -41,12 +41,12 @@ List *list_init(Int size, bool is_table)
     return list;
 }
 
-void list_free(List *list)
+void bruter_free(BruterList *list)
 {
     free(list->data);
     if (list->keys != NULL)
     {
-        for (Int i = 0; i < list->size; i++)
+        for (BruterInt i = 0; i < list->size; i++)
         {
             free(list->keys[i]);
         }
@@ -55,10 +55,10 @@ void list_free(List *list)
     free(list);
 }
 
-void list_double(List *list)
+void bruter_double(BruterList *list)
 {
     list->capacity = list->capacity == 0 ? 1 : list->capacity * 2;
-    list->data = realloc(list->data, list->capacity * sizeof(Value));
+    list->data = realloc(list->data, list->capacity * sizeof(BruterValue));
     if (list->keys != NULL)
     {
         list->keys = realloc(list->keys, list->capacity * sizeof(char*));
@@ -66,10 +66,10 @@ void list_double(List *list)
     }
 }
 
-void list_half(List *list)
+void bruter_half(BruterList *list)
 {
     list->capacity /= 2;
-    list->data = realloc(list->data, list->capacity * sizeof(Value));
+    list->data = realloc(list->data, list->capacity * sizeof(BruterValue));
     if (list->keys != NULL)
     {
         list->keys = realloc(list->keys, list->capacity * sizeof(char*));
@@ -81,11 +81,11 @@ void list_half(List *list)
     }
 }
 
-void list_push(List *list, Value value, const char* key)
+void bruter_push(BruterList *list, BruterValue value, const char* key)
 {
     if (list->size == list->capacity)
     {
-        list_double(list);
+        bruter_double(list);
     }
     list->data[list->size] = value;
 
@@ -106,13 +106,13 @@ void list_push(List *list, Value value, const char* key)
     list->size++;
 }
 
-void list_unshift(List *list, Value value, const char* key)
+void bruter_unshift(BruterList *list, BruterValue value, const char* key)
 {
     if (list->size == list->capacity)
     {
-        list_double(list);
+        bruter_double(list);
     }
-    memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(Value));
+    memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(BruterValue));
     list->data[0] = value;
     
     
@@ -134,15 +134,15 @@ void list_unshift(List *list, Value value, const char* key)
     list->size++;
 }
 
-void list_insert(List *list, Int i, Value value, const char* key)
+void bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key)
 {
     if (list->size == list->capacity)
     {
-        list_double(list);
+        bruter_double(list);
     }
     if (i <= list->size) 
     {
-        memmove(&(list->data[i + 1]), &(list->data[i]), (list->size - i) * sizeof(Value));
+        memmove(&(list->data[i + 1]), &(list->data[i]), (list->size - i) * sizeof(BruterValue));
         list->data[i] = value;
         if (list->keys != NULL)
         {
@@ -168,7 +168,7 @@ void list_insert(List *list, Int i, Value value, const char* key)
     }
 }
 
-Value list_pop(List *list)
+BruterValue bruter_pop(BruterList *list)
 {
     if (list->keys != NULL)
     {
@@ -178,12 +178,12 @@ Value list_pop(List *list)
     return list->data[--list->size];
 }
 
-Value list_shift(List *list)
+BruterValue bruter_shift(BruterList *list)
 {
-    Value ret = list->data[0];
+    BruterValue ret = list->data[0];
     if (list->size > 1) 
     {
-        memmove(&(list->data[0]), &(list->data[1]), (list->size - 1) * sizeof(Value));
+        memmove(&(list->data[0]), &(list->data[1]), (list->size - 1) * sizeof(BruterValue));
     }
     if (list->keys != NULL)
     {
@@ -198,10 +198,10 @@ Value list_shift(List *list)
     return ret;
 }
 
-Value list_remove(List *list, Int i)
+BruterValue bruter_remove(BruterList *list, BruterInt i)
 {
-    Value ret = list->data[i];
-    memmove(&(list->data[i]), &(list->data[i + 1]), (list->size - (i) - 1) * sizeof(Value));
+    BruterValue ret = list->data[i];
+    memmove(&(list->data[i]), &(list->data[i + 1]), (list->size - (i) - 1) * sizeof(BruterValue));
     list->size--;
     if (list->keys != NULL)
     {
@@ -212,17 +212,17 @@ Value list_remove(List *list, Int i)
     return ret;
 }
 
-Value list_fast_remove(List *list, Int i)
+BruterValue bruter_fast_remove(BruterList *list, BruterInt i)
 {
-    Value ret = list->data[i];
-    list_swap(list, i, list->size - 1);
-    list_pop(list);
+    BruterValue ret = list->data[i];
+    bruter_swap(list, i, list->size - 1);
+    bruter_pop(list);
     return ret;
 }
 
-void list_swap(List *list, Int i1, Int i2)
+void bruter_swap(BruterList *list, BruterInt i1, BruterInt i2)
 {
-    Value tmp = list->data[i1];
+    BruterValue tmp = list->data[i1];
     list->data[i1] = list->data[i2];
     list->data[i2] = tmp;
 
@@ -234,11 +234,11 @@ void list_swap(List *list, Int i1, Int i2)
     }
 }
 
-Int list_find(List *list, Value value, const char* key)
+BruterInt bruter_find(BruterList *list, BruterValue value, const char* key)
 {
     if (list->keys != NULL && key != NULL)
     {
-        for (Int i = 0; i < list->size; i++)
+        for (BruterInt i = 0; i < list->size; i++)
         {
             if (list->keys[i] && strcmp(list->keys[i], key) == 0)
             {
@@ -248,12 +248,12 @@ Int list_find(List *list, Value value, const char* key)
     }
     else if (list->keys == NULL && key != NULL)
     {
-        printf("BRUTER_ERROR: list_find received a key but the list is not a table\n");
+        printf("BRUTER_ERROR: bruter_find received a key but the list is not a table\n");
         return -1;
     }
     else
     {
-        for (Int i = 0; i < list->size; i++)
+        for (BruterInt i = 0; i < list->size; i++)
         {
             if (list->data[i].i == value.i)
             {
@@ -264,42 +264,42 @@ Int list_find(List *list, Value value, const char* key)
     return -1;
 }
 
-void list_reverse(List *list)
+void bruter_reverse(BruterList *list)
 {
-    for (Int i = 0; i < list->size / 2; i++)
+    for (BruterInt i = 0; i < list->size / 2; i++)
     {
-        list_swap(list, i, list->size - i - 1);
+        bruter_swap(list, i, list->size - i - 1);
     }
 }
 
-List* list_copy(List *list)
+BruterList* bruter_copy(BruterList *list)
 {
-    List *copy = list_init(list->capacity, list->keys != NULL);
+    BruterList *copy = bruter_init(list->capacity, list->keys != NULL);
     if (copy == NULL)
     {
-        printf("BRUTER_ERROR: failed to allocate memory for List copy\n");
+        printf("BRUTER_ERROR: failed to allocate memory for BruterList copy\n");
         exit(EXIT_FAILURE);
     }
     copy->size = list->size;
-    copy->data = (Value*)malloc(copy->capacity * sizeof(Value));
+    copy->data = (BruterValue*)malloc(copy->capacity * sizeof(BruterValue));
     if (copy->data == NULL)
     {
-        printf("BRUTER_ERROR: failed to allocate memory for List copy data\n");
+        printf("BRUTER_ERROR: failed to allocate memory for BruterList copy data\n");
         free(copy);
         exit(EXIT_FAILURE);
     }
-    memcpy(copy->data, list->data, copy->size * sizeof(Value));
+    memcpy(copy->data, list->data, copy->size * sizeof(BruterValue));
     if (list->keys != NULL)
     {
         copy->keys = (char**)malloc(copy->capacity * sizeof(char*));
         if (copy->keys == NULL)
         {
-            printf("BRUTER_ERROR: failed to allocate memory for List copy keys\n");
+            printf("BRUTER_ERROR: failed to allocate memory for BruterList copy keys\n");
             free(copy->data);
             free(copy);
             exit(EXIT_FAILURE);
         }
-        for (Int i = 0; i < copy->size; i++)
+        for (BruterInt i = 0; i < copy->size; i++)
         {
             if (list->keys[i] != NULL)
             {
@@ -323,13 +323,13 @@ List* list_copy(List *list)
 
 // pass NULL for context if you want to call a function directly
 // if context exist, the return will be always an int, because it return the index of the result in context
-Value list_call(List *context, List *list)
+BruterValue bruter_call(BruterList *context, BruterList *list)
 {
-    Value(*_function)(List*, List*);
+    BruterValue(*_function)(BruterList*, BruterList*);
     if (context)
     {
         _function = context->data[list->data[0].i].p;
-        return (Value){.i = _function(context, list).i};
+        return (BruterValue){.i = _function(context, list).i};
     }
     else 
     {
