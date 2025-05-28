@@ -438,24 +438,10 @@ static inline BruterList* bruter_copy(BruterList *list)
         exit(EXIT_FAILURE);
     }
     copy->size = list->size;
-    copy->data = (BruterValue*)malloc(copy->capacity * sizeof(BruterValue));
-    if (copy->data == NULL)
-    {
-        printf("BRUTER_ERROR: failed to allocate memory for BruterList copy data\n");
-        free(copy);
-        exit(EXIT_FAILURE);
-    }
     memcpy(copy->data, list->data, copy->size * sizeof(BruterValue));
+    
     if (list->keys != NULL)
     {
-        copy->keys = (char**)malloc(copy->capacity * sizeof(char*));
-        if (copy->keys == NULL)
-        {
-            printf("BRUTER_ERROR: failed to allocate memory for BruterList copy keys\n");
-            free(copy->data);
-            free(copy);
-            exit(EXIT_FAILURE);
-        }
         for (BruterInt i = 0; i < copy->size; i++)
         {
             if (list->keys[i] != NULL)

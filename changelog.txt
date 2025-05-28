@@ -7,6 +7,7 @@
 - every function is now declared and defined static inline(though, the compiler might not inline them anyway);
 - bruter is now a header-only library, you can just include bruter.h and use it;
 - replaced value macros with equivalent inline functions;
+- some fixes into bruter_copy;
 - some safety checks added;
 
 (19/05/2025) - version 0.8.6
