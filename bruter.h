@@ -59,9 +59,22 @@ typedef struct
     BruterInt capacity;
 } BruterList;
 
-// macros
-#define BRUTER_VALUE(type, value) (BruterValue){.type = value}
-#define BRUTER_FUNCTION(name) BruterInt name(BruterList *context, BruterList *args)
+#ifdef USE_SHORT_TYPES
+
+#warning "USE_SHORT_TYPES is defined; using short type aliases like Int, Float, etc."
+
+#define Int BruterInt
+#define UInt BruterUInt
+#define Float BruterFloat
+#define Value BruterValue
+#define List BruterList
+
+#endif
+
+static inline BruterValue bruter_value_i(BruterInt value);
+static inline BruterValue bruter_value_u(BruterUInt value);
+static inline BruterValue bruter_value_f(BruterFloat value);
+static inline BruterValue bruter_value_p(void *value);
 
 // BruterList functions(also work for tables as tables are just lists with keys)
 static inline BruterList   *bruter_init(BruterInt size, bool is_table);
@@ -92,6 +105,26 @@ static inline void          bruter_set_key(BruterList *list, BruterInt i, const 
 // functions implementations
 // functions implementations
 // functions implementations
+
+static inline BruterValue bruter_value_i(BruterInt value)
+{
+    return (BruterValue){.i = value};
+}
+
+static inline BruterValue bruter_value_u(BruterUInt value)
+{
+    return (BruterValue){.u = value};
+}
+
+static inline BruterValue bruter_value_f(BruterFloat value)
+{
+    return (BruterValue){.f = value};
+}
+
+static inline BruterValue bruter_value_p(void *value)
+{
+    return (BruterValue){.p = value};
+}
 
 static inline BruterList *bruter_init(BruterInt size, bool is_table)
 {
@@ -466,7 +499,7 @@ static inline BruterValue bruter_get(BruterList *list, BruterInt i)
 {
     if (i < 0 || i >= list->size)
     {
-        return BRUTER_VALUE(i, -1);
+        return bruter_value_i(-1); // return -1 if index is out of range
     }
     return list->data[i];
 }
