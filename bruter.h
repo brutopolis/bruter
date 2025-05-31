@@ -92,6 +92,7 @@ static inline void          bruter_swap(BruterList *list, BruterInt i1, BruterIn
 static inline BruterInt     bruter_find(BruterList *list, BruterValue value, const char* key);
 static inline void          bruter_reverse(BruterList *list);
 static inline BruterList   *bruter_copy(BruterList *list);
+static inline void          bruter_concat(BruterList *dest, BruterList *src);
 // if context is NULL, it will call direcly from list->data[0].p and the result itself
 // if context is not NULL, it will call from context->data[list->data[0].i].p and return the index of the result in context
 // if context is not NULL, the result will be always an int, because it return the index of the result in context
@@ -461,6 +462,38 @@ static inline BruterList* bruter_copy(BruterList *list)
         copy->keys = NULL;
     }
     return copy;
+}
+
+static inline void bruter_concat(BruterList *dest, BruterList *src)
+{
+    if (dest->size + src->size > dest->capacity)
+    {
+        while (dest->size + src->size > dest->capacity)
+        {
+            bruter_double(dest);
+        }
+    }
+    
+    memcpy(&(dest->data[dest->size]), src->data, src->size * sizeof(BruterValue));
+    
+    if (dest->keys != NULL && src->keys != NULL)
+    {
+        for (BruterInt i = 0; i < src->size; i++)
+        {
+            if (src->keys[i] != NULL)
+            {
+                int len = strlen(src->keys[i]);
+                dest->keys[dest->size + i] = malloc(len + 1);
+                strcpy(dest->keys[dest->size + i], src->keys[i]);
+            }
+            else 
+            {
+                dest->keys[dest->size + i] = NULL;
+            }
+        }
+    }
+    
+    dest->size += src->size;
 }
 
 // pass NULL for context if you want to call a function directly

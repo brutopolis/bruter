@@ -1,5 +1,9 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(31/05/2025) - version 0.8.7a
+
+- new experimental function: bruter_concat;
+
 (27/05/2025) - version 0.8.7
 
 - all list_* are now prefixed as  bruter_*;
