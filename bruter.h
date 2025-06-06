@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 // version
-#define VERSION "0.8.7"
+#define VERSION "0.8.7a"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -59,9 +59,22 @@ typedef struct
     BruterInt capacity;
 } BruterList;
 
-// macros
-#define BRUTER_VALUE(type, value) (BruterValue){.type = value}
-#define BRUTER_FUNCTION(name) BruterInt name(BruterList *context, BruterList *args)
+#ifdef USE_SHORT_TYPES
+
+#warning "USE_SHORT_TYPES is defined; using short type aliases like Int, Float, etc."
+
+#define Int BruterInt
+#define UInt BruterUInt
+#define Float BruterFloat
+#define Value BruterValue
+#define List BruterList
+
+#endif
+
+static inline BruterValue bruter_value_i(BruterInt value);
+static inline BruterValue bruter_value_u(BruterUInt value);
+static inline BruterValue bruter_value_f(BruterFloat value);
+static inline BruterValue bruter_value_p(void *value);
 
 // BruterList functions(also work for tables as tables are just lists with keys)
 static inline BruterList   *bruter_init(BruterInt size, bool is_table);
@@ -79,6 +92,7 @@ static inline void          bruter_swap(BruterList *list, BruterInt i1, BruterIn
 static inline BruterInt     bruter_find(BruterList *list, BruterValue value, const char* key);
 static inline void          bruter_reverse(BruterList *list);
 static inline BruterList   *bruter_copy(BruterList *list);
+static inline void          bruter_concat(BruterList *dest, BruterList *src);
 // if context is NULL, it will call direcly from list->data[0].p and the result itself
 // if context is not NULL, it will call from context->data[list->data[0].i].p and return the index of the result in context
 // if context is not NULL, the result will be always an int, because it return the index of the result in context
@@ -92,6 +106,26 @@ static inline void          bruter_set_key(BruterList *list, BruterInt i, const 
 // functions implementations
 // functions implementations
 // functions implementations
+
+static inline BruterValue bruter_value_i(BruterInt value)
+{
+    return (BruterValue){.i = value};
+}
+
+static inline BruterValue bruter_value_u(BruterUInt value)
+{
+    return (BruterValue){.u = value};
+}
+
+static inline BruterValue bruter_value_f(BruterFloat value)
+{
+    return (BruterValue){.f = value};
+}
+
+static inline BruterValue bruter_value_p(void *value)
+{
+    return (BruterValue){.p = value};
+}
 
 static inline BruterList *bruter_init(BruterInt size, bool is_table)
 {
@@ -405,24 +439,10 @@ static inline BruterList* bruter_copy(BruterList *list)
         exit(EXIT_FAILURE);
     }
     copy->size = list->size;
-    copy->data = (BruterValue*)malloc(copy->capacity * sizeof(BruterValue));
-    if (copy->data == NULL)
-    {
-        printf("BRUTER_ERROR: failed to allocate memory for BruterList copy data\n");
-        free(copy);
-        exit(EXIT_FAILURE);
-    }
     memcpy(copy->data, list->data, copy->size * sizeof(BruterValue));
+    
     if (list->keys != NULL)
     {
-        copy->keys = (char**)malloc(copy->capacity * sizeof(char*));
-        if (copy->keys == NULL)
-        {
-            printf("BRUTER_ERROR: failed to allocate memory for BruterList copy keys\n");
-            free(copy->data);
-            free(copy);
-            exit(EXIT_FAILURE);
-        }
         for (BruterInt i = 0; i < copy->size; i++)
         {
             if (list->keys[i] != NULL)
@@ -442,6 +462,38 @@ static inline BruterList* bruter_copy(BruterList *list)
         copy->keys = NULL;
     }
     return copy;
+}
+
+static inline void bruter_concat(BruterList *dest, BruterList *src)
+{
+    if (dest->size + src->size > dest->capacity)
+    {
+        while (dest->size + src->size > dest->capacity)
+        {
+            bruter_double(dest);
+        }
+    }
+    
+    memcpy(&(dest->data[dest->size]), src->data, src->size * sizeof(BruterValue));
+    
+    if (dest->keys != NULL && src->keys != NULL)
+    {
+        for (BruterInt i = 0; i < src->size; i++)
+        {
+            if (src->keys[i] != NULL)
+            {
+                int len = strlen(src->keys[i]);
+                dest->keys[dest->size + i] = malloc(len + 1);
+                strcpy(dest->keys[dest->size + i], src->keys[i]);
+            }
+            else 
+            {
+                dest->keys[dest->size + i] = NULL;
+            }
+        }
+    }
+    
+    dest->size += src->size;
 }
 
 // pass NULL for context if you want to call a function directly
@@ -466,7 +518,7 @@ static inline BruterValue bruter_get(BruterList *list, BruterInt i)
 {
     if (i < 0 || i >= list->size)
     {
-        return BRUTER_VALUE(i, -1);
+        return bruter_value_i(-1); // return -1 if index is out of range
     }
     return list->data[i];
 }
