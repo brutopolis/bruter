@@ -15,7 +15,7 @@
 #include <stdbool.h>
 
 // version
-#define VERSION "0.8.7a"
+#define VERSION "0.8.8"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
