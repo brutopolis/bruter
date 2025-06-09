@@ -1,5 +1,13 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(07/06/2025) - version 0.8.8
+
+- bruter lists can now have multiple parallel data buffer's;
+- no more tables, you can do that using a list with 2 data parallel buffers;
+- pop, shift, remove and fast_remove doest not return the value anymore, it just removes it, it got quite ambiguous, because you cant return all the parallel buffers simultaneously, so it was better to just remove it;
+- find now receive the buffer index also, so you can find the value in a specific buffer;
+- some examples created;
+
 (31/05/2025) - version 0.8.7a
 
 - new experimental function: bruter_concat;
