@@ -1,5 +1,11 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(11/06/2025) - version 0.8.8
+
+- new optional type system;
+- new macros BRUTER_KEYLESS and BRUTER_TYPELESS, they will not implement the key and/or the type system, be careful, once they are set, they cannot be unset;
+- beware, if you set BRUTER_KEYLESS or BRUTER_TYPELESS, they will eventually change the function definitions too (e.g. list_push will not receive a key parameter anymore, it will just receive the value);
+
 (31/05/2025) - version 0.8.7a
 
 - new experimental function: bruter_concat;
