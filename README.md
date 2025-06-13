@@ -1,7 +1,7 @@
 
 # BRUTER
 
-  BRUTER is a C header-only library to deal with lists of variables, it is designed to be simple and fast while extremely easy to use and uderstand.
+  BRUTER is a C header-only library to deal with lists of variables, it is designed to be simple and fast while extremely easy to use and understand.
 
 # Library
 
@@ -14,7 +14,7 @@
   #include <bruter.h>
   ```
 
-  BRUTER have a optional type system, each variable will have a byte for type, you can also disable completely the type system;
+  BRUTER have a optional type system, each variable will have a byte for type, note that bruter does not implement types for you, it just provides a way to store and retrieve types, you can define your own types and use them with BRUTER, you can also disable completely the type system by defining `BRUTER_TYPELESS`:
   ```c
   #define BRUTER_TYPELESS
   #include <bruter.h>

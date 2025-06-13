@@ -179,7 +179,7 @@ static inline void          _bruter_set_type(BruterList *list, BruterInt i, int8
 #endif
 
 // under this section macros are only affected by typeless
-#if defined(BRUTER_TYPELESS)
+#ifndef BRUTER_TYPELESS
     #define bruter_get_type(list, i) _bruter_get_type(list, i)
     #define bruter_set_type(list, i, type) _bruter_set_type(list, i, type)
 #endif
@@ -423,7 +423,7 @@ static inline void _bruter_push(BruterList *list, BruterValue value, const char*
 #ifndef BRUTER_TYPELESS
     if (list->types != NULL)
     {
-        list->types[list->size] = 0; // default type is 0
+        list->types[list->size] = type;
     }
 #endif
     list->size++;
