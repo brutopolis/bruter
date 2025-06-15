@@ -1,6 +1,6 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(11/06/2025) - version 0.8.8
+(15/06/2025) - version 0.8.8
 
 - new optional type system;
 - new macros BRUTER_KEYLESS and BRUTER_TYPELESS, they will not implement the key and/or the type system, be careful, once they are set, they cannot be unset;

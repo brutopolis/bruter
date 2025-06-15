@@ -83,153 +83,133 @@ typedef struct
 
 #endif
 
-static inline BruterValue _bruter_value_i(BruterInt value);
-static inline BruterValue _bruter_value_u(BruterUInt value);
-static inline BruterValue _bruter_value_f(BruterFloat value);
-static inline BruterValue _bruter_value_p(void *value);
+static inline BruterValue bruter_value_i(BruterInt value);
+static inline BruterValue bruter_value_u(BruterUInt value);
+static inline BruterValue bruter_value_f(BruterFloat value);
+static inline BruterValue bruter_value_p(void *value);
 
 // BruterList functions(also work for tables as tables are just lists with keys)
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
-static inline BruterList   *_bruter_init(BruterInt size, bool is_table, bool is_typed);
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline BruterList   *bruter_init(BruterInt size);
+#elif defined(BRUTER_TYPELESS)
+static inline BruterList   *bruter_init(BruterInt size, bool is_table);
+#elif defined(BRUTER_KEYLESS)
+static inline BruterList   *bruter_init(BruterInt size, bool is_typed);
+#else
+static inline BruterList   *bruter_init(BruterInt size, bool is_table, bool is_typed);
+#endif
 // free the list 
-static inline void          _bruter_free(BruterList *list);
+static inline void          bruter_free(BruterList *list);
 // double the list capacity
-static inline void          _bruter_double(BruterList *list);
+static inline void          bruter_double(BruterList *list);
 // halve the list capacity
-static inline void          _bruter_half(BruterList *list);
+static inline void          bruter_half(BruterList *list);
 // push a value to the end of the list
-static inline void          _bruter_push(BruterList *list, BruterValue value, const char* key, int8_t type);
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline void          bruter_push(BruterList *list, BruterValue value);
+#elif defined(BRUTER_TYPELESS)
+static inline void          bruter_push(BruterList *list, BruterValue value, const char* key);
+#elif defined(BRUTER_KEYLESS)
+static inline void          bruter_push(BruterList *list, BruterValue value, int8_t type);
+#else
+static inline void          bruter_push(BruterList *list, BruterValue value, const char* key, int8_t type);
+#endif
 // unshift a value to the start of the list
-static inline void          _bruter_unshift(BruterList *list, BruterValue value, const char* key, int8_t type);
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline void          bruter_unshift(BruterList *list, BruterValue value);
+#elif defined(BRUTER_TYPELESS)
+static inline void          bruter_unshift(BruterList *list, BruterValue value, const char* key);
+#elif defined(BRUTER_KEYLESS)
+static inline void          bruter_unshift(BruterList *list, BruterValue value, int8_t type);
+#else
+static inline void          bruter_unshift(BruterList *list, BruterValue value, const char* key, int8_t type);
+#endif
 // insert a value at index i in the list
-static inline void          _bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type);
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline void          bruter_insert(BruterList *list, BruterInt i, BruterValue value);
+#elif defined(BRUTER_TYPELESS)
+static inline void          bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key);
+#elif defined(BRUTER_KEYLESS)
+static inline void          bruter_insert(BruterList *list, BruterInt i, BruterValue value, int8_t type);
+#else
+static inline void          bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type);
+#endif
 // pop a value from the end of the list
-static inline BruterValue   _bruter_pop(BruterList *list);
+static inline BruterValue   bruter_pop(BruterList *list);
 // shift a value from the start of the list
-static inline BruterValue   _bruter_shift(BruterList *list);
+static inline BruterValue   bruter_shift(BruterList *list);
 // remove and return the value at index i in the list, shifting the rest of the list
-static inline BruterValue   _bruter_remove(BruterList *list, BruterInt i);
+static inline BruterValue   bruter_remove(BruterList *list, BruterInt i);
 // fast remove a value at index i in the list, swapping it with the last element and popping it
-static inline BruterValue   _bruter_fast_remove(BruterList *list, BruterInt i);
+static inline BruterValue   bruter_fast_remove(BruterList *list, BruterInt i);
 // swap two values in the list at indices i1 and i2
-static inline void          _bruter_swap(BruterList *list, BruterInt i1, BruterInt i2);
+static inline void          bruter_swap(BruterList *list, BruterInt i1, BruterInt i2);
 // find the index of a value in the list, returns -1 if not found
-static inline BruterInt     _bruter_find(BruterList *list, BruterValue value, const char* key);
+static inline BruterInt     bruter_find(BruterList *list, BruterValue value, const char* key);
 // reverse the list in place
-static inline void          _bruter_reverse(BruterList *list);
+static inline void          bruter_reverse(BruterList *list);
 // create a copy of the list, with the same capacity and size, but new data array
-static inline BruterList   *_bruter_copy(BruterList *list);
+static inline BruterList   *bruter_copy(BruterList *list);
 // concatenate two lists, appending src to dest, resizing dest if necessary
-static inline void          _bruter_concat(BruterList *dest, BruterList *src);
+static inline void          bruter_concat(BruterList *dest, BruterList *src);
 // if context is NULL, it will call direcly from list->data[0].p and the result itself
 // if context is not NULL, it will call from context->data[list->data[0].i].p and return the index of the result in context
 // if context is not NULL, the result will be always an int, because it return the index of the result in context
-static inline BruterValue   _bruter_call(BruterList *context, BruterList *list);
+static inline BruterValue   bruter_call(BruterList *context, BruterList *list);
 // get a value at index i in the list, returns a value with i set to -1 if index is out of range
-static inline BruterValue   _bruter_get(BruterList *list, BruterInt i);
+static inline BruterValue   bruter_get(BruterList *list, BruterInt i);
 // set a value at index i in the list, if index is out of range, it will print an error and exit
-static inline void          _bruter_set(BruterList *list, BruterInt i, BruterValue value);
+static inline void          bruter_set(BruterList *list, BruterInt i, BruterValue value);
 
 #ifndef BRUTER_KEYLESS
 // get a key at index i in the list, returns NULL if index is out of range or if the list is not a table
-static inline char*         _bruter_get_key(BruterList *list, BruterInt i);
+static inline char*         bruter_get_key(BruterList *list, BruterInt i);
 // set a key at index i in the list, if index is out of range, it will print an error and exit
-static inline void          _bruter_set_key(BruterList *list, BruterInt i , const char *key);
+static inline void          bruter_set_key(BruterList *list, BruterInt i , const char *key);
 #endif
 
 #ifndef BRUTER_TYPELESS
 // get a type at index i in the list, returns 0 if index is out of range or if the list is not typed
-static inline int8_t        _bruter_get_type(BruterList *list, BruterInt i);
+static inline int8_t        bruter_get_type(BruterList *list, BruterInt i);
 // set a type at index i in the list, if index is out of range, it will print an error and exit
-static inline void          _bruter_set_type(BruterList *list, BruterInt i, int8_t type);
+static inline void          bruter_set_type(BruterList *list, BruterInt i, int8_t type);
 #endif
-
-// MACRO IMPLEMENTATIONS
-
-// under this section, every macro have a specific implementation for each case
-#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
-    #define bruter_init(size) _bruter_init(size, false, false)
-    #define bruter_push(list, value) _bruter_push(list, value, NULL, 0)
-    #define bruter_unshift(list, value) _bruter_unshift(list, value, NULL, 0)
-    #define bruter_insert(list, i, value) _bruter_insert(list, i, value, NULL, 0)
-#elif defined(BRUTER_TYPELESS)
-    #define bruter_init(size, is_table) _bruter_init(size, is_table, false)
-    #define bruter_push(list, value, key) _bruter_push(list, value, key, 0)
-    #define bruter_unshift(list, value, key) _bruter_unshift(list, value, key, 0)
-    #define bruter_insert(list, i, value, key) _bruter_insert(list, i, value, key, 0)
-#elif defined(BRUTER_KEYLESS)
-    #define bruter_init(size, is_key) _bruter_init(size, false, is_key)
-    #define bruter_push(list, value, key) _bruter_push(list, value, NULL, 0)
-    #define bruter_unshift(list, value, key) _bruter_unshift(list, value, NULL, 0)
-    #define bruter_insert(list, i, value, key) _bruter_insert(list, i, value, NULL, 0)
-#else
-    #define bruter_init(size, is_table, is_typed) _bruter_init(size, is_table, is_typed)
-    #define bruter_push(list, value, key, type) _bruter_push(list, value, key, type)
-    #define bruter_unshift(list, value, key, type) _bruter_unshift(list, value, key, type)
-    #define bruter_insert(list, i, value, key, type) _bruter_insert(list, i, value, key, type)
-#endif
-
-// under this section macros are only affected by keyless
-#if defined(BRUTER_KEYLESS)
-    #define bruter_find(list, value) _bruter_find(list, value, NULL)
-#else
-    #define bruter_get_key(list, i) _bruter_get_key(list, i)
-    #define bruter_set_key(list, i, key) _bruter_set_key(list, i, key)
-    #define bruter_find(list, value, key) _bruter_find(list, value, key)
-#endif
-
-// under this section macros are only affected by typeless
-#ifndef BRUTER_TYPELESS
-    #define bruter_get_type(list, i) _bruter_get_type(list, i)
-    #define bruter_set_type(list, i, type) _bruter_set_type(list, i, type)
-#endif
-
-// these macros are always the same no matter the implementation
-#define bruter_free(list) _bruter_free(list)
-#define bruter_double(list) _bruter_double(list)
-#define bruter_half(list) _bruter_half(list)
-#define bruter_pop(list) _bruter_pop(list)
-#define bruter_shift(list) _bruter_shift(list)
-#define bruter_remove(list, i) _bruter_remove(list, i)
-#define bruter_fast_remove(list, i) _bruter_fast_remove(list, i)
-#define bruter_swap(list, i1, i2) _bruter_swap(list, i1, i2)
-#define bruter_reverse(list) _bruter_reverse(list)
-#define bruter_copy(list) _bruter_copy(list)
-#define bruter_concat(dest, src) _bruter_concat(dest, src)
-#define bruter_call(context, list) _bruter_call(context, list)
-#define bruter_get(list, i) _bruter_get(list, i)
-#define bruter_set(list, i, value) _bruter_set(list, i, value)
-#define bruter_value_i(value) _bruter_value_i(value)
-#define bruter_value_u(value) _bruter_value_u(value)
-#define bruter_value_f(value) _bruter_value_f(value)
-#define bruter_value_p(value) _bruter_value_p(value)
 
 // functions implementations
 // functions implementations
 // functions implementations
 // functions implementations
 
-static inline BruterValue _bruter_value_i(BruterInt value)
+static inline BruterValue bruter_value_i(BruterInt value)
 {
     return (BruterValue){.i = value};
 }
 
-static inline BruterValue _bruter_value_u(BruterUInt value)
+static inline BruterValue bruter_value_u(BruterUInt value)
 {
     return (BruterValue){.u = value};
 }
 
-static inline BruterValue _bruter_value_f(BruterFloat value)
+static inline BruterValue bruter_value_f(BruterFloat value)
 {
     return (BruterValue){.f = value};
 }
 
-static inline BruterValue _bruter_value_p(void *value)
+static inline BruterValue bruter_value_p(void *value)
 {
     return (BruterValue){.p = value};
 }
 
-static inline BruterList *_bruter_init(BruterInt size, bool is_table, bool is_typed)
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline BruterList *bruter_init(BruterInt size)
+#elif defined(BRUTER_TYPELESS)
+static inline BruterList *bruter_init(BruterInt size, bool is_table)
+#elif defined(BRUTER_KEYLESS)
+static inline BruterList *bruter_init(BruterInt size, bool is_typed)
+#else
+static inline BruterList *bruter_init(BruterInt size, bool is_table, bool is_typed)
+#endif
 {
     BruterList *list = (BruterList*)malloc(sizeof(BruterList));
     
@@ -291,7 +271,7 @@ static inline BruterList *_bruter_init(BruterInt size, bool is_table, bool is_ty
     return list;
 }
 
-static inline void _bruter_free(BruterList *list)
+static inline void bruter_free(BruterList *list)
 {
 #ifndef BRUTER_KEYLESS
     if (list->keys != NULL)
@@ -312,7 +292,7 @@ static inline void _bruter_free(BruterList *list)
     free(list);
 }
 
-static inline void _bruter_double(BruterList *list)
+static inline void bruter_double(BruterList *list)
 {
     list->capacity = list->capacity == 0 ? 1 : list->capacity * 2;
     BruterValue *new_data = realloc(list->data, list->capacity * sizeof(BruterValue));
@@ -352,7 +332,7 @@ static inline void _bruter_double(BruterList *list)
 #endif
 }
 
-static inline void _bruter_half(BruterList *list)
+static inline void bruter_half(BruterList *list)
 {
     list->capacity /= 2;
 
@@ -396,11 +376,19 @@ static inline void _bruter_half(BruterList *list)
     }
 }
 
-static inline void _bruter_push(BruterList *list, BruterValue value, const char* key, int8_t type)
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline void bruter_push(BruterList *list, BruterValue value)
+#elif defined(BRUTER_TYPELESS)
+static inline void bruter_push(BruterList *list, BruterValue value, const char* key)
+#elif defined(BRUTER_KEYLESS)
+static inline void bruter_push(BruterList *list, BruterValue value, int8_t type)
+#else
+static inline void bruter_push(BruterList *list, BruterValue value, const char* key, int8_t type)
+#endif
 {
     if (list->size == list->capacity)
     {
-        _bruter_double(list);
+        bruter_double(list);
     }
     list->data[list->size] = value;
 
@@ -429,11 +417,19 @@ static inline void _bruter_push(BruterList *list, BruterValue value, const char*
     list->size++;
 }
 
-static inline void _bruter_unshift(BruterList *list, BruterValue value, const char* key, int8_t type)
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline void bruter_unshift(BruterList *list, BruterValue value)
+#elif defined(BRUTER_TYPELESS)
+static inline void bruter_unshift(BruterList *list, BruterValue value, const char* key)
+#elif defined(BRUTER_KEYLESS)
+static inline void bruter_unshift(BruterList *list, BruterValue value, int8_t type)
+#else
+static inline void bruter_unshift(BruterList *list, BruterValue value, const char* key, int8_t type)
+#endif
 {
     if (list->size == list->capacity)
     {
-        _bruter_double(list);
+        bruter_double(list);
     }
     memmove(&(list->data[1]), &(list->data[0]), list->size * sizeof(BruterValue));
     list->data[0] = value;
@@ -466,11 +462,19 @@ static inline void _bruter_unshift(BruterList *list, BruterValue value, const ch
     list->size++;
 }
 
-static inline void _bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type)
+#if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
+static inline void bruter_insert(BruterList *list, BruterInt i, BruterValue value)
+#elif defined(BRUTER_TYPELESS)
+static inline void bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key)
+#elif defined(BRUTER_KEYLESS)
+static inline void bruter_insert(BruterList *list, BruterInt i, BruterValue value, int8_t type)
+#else
+static inline void bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type)
+#endif
 {
     if (list->size == list->capacity)
     {
-        _bruter_double(list);
+        bruter_double(list);
     }
 
     if (i <= list->size) 
@@ -512,7 +516,7 @@ static inline void _bruter_insert(BruterList *list, BruterInt i, BruterValue val
     }
 }
 
-static inline BruterValue _bruter_pop(BruterList *list)
+static inline BruterValue bruter_pop(BruterList *list)
 {
     if (list->size == 0)
     {
@@ -537,7 +541,7 @@ static inline BruterValue _bruter_pop(BruterList *list)
     return list->data[--list->size];
 }
 
-static inline BruterValue _bruter_shift(BruterList *list)
+static inline BruterValue bruter_shift(BruterList *list)
 {
     BruterValue ret = list->data[0];
     if (list->size > 1) 
@@ -572,7 +576,7 @@ static inline BruterValue _bruter_shift(BruterList *list)
     return ret;
 }
 
-static inline BruterValue _bruter_remove(BruterList *list, BruterInt i)
+static inline BruterValue bruter_remove(BruterList *list, BruterInt i)
 {
     BruterValue ret = list->data[i];
     memmove(&(list->data[i]), &(list->data[i + 1]), (list->size - (i) - 1) * sizeof(BruterValue));
@@ -598,15 +602,15 @@ static inline BruterValue _bruter_remove(BruterList *list, BruterInt i)
     return ret;
 }
 
-static inline BruterValue _bruter_fast_remove(BruterList *list, BruterInt i)
+static inline BruterValue bruter_fast_remove(BruterList *list, BruterInt i)
 {
     BruterValue ret = list->data[i];
-    _bruter_swap(list, i, list->size - 1);
-    _bruter_pop(list);
+    bruter_swap(list, i, list->size - 1);
+    bruter_pop(list);
     return ret;
 }
 
-static inline void _bruter_swap(BruterList *list, BruterInt i1, BruterInt i2)
+static inline void bruter_swap(BruterList *list, BruterInt i1, BruterInt i2)
 {
     BruterValue tmp = list->data[i1];
     list->data[i1] = list->data[i2];
@@ -631,7 +635,7 @@ static inline void _bruter_swap(BruterList *list, BruterInt i1, BruterInt i2)
     #endif
 }
 
-static inline BruterInt _bruter_find(BruterList *list, BruterValue value, const char* key) 
+static inline BruterInt bruter_find(BruterList *list, BruterValue value, const char* key) 
 {
     #ifndef BRUTER_KEYLESS
         if (list->keys != NULL && key != NULL)
@@ -646,7 +650,7 @@ static inline BruterInt _bruter_find(BruterList *list, BruterValue value, const 
         }
         else if (list->keys == NULL && key != NULL)
         {
-            printf("BRUTER_ERROR: _bruter_find received a key but the list is not a table\n");
+            printf("BRUTER_ERROR: bruter_find received a key but the list is not a table\n");
             return -1;
         }
         else
@@ -669,26 +673,22 @@ static inline BruterInt _bruter_find(BruterList *list, BruterValue value, const 
     return -1;
 }
 
-static inline void _bruter_reverse(BruterList *list)
+static inline void bruter_reverse(BruterList *list)
 {
     for (BruterInt i = 0; i < list->size / 2; i++)
     {
-        _bruter_swap(list, i, list->size - i - 1);
+        bruter_swap(list, i, list->size - i - 1);
     }
 }
 
-static inline BruterList* _bruter_copy(BruterList *list)
+static inline BruterList* bruter_copy(BruterList *list)
 {
-    BruterList *copy = _bruter_init(list->capacity
+    BruterList *copy = bruter_init(list->capacity
     #ifndef BRUTER_KEYLESS
         , list->keys != NULL
-    #else
-        , false
     #endif
     #ifndef BRUTER_TYPELESS
         , list->types != NULL
-    #else
-        , false
     #endif
     );
     
@@ -730,7 +730,7 @@ static inline BruterList* _bruter_copy(BruterList *list)
             if (copy->types == NULL)
             {
                 printf("BRUTER_ERROR: failed to allocate memory for BruterList types copy\n");
-                _bruter_free(copy);
+                bruter_free(copy);
                 exit(EXIT_FAILURE);
             }
             memcpy(copy->types, list->types, copy->size * sizeof(int8_t));
@@ -747,13 +747,13 @@ static inline BruterList* _bruter_copy(BruterList *list)
     return copy;
 }
 
-static inline void _bruter_concat(BruterList *dest, BruterList *src)
+static inline void bruter_concat(BruterList *dest, BruterList *src)
 {
     if (dest->size + src->size > dest->capacity)
     {
         while (dest->size + src->size > dest->capacity)
         {
-            _bruter_double(dest);
+            bruter_double(dest);
         }
     }
     
@@ -801,7 +801,7 @@ static inline void _bruter_concat(BruterList *dest, BruterList *src)
 
 // pass NULL for context if you want to call a function directly
 // if context exist, the return will be always an int, because it return the index of the result in context
-static inline BruterValue _bruter_call(BruterList *context, BruterList *list)
+static inline BruterValue bruter_call(BruterList *context, BruterList *list)
 {
     BruterValue(*_function)(BruterList*, BruterList*);
     if (context)
@@ -817,16 +817,16 @@ static inline BruterValue _bruter_call(BruterList *context, BruterList *list)
 }
 
 
-static inline BruterValue _bruter_get(BruterList *list, BruterInt i)
+static inline BruterValue bruter_get(BruterList *list, BruterInt i)
 {
     if (i < 0 || i >= list->size)
     {
-        return _bruter_value_i(-1); // return -1 if index is out of range
+        return bruter_value_i(-1); // return -1 if index is out of range
     }
     return list->data[i];
 }
 
-static inline void _bruter_set(BruterList *list, BruterInt i, BruterValue value)
+static inline void bruter_set(BruterList *list, BruterInt i, BruterValue value)
 {
     if (i < 0 || i >= list->size)
     {
@@ -837,11 +837,11 @@ static inline void _bruter_set(BruterList *list, BruterInt i, BruterValue value)
 }
 
 #ifndef BRUTER_KEYLESS
-    static inline char* _bruter_get_key(BruterList *list, BruterInt i)
+    static inline char* bruter_get_key(BruterList *list, BruterInt i)
     {
         if (list->keys == NULL)
         {
-            printf("BRUTER_ERROR: _bruter_get_key called on a list that is not a table\n");
+            printf("BRUTER_ERROR: bruter_get_key called on a list that is not a table\n");
             exit(EXIT_FAILURE);
         }
         
@@ -854,11 +854,11 @@ static inline void _bruter_set(BruterList *list, BruterInt i, BruterValue value)
         return list->keys[i];
     }
 
-    static inline void _bruter_set_key(BruterList *list, BruterInt i, const char *key)
+    static inline void bruter_set_key(BruterList *list, BruterInt i, const char *key)
     {
         if (list->keys == NULL)
         {
-            printf("BRUTER_ERROR: _bruter_set_key called on a list that is not a table\n");
+            printf("BRUTER_ERROR: bruter_set_key called on a list that is not a table\n");
             exit(EXIT_FAILURE);
         }
         
@@ -887,11 +887,11 @@ static inline void _bruter_set(BruterList *list, BruterInt i, BruterValue value)
 #endif
 
 #ifndef BRUTER_TYPELESS
-    static inline int8_t _bruter_get_type(BruterList *list, BruterInt i)
+    static inline int8_t bruter_get_type(BruterList *list, BruterInt i)
     {
         if (list->types == NULL)
         {
-            printf("BRUTER_ERROR: _bruter_get_type called on a list that is not typed\n");
+            printf("BRUTER_ERROR: bruter_get_type called on a list that is not typed\n");
             exit(EXIT_FAILURE);
         }
         
@@ -904,11 +904,11 @@ static inline void _bruter_set(BruterList *list, BruterInt i, BruterValue value)
         return list->types[i];
     }
 
-    static inline void _bruter_set_type(BruterList *list, BruterInt i, int8_t type)
+    static inline void bruter_set_type(BruterList *list, BruterInt i, int8_t type)
     {
         if (list->types == NULL)
         {
-            printf("BRUTER_ERROR: _bruter_set_type called on a list that is not typed\n");
+            printf("BRUTER_ERROR: bruter_set_type called on a list that is not typed\n");
             exit(EXIT_FAILURE);
         }
         
