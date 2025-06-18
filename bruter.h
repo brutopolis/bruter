@@ -91,13 +91,13 @@ static inline BruterValue bruter_value_p(void *value);
 // BruterList functions(also work for tables as tables are just lists with keys)
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
 #if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
-static inline BruterList   *bruter_init(BruterInt size);
+static inline BruterList   *bruter_new(BruterInt size);
 #elif defined(BRUTER_TYPELESS)
-static inline BruterList   *bruter_init(BruterInt size, bool is_table);
+static inline BruterList   *bruter_new(BruterInt size, bool is_table);
 #elif defined(BRUTER_KEYLESS)
-static inline BruterList   *bruter_init(BruterInt size, bool is_typed);
+static inline BruterList   *bruter_new(BruterInt size, bool is_typed);
 #else
-static inline BruterList   *bruter_init(BruterInt size, bool is_table, bool is_typed);
+static inline BruterList   *bruter_new(BruterInt size, bool is_table, bool is_typed);
 #endif
 // free the list 
 static inline void          bruter_free(BruterList *list);
@@ -204,13 +204,13 @@ static inline BruterValue bruter_value_p(void *value)
 }
 
 #if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
-static inline BruterList *bruter_init(BruterInt size)
+static inline BruterList *bruter_new(BruterInt size)
 #elif defined(BRUTER_TYPELESS)
-static inline BruterList *bruter_init(BruterInt size, bool is_table)
+static inline BruterList *bruter_new(BruterInt size, bool is_table)
 #elif defined(BRUTER_KEYLESS)
-static inline BruterList *bruter_init(BruterInt size, bool is_typed)
+static inline BruterList *bruter_new(BruterInt size, bool is_typed)
 #else
-static inline BruterList *bruter_init(BruterInt size, bool is_table, bool is_typed)
+static inline BruterList *bruter_new(BruterInt size, bool is_table, bool is_typed)
 #endif
 {
     BruterList *list = (BruterList*)malloc(sizeof(BruterList));
@@ -685,7 +685,7 @@ static inline void bruter_reverse(BruterList *list)
 
 static inline BruterList* bruter_copy(BruterList *list)
 {
-    BruterList *copy = bruter_init(list->capacity
+    BruterList *copy = bruter_new(list->capacity
     #ifndef BRUTER_KEYLESS
         , list->keys != NULL
     #endif
