@@ -606,10 +606,8 @@ static inline BruterValue bruter_remove(BruterList *list, BruterInt i)
 
 static inline BruterValue bruter_fast_remove(BruterList *list, BruterInt i)
 {
-    BruterValue ret = list->data[i];
     bruter_swap(list, i, list->size - 1);
-    bruter_pop(list);
-    return ret;
+    return bruter_pop(list);
 }
 
 static inline void bruter_swap(BruterList *list, BruterInt i1, BruterInt i2)
