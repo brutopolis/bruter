@@ -58,7 +58,7 @@
 
 int main()
 {
-    List *list = bruter_init(8);
+    List *list = bruter_new(8);
     Int i = 42;
     bruter_push(list, bruter_value_i(i));
     bruter_unshift(list, bruter_value_f(3.14f));

@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 // version
-#define VERSION "0.8.8"
+#define VERSION "0.8.9"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -91,13 +91,13 @@ static inline BruterValue bruter_value_p(void *value);
 // BruterList functions(also work for tables as tables are just lists with keys)
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
 #if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
-static inline BruterList   *bruter_init(BruterInt size);
+static inline BruterList   *bruter_new(BruterInt size);
 #elif defined(BRUTER_TYPELESS)
-static inline BruterList   *bruter_init(BruterInt size, bool is_table);
+static inline BruterList   *bruter_new(BruterInt size, bool is_table);
 #elif defined(BRUTER_KEYLESS)
-static inline BruterList   *bruter_init(BruterInt size, bool is_typed);
+static inline BruterList   *bruter_new(BruterInt size, bool is_typed);
 #else
-static inline BruterList   *bruter_init(BruterInt size, bool is_table, bool is_typed);
+static inline BruterList   *bruter_new(BruterInt size, bool is_table, bool is_typed);
 #endif
 // free the list 
 static inline void          bruter_free(BruterList *list);
@@ -153,10 +153,12 @@ static inline void          bruter_reverse(BruterList *list);
 static inline BruterList   *bruter_copy(BruterList *list);
 // concatenate two lists, appending src to dest, resizing dest if necessary
 static inline void          bruter_concat(BruterList *dest, BruterList *src);
-// if context is NULL, it will call direcly from list->data[0].p and the result itself
-// if context is not NULL, it will call from context->data[list->data[0].i].p and return the index of the result in context
-// if context is not NULL, the result will be always an int, because it return the index of the result in context
-static inline BruterValue   bruter_call(BruterList *context, BruterList *list);
+// receive a context and a list of indexes relative to the context, and call it as a stack
+// the function pointer must have the same type as bruter_call BruterInt(*)(BruterList*, BruterList*);
+static inline BruterInt     bruter_call(BruterList *context, BruterList *list);
+// same as bruter_call, but it will run the list as a stack without any relative context
+// the function pointer must have the same type as bruter_run BruterValue(*)(BruterList*);
+static inline BruterValue   bruter_run(BruterList *list);
 // get a value at index i in the list, returns a value with i set to -1 if index is out of range
 static inline BruterValue   bruter_get(BruterList *list, BruterInt i);
 // set a value at index i in the list, if index is out of range, it will print an error and exit
@@ -202,13 +204,13 @@ static inline BruterValue bruter_value_p(void *value)
 }
 
 #if defined(BRUTER_TYPELESS) && defined(BRUTER_KEYLESS)
-static inline BruterList *bruter_init(BruterInt size)
+static inline BruterList *bruter_new(BruterInt size)
 #elif defined(BRUTER_TYPELESS)
-static inline BruterList *bruter_init(BruterInt size, bool is_table)
+static inline BruterList *bruter_new(BruterInt size, bool is_table)
 #elif defined(BRUTER_KEYLESS)
-static inline BruterList *bruter_init(BruterInt size, bool is_typed)
+static inline BruterList *bruter_new(BruterInt size, bool is_typed)
 #else
-static inline BruterList *bruter_init(BruterInt size, bool is_table, bool is_typed)
+static inline BruterList *bruter_new(BruterInt size, bool is_table, bool is_typed)
 #endif
 {
     BruterList *list = (BruterList*)malloc(sizeof(BruterList));
@@ -604,10 +606,8 @@ static inline BruterValue bruter_remove(BruterList *list, BruterInt i)
 
 static inline BruterValue bruter_fast_remove(BruterList *list, BruterInt i)
 {
-    BruterValue ret = list->data[i];
     bruter_swap(list, i, list->size - 1);
-    bruter_pop(list);
-    return ret;
+    return bruter_pop(list);
 }
 
 static inline void bruter_swap(BruterList *list, BruterInt i1, BruterInt i2)
@@ -683,7 +683,7 @@ static inline void bruter_reverse(BruterList *list)
 
 static inline BruterList* bruter_copy(BruterList *list)
 {
-    BruterList *copy = bruter_init(list->capacity
+    BruterList *copy = bruter_new(list->capacity
     #ifndef BRUTER_KEYLESS
         , list->keys != NULL
     #endif
@@ -799,23 +799,32 @@ static inline void bruter_concat(BruterList *dest, BruterList *src)
     dest->size += src->size;
 }
 
-// pass NULL for context if you want to call a function directly
-// if context exist, the return will be always an int, because it return the index of the result in context
-static inline BruterValue bruter_call(BruterList *context, BruterList *list)
+// contextual call
+static inline BruterInt bruter_call(BruterList *context, BruterList *list)
 {
-    BruterValue(*_function)(BruterList*, BruterList*);
-    if (context)
+    if (list->size == 0)
     {
-        _function = context->data[list->data[0].i].p;
-        return (BruterValue){.i = _function(context, list).i};
+        printf("BRUTER_ERROR: cannot call an empty list\n");
+        exit(EXIT_FAILURE);
     }
-    else 
-    {
-        _function = list->data[0].p;
-        return _function(NULL, list);
-    }
+
+    BruterInt(*_function)(BruterList*, BruterList*);
+    _function = context->data[list->data[0].i].p;
+    return _function(context, list);
 }
 
+static inline BruterValue bruter_run(BruterList *list)
+{
+    if (list->size == 0)
+    {
+        printf("BRUTER_ERROR: cannot run an empty list\n");
+        exit(EXIT_FAILURE);
+    }
+
+    BruterValue(*_function)(BruterList*);
+    _function = list->data[0].p;
+    return _function(list);
+}
 
 static inline BruterValue bruter_get(BruterList *list, BruterInt i)
 {

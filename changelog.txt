@@ -1,5 +1,12 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(18/06/2025) - version 0.8.9
+
+- bruter_call cannot receive NULL as context anymore, use bruter_run instead;
+- some new functions from the reference documentation;
+- new function: bruter_run, it receives a list and run it, just like bruter_call without the context;
+- bruter_init renamed to bruter_new, seems more appropriate;
+
 (15/06/2025) - version 0.8.8
 
 - new optional type system;
