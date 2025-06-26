@@ -8,28 +8,14 @@
   BRUTER is a single header file `bruter.h`, just include and ready to go, there are some macros to manage the implementation, you can define them before including the header file to change the behavior of the library.
 
   ```c
-  #define BRUTER_TYPELESS // Disable the type system
-  #define BRUTER_KEYLESS // Disable the key system
-  #define USE_SHORT_TYPES // Use short type names
-  #include <bruter.h>
-  ```
-
-  BRUTER have a optional type system, each variable will have a byte for type, note that bruter does not implement types for you, it just provides a way to store and retrieve types, you can define your own types and use them with BRUTER, you can also disable completely the type system by defining `BRUTER_TYPELESS`:
-  ```c
-  #define BRUTER_TYPELESS
-  #include <bruter.h>
-  ```
-
-  BRUTER have also a optional key system, each variable will have a pointer to a key, even if the key is not used, it can be completely disabled defining BRUTER_KEYLESS:
-  ```c
-  #define BRUTER_KEYLESS
+  #define BRUTER_USE_SHORT_TYPES // Use short type names
   #include <bruter.h>
   ```
 
   BRUTER can also use short type names:
 
   ```c
-  #define USE_SHORT_TYPES
+  #define BRUTER_USE_SHORT_TYPES
   #include <bruter.h>
   Int i; // short for BruterInt
   UInt u; // short for BruterUInt
@@ -51,9 +37,7 @@
 
 // can be found at example/simple.c
 
-#define USE_SHORT_TYPES
-#define BRUTER_TYPELESS
-#define BRUTER_KEYLESS
+#define BRUTER_USE_SHORT_TYPES
 #include <bruter.h>
 
 int main()

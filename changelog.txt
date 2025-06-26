@@ -1,5 +1,17 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(26/06/2025) - version 0.9.0
+
+- BRUTER_KEYLESS and BRUTER_TYPELESS are now removed;
+- use cruder(https://github.com/brutopolis/cruder) if you need a really lightweight bruter-like;
+- cruder is 100% macro-based instead of inlining, also it uses FAM and doesnt have types or keys;
+- bruter added optional support for _Generic, which is a C11 feature, thats why it is optional;
+- the optional support is enabled by default, it will try to detect which compiler you are running, but you can force it by defining BRUTER_USE_GENERIC;
+- every function that receive BruterValue now have some wrappers;
+- new shortcuts (only avaliable when BRUTER_USE_GENERIC is defined): bnew, bfree, bduplicate, bset, bget, bvalue, bpush and so on;
+- bpush, bunshift, binsert, bfind and bset are overloaded, they will detect whatever (primitive)type you are passing and will create the value accordingly;
+- bruter_find has been splited into bruter_find and bruter_find_key;
+
 (18/06/2025) - version 0.8.9
 
 - bruter_call cannot receive NULL as context anymore, use bruter_run instead;
