@@ -11,6 +11,10 @@
 - new shortcuts (only avaliable when BRUTER_USE_GENERIC is defined): bnew, bfree, bduplicate, bset, bget, bvalue, bpush and so on;
 - bpush, bunshift, binsert, bfind and bset are overloaded, they will detect whatever (primitive)type you are passing and will create the value accordingly;
 - bruter_find has been splited into bruter_find and bruter_find_key;
+- bruter_value_i renamed to bruter_value_int;
+- bruter_value_u renamed to bruter_value_uint;
+- bruter_value_f renamed to bruter_value_float;
+- bruter_value_p renamed to bruter_value_pointer;
 
 (18/06/2025) - version 0.8.9
 

@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 // version
-#define VERSION "0.9.0"
+#define BRUTER_VERSION "0.9.0"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -33,25 +33,11 @@ typedef float BruterFloat;
 // you can use memcpy to "pun" the type easily, although most modern compilers doesnt care about this specific union behavior
 typedef union 
 {
-    // these types depend on the size of the pointer
-    BruterFloat f;
+    // all types depend on the size of the pointer
     BruterInt i;
+    BruterFloat f;
     BruterUInt u;
-
-    // these types are pointers
-    char* s;
     void* p;
-    
-    // these types are int arrays
-    uint8_t u8[sizeof(BruterFloat)];
-    uint16_t u16[sizeof(BruterFloat) / 2];
-    uint32_t u32[sizeof(BruterFloat) / 4];
-
-    int8_t i8[sizeof(BruterFloat)];
-    int16_t i16[sizeof(BruterFloat) / 2];
-    int32_t i32[sizeof(BruterFloat) / 4];
-
-    float f32[sizeof(BruterFloat) / 4];
 } BruterValue;
 
 typedef struct 
@@ -71,10 +57,10 @@ typedef struct
 
 } BruterList;
 
-static inline BruterValue bruter_value_i(BruterInt value);
-static inline BruterValue bruter_value_u(BruterUInt value);
-static inline BruterValue bruter_value_f(BruterFloat value);
-static inline BruterValue bruter_value_p(void *value);
+static inline BruterValue bruter_value_int(BruterInt value);
+static inline BruterValue bruter_value_uint(BruterUInt value);
+static inline BruterValue bruter_value_float(BruterFloat value);
+static inline BruterValue bruter_value_pointer(void *value);
 
 // BruterList functions(also work for tables as tables are just lists with keys)
 // create a new list with the given size, if size is 0, it will be initialized with NULL data and then allocated when needed
@@ -140,7 +126,6 @@ static inline void          bruter_set_int(BruterList *list, BruterInt i, Bruter
 static inline void          bruter_set_uint(BruterList *list, BruterInt i, BruterUInt value);
 static inline void          bruter_set_float(BruterList *list, BruterInt i, BruterFloat value);
 static inline void          bruter_set_pointer(BruterList *list, BruterInt i, void *value);
-static inline void          bruter_set_string(BruterList *list, BruterInt i, const char *value);
 // get a key at index i in the list, returns NULL if index is out of range or if the list is not a table
 static inline char*         bruter_get_key(BruterList *list, BruterInt i);
 // set a key at index i in the list, if index is out of range, it will print an error and exit
@@ -155,22 +140,22 @@ static inline void          bruter_set_type(BruterList *list, BruterInt i, int8_
 // functions implementations
 // functions implementations
 
-static inline BruterValue bruter_value_i(BruterInt value)
+static inline BruterValue bruter_value_int(BruterInt value)
 {
     return (BruterValue){.i = value};
 }
 
-static inline BruterValue bruter_value_u(BruterUInt value)
+static inline BruterValue bruter_value_uint(BruterUInt value)
 {
     return (BruterValue){.u = value};
 }
 
-static inline BruterValue bruter_value_f(BruterFloat value)
+static inline BruterValue bruter_value_float(BruterFloat value)
 {
     return (BruterValue){.f = value};
 }
 
-static inline BruterValue bruter_value_p(void *value)
+static inline BruterValue bruter_value_pointer(void *value)
 {
     return (BruterValue){.p = value};
 }
@@ -356,22 +341,22 @@ static inline void bruter_push(BruterList *list, BruterValue value, const char* 
 
 static inline void bruter_push_int(BruterList *list, BruterInt value, const char* key)
 {
-    bruter_push(list, bruter_value_i(value), key, 0);
+    bruter_push(list, bruter_value_int(value), key, 0);
 }
 
 static inline void bruter_push_uint(BruterList *list, BruterUInt value, const char* key)
 {
-    bruter_push(list, bruter_value_u(value), key, 0);
+    bruter_push(list, bruter_value_uint(value), key, 0);
 }
 
 static inline void bruter_push_float(BruterList *list, BruterFloat value, const char* key)
 {
-    bruter_push(list, bruter_value_f(value), key, 1);
+    bruter_push(list, bruter_value_float(value), key, 1);
 }
 
 static inline void bruter_push_pointer(BruterList *list, void *value, const char* key)
 {
-    bruter_push(list, bruter_value_p(value), key, 2);
+    bruter_push(list, bruter_value_pointer(value), key, 2);
 }
 
 static inline void bruter_unshift(BruterList *list, BruterValue value, const char* key, int8_t type)
@@ -409,22 +394,22 @@ static inline void bruter_unshift(BruterList *list, BruterValue value, const cha
 
 static inline void bruter_unshift_int(BruterList *list, BruterInt value, const char* key)
 {
-    bruter_unshift(list, bruter_value_i(value), key, 0);
+    bruter_unshift(list, bruter_value_int(value), key, 0);
 }
 
 static inline void bruter_unshift_uint(BruterList *list, BruterUInt value, const char* key)
 {
-    bruter_unshift(list, bruter_value_u(value), key, 0);
+    bruter_unshift(list, bruter_value_uint(value), key, 0);
 }
 
 static inline void bruter_unshift_float(BruterList *list, BruterFloat value, const char* key)
 {
-    bruter_unshift(list, bruter_value_f(value), key, 1);
+    bruter_unshift(list, bruter_value_float(value), key, 1);
 }
 
 static inline void bruter_unshift_pointer(BruterList *list, void *value, const char* key)
 {
-    bruter_unshift(list, bruter_value_p(value), key, 2);
+    bruter_unshift(list, bruter_value_pointer(value), key, 2);
 }
 
 static inline void bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type)
@@ -470,22 +455,22 @@ static inline void bruter_insert(BruterList *list, BruterInt i, BruterValue valu
 
 static inline void bruter_insert_int(BruterList *list, BruterInt i, BruterInt value, const char* key)
 {
-    bruter_insert(list, i, bruter_value_i(value), key, 0);
+    bruter_insert(list, i, bruter_value_int(value), key, 0);
 }
 
 static inline void bruter_insert_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key)
 {
-    bruter_insert(list, i, bruter_value_u(value), key, 0);
+    bruter_insert(list, i, bruter_value_uint(value), key, 0);
 }
 
 static inline void bruter_insert_float(BruterList *list, BruterInt i, BruterFloat value, const char* key)
 {
-    bruter_insert(list, i, bruter_value_f(value), key, 1);
+    bruter_insert(list, i, bruter_value_float(value), key, 1);
 }
 
 static inline void bruter_insert_pointer(BruterList *list, BruterInt i, void *value, const char* key)
 {
-    bruter_insert(list, i, bruter_value_p(value), key, 2);
+    bruter_insert(list, i, bruter_value_pointer(value), key, 2);
 }
 
 static inline BruterValue bruter_pop(BruterList *list)
@@ -605,22 +590,22 @@ static inline BruterInt bruter_find(BruterList *list, BruterValue value)
 
 static inline BruterInt bruter_find_int(BruterList *list, BruterInt value)
 {
-    return bruter_find(list, bruter_value_i(value));
+    return bruter_find(list, bruter_value_int(value));
 }
 
 static inline BruterInt bruter_find_uint(BruterList *list, BruterUInt value)
 {
-    return bruter_find(list, bruter_value_u(value));
+    return bruter_find(list, bruter_value_uint(value));
 }
 
 static inline BruterInt bruter_find_float(BruterList *list, BruterFloat value)
 {
-    return bruter_find(list, bruter_value_f(value));
+    return bruter_find(list, bruter_value_float(value));
 }
 
 static inline BruterInt bruter_find_pointer(BruterList *list, void *value)
 {
-    return bruter_find(list, bruter_value_p(value));
+    return bruter_find(list, bruter_value_pointer(value));
 }
 
 static inline BruterInt bruter_find_key(BruterList *list, const char* key)
@@ -783,7 +768,7 @@ static inline BruterValue bruter_get(BruterList *list, BruterInt i)
 {
     if (i < 0 || i >= list->size)
     {
-        return bruter_value_i(-1); // return -1 if index is out of range
+        return bruter_value_int(-1); // return -1 if index is out of range
     }
     return list->data[i];
 }
@@ -800,22 +785,22 @@ static inline void bruter_set(BruterList *list, BruterInt i, BruterValue value)
 
 static inline void bruter_set_int(BruterList *list, BruterInt i, BruterInt value)
 {
-    bruter_set(list, i, bruter_value_i(value));
+    bruter_set(list, i, bruter_value_int(value));
 }
 
 static inline void bruter_set_uint(BruterList *list, BruterInt i, BruterUInt value)
 {
-    bruter_set(list, i, bruter_value_u(value));
+    bruter_set(list, i, bruter_value_uint(value));
 }
 
 static inline void bruter_set_float(BruterList *list, BruterInt i, BruterFloat value)
 {
-    bruter_set(list, i, bruter_value_f(value));
+    bruter_set(list, i, bruter_value_float(value));
 }
 
 static inline void bruter_set_pointer(BruterList *list, BruterInt i, void *value)
 {
-    bruter_set(list, i, bruter_value_p(value));
+    bruter_set(list, i, bruter_value_pointer(value));
 }
 
 static inline char* bruter_get_key(BruterList *list, BruterInt i)
@@ -905,7 +890,7 @@ static inline void bruter_set_type(BruterList *list, BruterInt i, int8_t type)
 #ifndef BRUTER_USE_GENERIC
     #if defined(__TINYC__) || defined(__TCC__)
         // ok to warn because we know TCC have warning macro
-        #warning "Using C11 generic selection feature"
+        //#warning "Using C11 generic selection feature"
         #define BRUTER_USE_GENERIC 1
     #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
         #define BRUTER_USE_GENERIC 1
@@ -916,16 +901,16 @@ static inline void bruter_set_type(BruterList *list, BruterInt i, int8_t type)
             #define BRUTER_USE_GENERIC 0
         #endif
     #elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))
-        #warning "Using C11 generic selection feature"
+        //#warning "Using C11 generic selection feature"
         #define BRUTER_USE_GENERIC 1
     #elif defined(__clang__)
-        #warning "Using C11 generic selection feature"
+        //#warning "Using C11 generic selection feature"
         #define BRUTER_USE_GENERIC 1
     #elif defined(_MSC_VER) && _MSC_VER >= 1900  // Visual Studio 2015+
-        #warning "C11 generic selection feature not available in MSVC"
+        //#warning "C11 generic selection feature not available in MSVC"
         #define BRUTER_USE_GENERIC 0
     #else
-        #warning "C11 generic selection feature not available"
+        //#warning "C11 generic selection feature not available"
         #define BRUTER_USE_GENERIC 0
     #endif
 #endif
@@ -933,15 +918,15 @@ static inline void bruter_set_type(BruterList *list, BruterInt i, int8_t type)
 #if BRUTER_USE_GENERIC
     #define bvalue(a) \
     _Generic((a), \
-        uint8_t: bruter_value_u, \
-        uint16_t: bruter_value_u, \
-        uint32_t: bruter_value_u, \
-        uint64_t: bruter_value_u, \
-        float: bruter_value_f, \
-        double: bruter_value_f, \
-        void*: bruter_value_p, \
-        char*: bruter_value_p, \
-        default: bruter_value_i \
+        uint8_t: bruter_value_uint, \
+        uint16_t: bruter_value_uint, \
+        uint32_t: bruter_value_uint, \
+        uint64_t: bruter_value_uint, \
+        float: bruter_value_float, \
+        double: bruter_value_float, \
+        void*: bruter_value_pointer, \
+        char*: bruter_value_pointer, \
+        default: bruter_value_int \
     )(a)
 
     // most are simply the same function
