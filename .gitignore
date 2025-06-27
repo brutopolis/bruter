@@ -7,4 +7,5 @@ build/
 arduino/
 *.wasm
 *.so
+*.o
 .bruter
