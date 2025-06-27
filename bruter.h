@@ -22,15 +22,16 @@ typedef uintptr_t BruterUInt;
 // BRUTER use BruterInt and BruterFloat instead of int and float because we need to use always the pointer size for any type that might share the fundamental union type;
 // BRUTER use a union as universal type, and BRUTER is able to manipulate and use pointers direcly so we need to use the pointer size;
 #if INTPTR_MAX == INT64_MAX
-typedef double BruterFloat;
+    typedef double BruterFloat;
 #else
-typedef float BruterFloat;
+    typedef float BruterFloat;
 #endif
 
+// you can build bruter as lib, just define BRUTER_AS_LIB before including this header, it will act like a source.c file
 #if defined(BRUTER_AS_LIB)
-#define STATIC_INLINE // we dont want it static inlined
+    #define STATIC_INLINE // we dont want it static inlined
 #else
-#define STATIC_INLINE static inline
+    #define STATIC_INLINE static inline
 #endif
 
 // sometimes we need to allow aggregate return, so we define a macro to supress the warning where we need it
@@ -61,7 +62,7 @@ typedef float BruterFloat;
 
 // branch prediction macros, only defined for using under gcc or clang, but you can force it defining BRUTER_FORCE_EXPECT
 // likely and unlikely are the only macros that arent UPPERCASED, all other macros are standardized to UPPERCASE;
-#if defined(BRUTER_NO_EXPECT) || defined(BRUTER_NO_PREFETCH)
+#if defined(BRUTER_NO_EXPECT)
     #define likely(x)   (x)
     #define unlikely(x) (x)
 #elif defined(__GNUC__) || defined(__clang__) || defined(BRUTER_FORCE_EXPECT)
@@ -1285,7 +1286,11 @@ STATIC_INLINE const char* bruter_get_version(void)
     #endif
 #endif
 
+// dont expect this to work on restricted compilers and environments, but ofc if can work if has the _Generic feature
+// if you wanna mantain maximum compatibility and portability avoid this
+// these macros are not meant to be much portable, i have not tested them on restricted compilers and environments
 #if BRUTER_USE_GENERIC
+    // this generate aggregate return warning
     #define bvalue(a) \
     _Generic((a), \
         uint8_t: bruter_value_uint, \
