@@ -19,6 +19,7 @@
 - bruter can now be compiled as a library, use -DBRUTER_AS_LIB to compile it as a library, this macro make the bruter.h act like a bruter.c file;
 - bruter_run removed, lets focus on bruter_call;
 - new camp added to the BruterValue union: fn, a function pointer;
+- beside being completely discouraged, BruterValue can now be manually defined using macro BRUTER_MANUAL_UNION, just use when is really needed;
 
 (18/06/2025) - version 0.8.9
 

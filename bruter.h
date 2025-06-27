@@ -51,9 +51,29 @@ typedef float BruterFloat;
 // BruterValue
 
 // well, we need to declare the types before, so we can use them in the union
-typedef union BruterValue BruterValue;
+// this is not defined if BRUTER_MANUAL_UNION is defined, so you can define your own types BEFORE including this header
+// note you'll need everything below to be defined before including this header too
+typedef union  BruterValue BruterValue;
 typedef struct BruterList BruterList;
 
+// define BRUTER_MANUAL_UNION to 1 if you want to manually define the BruterValue union
+// note that you still need the primitive types in the union: i, f, u, p, fn
+// you are strogly disencouraged to use manual union definition, but in some cases it is really needed;
+/* example of manual union definition:
+    #define BRUTER_MANUAL_UNION 1
+    struct BruterList; // obligatory, we need it in the union
+    union BruterValue
+    {
+        // BruterInt, BruterFloat and BruterUInt arent defined yet, so we need to use the types we want directly
+        long i;
+        double f;
+        unsigned long u;
+        void* p;
+        BruterInt (*fn)(struct BruterList *context, struct BruterList *args);
+    };
+    #include "bruter.h" // now we can include the bruter.h header, which will use the union we defined
+*/
+#ifndef BRUTER_MANUAL_UNION
 // if you are under a pure C99 eviroment, beware of the use of the union,
 // C99 defines that the used type is always the last it was defined to,
 // you can use memcpy to "pun" the type easily, although most modern compilers doesnt care about this specific union behavior
@@ -66,6 +86,7 @@ union BruterValue
     void* p;
     BruterInt (*fn)(struct BruterList *context, struct BruterList *args);
 };
+#endif
 
 struct BruterList
 {
