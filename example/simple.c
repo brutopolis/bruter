@@ -1,21 +1,16 @@
-#define USE_SHORT_TYPES
-#define BRUTER_TYPELESS
-#define BRUTER_KEYLESS
 #include <bruter.h>
 
-int main()
+int main(void)
 {
-    List *list = bruter_new(8);
-    Int i = 42;
-    bruter_push(list, bruter_value_i(i));
-    bruter_unshift(list, bruter_value_f(3.14f));
-    bruter_insert(list, 1, bruter_value_p(list));
-    bruter_push(list, bruter_value_p(strdup("Hello, World!")));
-    bruter_reverse(list);
-    Value v = bruter_pop(list);
-    printf("List size: %d\n", list->size);
+    BruterList *list = bnew(8, false, false);
+    BruterInt i = 42;
+    bpush(list, i, NULL);
+    bunshift(list, 3.14f, NULL);
+    binsert(list, 1, (void*)list, NULL);
+    breverse(list);
+    BruterValue v = bpop(list);
+    printf("List size: %ld\n", list->size);
     printf("Popped value: %f\n", v.f);
-    free(bruter_shift(list).s);
-    bruter_free(list);
+    bfree(list);
     return 0;
 }

@@ -1,5 +1,31 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(27/06/2025) - version 0.9.0
+
+- BRUTER is now 100% C99 compliant;
+- bruter is now more portable than ever;
+- tested under some very restricted compiler, and compiler tags, see debug-extreme.sh from https://github.com/brutopolis/buxu-dev
+- BRUTER_KEYLESS and BRUTER_TYPELESS are now removed;
+- use cruder(https://github.com/jardimdanificado/cruder) if you need a really lightweight bruter-like (and dont care about standards);
+- cruder is 100% macro-based instead of inlining, also it uses FAM and doesnt have types or keys;
+- bruter added optional support for _Generic, which is a C11 feature, thats why it is optional;
+- the optional support is enabled by default, it will try to detect which compiler you are running, but you can force it by defining BRUTER_USE_GENERIC;
+- every function that receive BruterValue now have some wrappers;
+- new shortcuts (only avaliable when BRUTER_USE_GENERIC is defined): bnew, bfree, bduplicate, bset, bget, bvalue, bpush and so on;
+- bpush, bunshift, binsert, bfind and bset are overloaded, they will detect whatever (primitive)type you are passing and will create the value accordingly;
+- bruter_find has been splited into bruter_find and bruter_find_key;
+- bruter_value_i renamed to bruter_value_int;
+- bruter_value_u renamed to bruter_value_uint;
+- bruter_value_f renamed to bruter_value_float;
+- bruter_value_p renamed to bruter_value_pointer;
+- added likely and unlikely macros, they are just like __builtin_expect.
+- bruter can now be compiled as a library, use -DBRUTER_AS_LIB to compile it as a library, this macro make the bruter.h act like a bruter.c file;
+- bruter_run removed, lets focus on bruter_call;
+- new camp added to the BruterValue union: fn, a function pointer;
+- beside being completely discouraged, BruterValue can now be manually defined using macro BRUTER_MANUAL_UNION, just use when is really needed;
+- BRUTER_ALLOW_NON_LITERAL_FORMAT and BRUTER_FORBID_NON_LITERAL_FORMAT macros are now a thing;
+- BRUTER_ALLOW_AGGREGATE_RETURN and BRUTER_FORBID_AGGREGATE_RETURN macros are now a thing;
+
 (18/06/2025) - version 0.8.9
 
 - bruter_call cannot receive NULL as context anymore, use bruter_run instead;
