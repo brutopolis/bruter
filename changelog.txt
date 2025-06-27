@@ -16,7 +16,8 @@
 - bruter_value_f renamed to bruter_value_float;
 - bruter_value_p renamed to bruter_value_pointer;
 - added likely and unlikely macros, they are just like __builtin_expect.
-- TODO: remove bruter_run;
+- bruter can now be compiled as a library, use -DBRUTER_AS_LIB to compile it as a library, this macro make the bruter.h act like a bruter.c file;
+- bruter_run removed, lets focus on bruter_call;
 
 (18/06/2025) - version 0.8.9
 
