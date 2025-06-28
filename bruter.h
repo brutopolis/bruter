@@ -28,8 +28,14 @@ typedef uintptr_t BruterUInt;
 #endif
 
 // you can build bruter as lib, just define BRUTER_AS_SOURCE before including this header, it will act like a source.c file
-#if defined(BRUTER_AS_SOURCE)
-    #define STATIC_INLINE // we dont want it static inlined
+#if defined(BRUTER_AS_SOURCE) 
+    #if defined(__GNUC__) || defined(__clang__)
+        // we want it to be visible in the shared library, so we can use it in other files
+        #define STATIC_INLINE __attribute__((visibility("default"))) __attribute__((used))
+    #else 
+        // we dont want it static inlined
+        #define STATIC_INLINE 
+    #endif
 #else
     #define STATIC_INLINE static inline
 #endif
@@ -1453,16 +1459,16 @@ STATIC_INLINE const char* bruter_get_version(void)
     #endif
 #endif
 
-#if defined(BRUTER_AS_SOURCE)
-    #if defined(BRUTER_H) && defined(BRUTER_VERSION)
-        // just to avoid warnings about unused macros
-    #endif
+#if defined(BRUTER_ALLOW_AGGREGATE_RETURN) && defined(BRUTER_FORBID_AGGREGATE_RETURN)
+    // just to avoid warnings about unused macros
 #endif
 
-#if defined(BRUTER_ALLOW_AGGREGATE_RETURN) && defined(BRUTER_FORBID_AGGREGATE_RETURN)
-    #if defined(BRUTER_ALLOW_NON_LITERAL_FORMAT) && defined(BRUTER_FORBID_NON_LITERAL_FORMAT)
-        // just to avoid warnings about unused macros
-    #endif
+#if defined(BRUTER_ALLOW_NON_LITERAL_FORMAT) && defined(BRUTER_FORBID_NON_LITERAL_FORMAT)
+    // just to avoid warnings about unused macros
+#endif
+
+#if defined(BRUTER_H) && defined(BRUTER_VERSION)
+    // just to avoid warnings about unused macros
 #endif
 
 #endif
