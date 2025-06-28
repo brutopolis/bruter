@@ -1261,7 +1261,7 @@ STATIC_INLINE const char* bruter_get_version(void)
 // a C11 standard and a gcc-compatible compiler
 // OR
 // a C23 compiler, which standardized the typeof and some __VA_ARGS__ behaviors which were only available as gcc extensions
-#if MACRO_BRUTER
+#ifdef MACRO_BRUTER
 
     // how we do optional arguments
     #if __STDC_VERSION__ >= 202311L  // C23 
