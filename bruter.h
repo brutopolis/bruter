@@ -1531,387 +1531,501 @@ STATIC_INLINE const char* bruter_get_version(void)
     #endif
 #endif
 
-// uncomment this line to force disable C++ wrapper
+// uncomment next line to force disable C++ wrapper
 // #define BRUTER_CPP 1
 
-// uncomment this line to force enable C++ wrapper
+// uncomment next line to force enable C++ wrapper
 // #define BRUTER_CPP 0
 
 // C++ wrapper for BruterList
 // This is only compiled if BRUTER_CPP is defined, which is usually done automatically
 // you can also define it manually
 // the wrapper is not garanteed to meet any C++ standard, i know little to nothing about C++ standard
-// might not be as fast as C code, idk about C++ optimization either
+// might not be as fast as C code, i know nothing about C++ optimization either
 // might not be as clean and readable as C code, bcause C++ can be very messy sometimes
 // i only focused on making it easy to use, comprehensible and somewhat readable;
 #if BRUTER_CPP
-
 // typedef is redundant but we use it just to standardize like in C code
+// inline in methods are also redundant, but we use it to standardize like is in C code
 typedef class Bruter 
 {
     private:
         BruterList* list;
     public:
         // Bruter::VERSION, just accessible as a class member(not an object member)
-        static constexpr const char* VERSION = BRUTER_VERSION;
-        
-        // index operator to access and modify elements
-        BruterValue& operator[](BruterInt i) 
-        {
-            if (unlikely(i < 0 || i >= list->size))
-            {
-                printf("BRUTER_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR " \n", i, list->size);
-                exit(EXIT_FAILURE);
-            }
-
-            // return the reference to the value at index i
-            // this allows us to use the index operator to access and modify elements
-            // e.g. list[i] = value;
-            // or value = list[i];
-            // or even list[i].i = 42; to modify the int value directly
-            // this is fun, C++ can be fun sometimes
-            return list->data[i];
-        }
+        inline static constexpr const char* VERSION = BRUTER_VERSION;
 
         // constructor
-        Bruter(int capacity = 8, bool keyless = false, bool typeless = false) 
-        {
-            list = bruter_new(capacity, keyless, typeless);
-        }
+        inline Bruter(int capacity = 8, bool keyless = false, bool typeless = false);
 
         // destructor
-        ~Bruter() 
-        {
-            bruter_free(list);
-        }
-
-        // double the capacity of the list
-        void double_capacity() 
-        {
-            bruter_double(list);
-        }
-
-        // half the capacity of the list
-        void half_capacity() 
-        {
-            bruter_half(list);
-        }
-
-        // get the size of the list
-        void push(BruterValue value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_push(list, value, key, type);
-        }
-
-        // push different types of values
-        void push(BruterInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_push_int(list, value, key, type);
-        }
-
-        void push(BruterUInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_push_uint(list, value, key, type);
-        }
-
-        void push(BruterFloat value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_push_float(list, value, key, type);
-        }
-
-        void push(void* value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_push_pointer(list, value, key, type);
-        }
-
-        void push(BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_push_function(list, func, key, type);
-        }
-
-        // unshift different types of values
-        void unshift(BruterValue value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_unshift(list, value, key, type);
-        }
-
-        void unshift(BruterInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_unshift_int(list, value, key, type);
-        }
-
-        void unshift(BruterUInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_unshift_uint(list, value, key, type);
-        }
-
-        void unshift(BruterFloat value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_unshift_float(list, value, key, type);
-        }
-
-        void unshift(void* value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_unshift_pointer(list, value, key, type);
-        }
-
-        void unshift(BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_unshift_function(list, func, key, type);
-        }
-
-        // insert different types of values at a specific index
-        void insert(BruterInt index, BruterValue value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_insert(list, index, value, key, type);
-        }
-
-        void insert(BruterInt index, BruterInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_insert_int(list, index, value, key, type);
-        }
-
-        void insert(BruterInt index, BruterUInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_insert_uint(list, index, value, key, type);
-        }
-
-        void insert(BruterInt index, BruterFloat value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_insert_float(list, index, value, key, type);
-        }
-
-        void insert(BruterInt index, void* value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_insert_pointer(list, index, value, key, type);
-        }
-
-        void insert(BruterInt index, BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_insert_function(list, index, func, key, type);
-        }
-
-        // pop
-        BruterValue pop() 
-        {
-            return bruter_pop(list);
-        }
-
-        // shift
-        BruterValue shift() 
-        {
-            return bruter_shift(list);
-        }
-
-        // remove
-        BruterValue remove(BruterInt i) 
-        {
-            return bruter_remove(list, i);
-        }
-
-        // fast remove
-        BruterValue fast_remove(BruterInt i) 
-        {
-            return bruter_fast_remove(list, i);
-        }
-
-        // swap two elements
-        void swap(BruterInt i1, BruterInt i2) 
-        {
-            bruter_swap(list, i1, i2);
-        }
-
-        // find a index by key
-        BruterInt find_key(const char* key) const 
-        {
-            return bruter_find_key(list, key);
-        }
-
-        // find a value by different types
-        BruterInt find(BruterValue value) const 
-        {
-            return bruter_find(list, value);
-        }
-
-        BruterInt find(BruterInt value) const 
-        {
-            return bruter_find_int(list, value);
-        }
-
-        BruterInt find(BruterUInt value) const 
-        {
-            return bruter_find_uint(list, value);
-        }
-
-        BruterInt find(BruterFloat value) const 
-        {
-            return bruter_find_float(list, value);
-        }
-
-        BruterInt find(void* value) const 
-        {
-            return bruter_find_pointer(list, value);
-        }
-
-        BruterInt find(BruterInt (*func)(BruterList *context, BruterList *args)) const 
-        {
-            return bruter_find_function(list, func);
-        }
-
-        // reverse the list
-        void reverse() 
-        {
-            bruter_reverse(list);
-        }
-
-        // copy the list
-        BruterList* copy() const 
-        {
-            return bruter_copy(list);
-        }
-
-        // concatenate another list
-        void concat(const BruterList* src) 
-        {
-            bruter_concat(list, src);
-        }
-
-        // contextual call
-        // the context is the list itself
-        BruterInt call(BruterList* cmd) 
-        {
-            return bruter_call(list, cmd);
-        }
-
-        // get, prefer to use operator[]
-        BruterValue get(BruterInt i) const 
-        {
-            return bruter_get(list, i);
-        }
-
-        // set, prefer to use operator[]
-        void set(BruterInt i, BruterValue value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_set(list, i, value, key, type);
-        }
-
-        void set(BruterInt i, BruterInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_set_int(list, i, value, key, type);
-        }
-
-        void set(BruterInt i, BruterUInt value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_set_uint(list, i, value, key, type);
-        }
-
-        void set(BruterInt i, BruterFloat value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_set_float(list, i, value, key, type);
-        }
-
-        void set(BruterInt i, void* value, const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_set_pointer(list, i, value, key, type);
-        }
-
-        void set(BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
-        {
-            bruter_set_function(list, i, func, key, type);
-        }
-
-        // get key
-        // same as get_key in C
-        const char* get_key(BruterInt i) const 
-        {
-            return bruter_get_key(list, i);
-        }
-
-        // set key
-        // same as set_key in C
-        void set_key(BruterInt i, const char* key) 
-        {
-            bruter_set_key(list, i, key);
-        }
-
-        // get type
-        // same as get_type in C
-        int8_t get_type(BruterInt i) const 
-        {
-            return bruter_get_type(list, i);
-        }
-
-        // set type
-        // same as set_type in C
-        void set_type(BruterInt i, int8_t type) 
-        {
-            bruter_set_type(list, i, type);
-        }
-
-        // c++ specific methods
-        // returns the size of the list
-        // just because list is private
-        BruterInt size() const 
-        {
-            return list->size;
-        }
-
-        // free the list
-        // then recreate it with the same capacity and keyless/typeless options
-        void clear() 
-        {
-            bool is_table = list->keys != NULL;
-            bool is_typed = list->types != NULL;
-            bruter_free(list);
-            list = bruter_new(list->capacity, is_table, is_typed);
-        }
-
-        // returns the capacity of the list
-        // just because list is private
-        // it is the maximum number of elements that can be stored in the list without reallocating
-        // it is not the same as size, which is the number of elements currently stored in the list
-        // capacity is always a power of 2, and it is doubled when the list is full
-        // it is used to optimize memory allocation and avoid fragmentation
-        BruterInt capacity() const 
-        {
-            return list->capacity;
-        }
-
-        // returns true if the list is a table (has keys)
-        // just because list is private
-        // a table is a list that has keys associated with each element
-        // it is used to store key-value pairs, like a dictionary or a map
-        bool is_table() const 
-        {
-            return list->keys != NULL;
-        }
-
-        // returns true if the list is typed (has types)
-        // just because list is private
-        // a typed list is a list that has types associated with each element
-        // it is used to store elements of different types in a union called BruterValue
-        // types arent automatically checked or anything like that, no bruter function will check types
-        // it is up to the user to check types if needed
-        // use it as pure metadata
-        bool is_typed() const 
-        {
-            return list->types != NULL;
-        }
-
-        // returns the internal list pointer
-        // just because list is private
-        // this is useful if you want to use the list with other functions that expect a BruterList*
-        // it is not recommended to use this pointer directly(in C++, if you want so, just stick to bruter)
-        // it is better to use the methods provided by this class
-        // i mean, if you using this wrapper then you probably want something safer, easier and higher level than regular C bruter
-        // if you want to use it that low level, then just use the C API directly
-        // i mean, just use this method when you really need it
-        BruterList* get_list() const 
-        {
-            return list;
-        }
+        inline ~Bruter();
+        
+        // indexing operator
+        inline BruterValue&    operator[](BruterInt i);
+        
+        // capacity management
+        inline void            double_capacity();
+        inline void            half_capacity();
+        
+        // push overloads
+        inline void            push(BruterValue value, const char* key = NULL, int8_t type = 0);
+        inline void            push(BruterInt value, const char* key = NULL, int8_t type = 0);
+        inline void            push(BruterUInt value, const char* key = NULL, int8_t type = 0);
+        inline void            push(BruterFloat value, const char* key = NULL, int8_t type = 0);
+        inline void            push(void* value, const char* key = NULL, int8_t type = 0);
+        inline void            push(BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0);
+        
+        // unshift overloads
+        inline void            unshift(BruterValue value, const char* key = NULL, int8_t type = 0);
+        inline void            unshift(BruterInt value, const char* key = NULL, int8_t type = 0);
+        inline void            unshift(BruterUInt value, const char* key = NULL, int8_t type = 0);
+        inline void            unshift(BruterFloat value, const char* key = NULL, int8_t type = 0);
+        inline void            unshift(void* value, const char* key = NULL, int8_t type = 0);
+        inline void            unshift(BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0);
+        
+        // insert overloads
+        inline void            insert(BruterInt index, BruterValue value, const char* key = NULL, int8_t type = 0);
+        inline void            insert(BruterInt index, BruterInt value, const char* key = NULL, int8_t type = 0);
+        inline void            insert(BruterInt index, BruterUInt value, const char* key = NULL, int8_t type = 0);
+        inline void            insert(BruterInt index, BruterFloat value, const char* key = NULL, int8_t type = 0);
+        inline void            insert(BruterInt index, void* value, const char* key = NULL, int8_t type = 0);
+        inline void            insert(BruterInt index, BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0);
+        
+        // regular methods declarations
+        inline BruterValue     pop();
+        inline BruterValue     shift();
+        inline BruterValue     remove(BruterInt i);
+        inline BruterValue     fast_remove(BruterInt i);
+        inline void            swap(BruterInt i1, BruterInt i2);
+        inline BruterInt       find_key(const char* key) const;
+        
+        // find overloads
+        inline BruterInt       find(BruterValue value) const;
+        inline BruterInt       find(BruterInt value) const;
+        inline BruterInt       find(BruterUInt value) const;
+        inline BruterInt       find(BruterFloat value) const;
+        inline BruterInt       find(void* value) const;
+        inline BruterInt       find(BruterInt (*func)(BruterList *context, BruterList *args)) const;
+        
+        // regular methods declarations
+        inline void            reverse();
+        inline BruterList*     copy() const;
+        inline void            concat(const BruterList* src);
+        inline BruterInt       call(BruterList* cmd);
+        inline BruterValue     get(BruterInt i) const;
+        
+        // set overloads
+        inline void            set(BruterInt i, BruterValue value, const char* key = NULL, int8_t type = 0);
+        inline void            set(BruterInt i, BruterInt value, const char* key = NULL, int8_t type = 0);
+        inline void            set(BruterInt i, BruterUInt value, const char* key = NULL, int8_t type = 0);
+        inline void            set(BruterInt i, BruterFloat value, const char* key = NULL, int8_t type = 0);
+        inline void            set(BruterInt i, void* value, const char* key = NULL, int8_t type = 0);
+        inline void            set(BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0);
+        
+        // key and type getters and setters
+        inline const char*     get_key(BruterInt i) const;
+        inline void            set_key(BruterInt i, const char* key);
+        inline int8_t          get_type(BruterInt i) const;
+        inline void            set_type(BruterInt i, int8_t type);
+        
+        // C++ specific methods
+        inline void            clear();
+        
+        // C++ specific getters(list is private)
+        inline BruterInt       size() const;
+        inline BruterInt       capacity() const;
+        inline bool            is_table() const;
+        inline bool            is_typed() const;
+        inline BruterList*     get_list() const;
 } Bruter;
-#endif
+
+// Bruter class methods implementation
+// this is the indexing operator
+inline BruterValue& Bruter::operator[](BruterInt i) 
+{
+    if (unlikely(i < 0 || i >= list->size))
+    {
+        printf("BRUTER_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR ".\n", i, list->size);
+        exit(EXIT_FAILURE);
+    }
+
+    // return the reference to the value at index i
+    // this allows us to use the index operator to access and modify elements
+    // e.g. list[i] = value;
+    // or value = list[i];
+    // or even list[i].i = 42; to modify the int value directly
+    // this is fun, C++ can be fun sometimes
+    return list->data[i];
+}
+
+// constructor
+inline Bruter::Bruter(int capacity = 8, bool keyless = false, bool typeless = false) 
+{
+    list = bruter_new(capacity, keyless, typeless);
+}
+
+// destructor
+inline Bruter::~Bruter() 
+{
+    bruter_free(list);
+}
+
+// double the capacity of the list
+inline void Bruter::double_capacity() 
+{
+    bruter_double(list);
+}
+
+// half the capacity of the list
+inline void Bruter::half_capacity() 
+{
+    bruter_half(list);
+}
+
+// push different types of values
+// this is the default push method
+inline void Bruter::push(BruterValue value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_push(list, value, key, type);
+}
+
+// push int overload
+inline void Bruter::push(BruterInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_push_int(list, value, key, type);
+}
+
+// push uint overload
+inline void Bruter::push(BruterUInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_push_uint(list, value, key, type);
+}
+
+// push float overload
+inline void Bruter::push(BruterFloat value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_push_float(list, value, key, type);
+}
+
+// push pointer overload
+inline void Bruter::push(void* value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_push_pointer(list, value, key, type);
+}
+
+// push function overload
+inline void Bruter::push(BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
+{
+    bruter_push_function(list, func, key, type);
+}
+
+// unshift different types of values
+// this is the default unshift method
+inline void Bruter::unshift(BruterValue value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_unshift(list, value, key, type);
+}
+
+// unshift int overload
+inline void Bruter::unshift(BruterInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_unshift_int(list, value, key, type);
+}
+
+// unshift uint overload
+inline void Bruter::unshift(BruterUInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_unshift_uint(list, value, key, type);
+}
+
+// unshift float overload
+inline void Bruter::unshift(BruterFloat value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_unshift_float(list, value, key, type);
+}
+
+// unshift pointer overload
+inline void Bruter::unshift(void* value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_unshift_pointer(list, value, key, type);
+}
+
+// unshift function overload
+inline void Bruter::unshift(BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
+{
+    bruter_unshift_function(list, func, key, type);
+}
+
+// insert different types of values at a specific index
+// this is the default insert method
+inline void Bruter::insert(BruterInt index, BruterValue value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_insert(list, index, value, key, type);
+}
+
+// insert int overload
+inline void Bruter::insert(BruterInt index, BruterInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_insert_int(list, index, value, key, type);
+}
+
+// insert uint overload
+inline void Bruter::insert(BruterInt index, BruterUInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_insert_uint(list, index, value, key, type);
+}
+
+// insert float overload
+inline void Bruter::insert(BruterInt index, BruterFloat value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_insert_float(list, index, value, key, type);
+}
+
+// insert pointer overload
+inline void Bruter::insert(BruterInt index, void* value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_insert_pointer(list, index, value, key, type);
+}
+
+// insert function overload
+inline void Bruter::insert(BruterInt index, BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
+{
+    bruter_insert_function(list, index, func, key, type);
+}
+
+// pop
+inline BruterValue Bruter::pop() 
+{
+    return bruter_pop(list);
+}
+
+// shift
+inline BruterValue Bruter::shift() 
+{
+    return bruter_shift(list);
+}
+
+// remove
+inline BruterValue Bruter::remove(BruterInt i) 
+{
+    return bruter_remove(list, i);
+}
+
+// fast remove
+inline BruterValue Bruter::fast_remove(BruterInt i) 
+{
+    return bruter_fast_remove(list, i);
+}
+
+// swap two elements
+inline void Bruter::swap(BruterInt i1, BruterInt i2) 
+{
+    bruter_swap(list, i1, i2);
+}
+
+// find a index by key
+inline BruterInt Bruter::find_key(const char* key) const 
+{
+    return bruter_find_key(list, key);
+}
+
+// find a value by different types
+// this is the default find method
+inline BruterInt Bruter::find(BruterValue value) const 
+{
+    return bruter_find(list, value);
+}
+
+// find int overload
+inline BruterInt Bruter::find(BruterInt value) const 
+{
+    return bruter_find_int(list, value);
+}
+
+// find uint overload
+inline BruterInt Bruter::find(BruterUInt value) const 
+{
+    return bruter_find_uint(list, value);
+}
+
+// find float overload
+inline BruterInt Bruter::find(BruterFloat value) const 
+{
+    return bruter_find_float(list, value);
+}
+
+// find pointer overload
+inline BruterInt Bruter::find(void* value) const 
+{
+    return bruter_find_pointer(list, value);
+}
+
+// find function overload
+inline BruterInt Bruter::find(BruterInt (*func)(BruterList *context, BruterList *args)) const 
+{
+    return bruter_find_function(list, func);
+}
+
+// reverse the list
+inline void Bruter::reverse() 
+{
+    bruter_reverse(list);
+}
+
+// copy the list
+inline BruterList* Bruter::copy() const 
+{
+    return bruter_copy(list);
+}
+
+// concatenate another list
+inline void Bruter::concat(const BruterList* src) 
+{
+    bruter_concat(list, src);
+}
+
+// contextual call
+// the context is the list itself
+inline BruterInt Bruter::call(BruterList* cmd) 
+{
+    return bruter_call(list, cmd);
+}
+
+// get, prefer to use operator[]
+inline BruterValue Bruter::get(BruterInt i) const 
+{
+    return bruter_get(list, i);
+}
+
+// set, prefer to use operator[]
+// this is the default set method
+inline void Bruter::set(BruterInt i, BruterValue value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_set(list, i, value, key, type);
+}
+
+// set int overload
+inline void Bruter::set(BruterInt i, BruterInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_set_int(list, i, value, key, type);
+}
+
+// set uint overload
+inline void Bruter::set(BruterInt i, BruterUInt value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_set_uint(list, i, value, key, type);
+}
+
+// set float overload
+inline void Bruter::set(BruterInt i, BruterFloat value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_set_float(list, i, value, key, type);
+}
+
+// set pointer overload
+inline void Bruter::set(BruterInt i, void* value, const char* key = NULL, int8_t type = 0) 
+{
+    bruter_set_pointer(list, i, value, key, type);
+}
+
+// set function overload
+inline void Bruter::set(BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key = NULL, int8_t type = 0) 
+{
+    bruter_set_function(list, i, func, key, type);
+}
+
+// get key
+// same as get_key in C
+inline const char* Bruter::get_key(BruterInt i) const 
+{
+    return bruter_get_key(list, i);
+}
+
+// set key
+// same as set_key in C
+inline void Bruter::set_key(BruterInt i, const char* key) 
+{
+    bruter_set_key(list, i, key);
+}
+
+// get type
+// same as get_type in C
+inline int8_t Bruter::get_type(BruterInt i) const 
+{
+    return bruter_get_type(list, i);
+}
+
+// set type
+// same as set_type in C
+inline void Bruter::set_type(BruterInt i, int8_t type) 
+{
+    bruter_set_type(list, i, type);
+}
+
+// c++ specific methods
+// returns the size of the list
+// just because list is private
+inline BruterInt Bruter::size() const 
+{
+    return list->size;
+}
+
+// free the list
+// then recreate it with the same capacity and keyless/typeless options
+inline void Bruter::clear() 
+{
+    bool is_table = list->keys != NULL;
+    bool is_typed = list->types != NULL;
+    bruter_free(list);
+    list = bruter_new(list->capacity, is_table, is_typed);
+}
+
+// returns the capacity of the list
+// just because list is private
+// it is the maximum number of elements that can be stored in the list without reallocating
+// it is not the same as size, which is the number of elements currently stored in the list
+// capacity is always a power of 2, and it is doubled when the list is full
+// it is used to optimize memory allocation and avoid fragmentation
+inline BruterInt Bruter::capacity() const 
+{
+    return list->capacity;
+}
+
+// returns true if the list is a table (has keys)
+// just because list is private
+// a table is a list that has keys associated with each element
+// it is used to store key-value pairs, like a dictionary or a map
+inline bool Bruter::is_table() const 
+{
+    return list->keys != NULL;
+}
+
+// returns true if the list is typed (has types)
+// just because list is private
+// a typed list is a list that has types associated with each element
+// it is used to store elements of different types in a union called BruterValue
+// types arent automatically checked or anything like that, no bruter function will check types
+// it is up to the user to check types if needed
+// use it as pure metadata
+inline bool Bruter::is_typed() const 
+{
+    return list->types != NULL;
+}
+
+// returns the internal list pointer
+// just because list is private
+// this is useful if you want to use the list with other functions that expect a BruterList*
+// it is not recommended to use this pointer directly(in C++, if you want so, just stick to bruter)
+// it is better to use the methods provided by this class
+// i mean, if you using this wrapper then you probably want something safer, easier and higher level than regular C bruter
+// if you want to use it that low level, then just use the C API directly
+// i mean, just use this method when you really need it
+inline BruterList* Bruter::get_list() const 
+{
+    return list;
+}
+#endif // this closes the C++ wrapper
 
 // we dont need this in header files or regular bruter
 // this is only used if one compiling the bruter as a lib
