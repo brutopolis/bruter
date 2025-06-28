@@ -14,7 +14,7 @@
 #include <stdbool.h>
 
 // version
-#define BRUTER_VERSION "0.9.0"
+#define BRUTER_VERSION "0.9.0a"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -27,8 +27,8 @@ typedef uintptr_t BruterUInt;
     typedef float BruterFloat;
 #endif
 
-// you can build bruter as lib, just define BRUTER_AS_LIB before including this header, it will act like a source.c file
-#if defined(BRUTER_AS_LIB)
+// you can build bruter as lib, just define BRUTER_AS_SOURCE before including this header, it will act like a source.c file
+#if defined(BRUTER_AS_SOURCE)
     #define STATIC_INLINE // we dont want it static inlined
 #else
     #define STATIC_INLINE static inline
@@ -241,7 +241,7 @@ STATIC_INLINE const char*   bruter_get_version(void);
 // functions implementations
 // functions implementations
 // functions implementations
-#ifndef BRUTER_NO_IMPLEMENTATION // you can define this to not include the implementations
+#ifndef BRUTER_AS_HEADER // you can define this to not include the implementations
 BRUTER_ALLOW_AGGREGATE_RETURN()
 STATIC_INLINE BruterValue bruter_value_int(BruterInt value)
 {
@@ -1253,7 +1253,7 @@ STATIC_INLINE const char* bruter_get_version(void)
     return BRUTER_VERSION;
 }
 
-#endif // BRUTER_NO_IMPLEMENTATION
+#endif // BRUTER_AS_HEADER
 
 // dont expect this to work on restricted compilers and environments, but ofc if can work if has the _Generic feature
 // if you wanna mantain maximum compatibility and portability avoid this
@@ -1428,7 +1428,7 @@ STATIC_INLINE const char* bruter_get_version(void)
     )(a)
 
     // supress unused macro warnings
-    #if defined(BRUTER_AS_LIB)    
+    #if defined(BRUTER_AS_SOURCE)    
         #if defined(bnew)
             #if defined(bpush) && defined(bunshift) && defined(binsert) && defined(bset) && defined(bfree) && defined(bdouble) && defined(bhalf) && defined(bpop) && defined(bshift) && defined(bremove) && defined(bfast_remove) && defined(bswap) && defined(bfind_key) && defined(breverse) && defined(bcopy) && defined(bconcat) && defined(bcall) && defined(bget) && defined(bget_key) && defined(bset_key) && defined(bget_type) && defined(bset_type)
                 #if defined(bfind) && defined(bvalue)
@@ -1453,13 +1453,15 @@ STATIC_INLINE const char* bruter_get_version(void)
     #endif
 #endif
 
-#if defined(BRUTER_AS_LIB)
+#if defined(BRUTER_AS_SOURCE)
     #if defined(BRUTER_H) && defined(BRUTER_VERSION)
-        #if defined(BRUTER_ALLOW_AGGREGATE_RETURN) && defined(BRUTER_FORBID_AGGREGATE_RETURN)
-            #if defined(BRUTER_ALLOW_NON_LITERAL_FORMAT) && defined(BRUTER_FORBID_NON_LITERAL_FORMAT)
-                // just to avoid warnings about unused macros
-            #endif
-        #endif
+        // just to avoid warnings about unused macros
+    #endif
+#endif
+
+#if defined(BRUTER_ALLOW_AGGREGATE_RETURN) && defined(BRUTER_FORBID_AGGREGATE_RETURN)
+    #if defined(BRUTER_ALLOW_NON_LITERAL_FORMAT) && defined(BRUTER_FORBID_NON_LITERAL_FORMAT)
+        // just to avoid warnings about unused macros
     #endif
 #endif
 
