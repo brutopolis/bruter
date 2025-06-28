@@ -127,16 +127,6 @@ struct BruterList
     BruterValue *data;
 };
 
-enum BRUTER_TYPES
-{
-    BRUTER_TYPE_NULL               = -1,   // null
-    BRUTER_TYPE_INT                =  0,   // integer or pointer
-    BRUTER_TYPE_UINT               =  1,   // same as any but unsigned
-    BRUTER_TYPE_FLOAT              =  2,   // float
-    BRUTER_TYPE_POINTER            =  3,   // pointer
-    BRUTER_TYPE_FUNCTION           =  4,   // function, same as any but executable
-    BRUTER_TYPE_LIST               =  5,   // list
-};
 
 STATIC_INLINE BruterValue bruter_value_int(BruterInt value);
 STATIC_INLINE BruterValue bruter_value_uint(BruterUInt value);
@@ -155,25 +145,25 @@ STATIC_INLINE void          bruter_double(BruterList *list);
 STATIC_INLINE void          bruter_half(BruterList *list);
 // push a value to the end of the list
 STATIC_INLINE void          bruter_push(BruterList *list, BruterValue value, const char* key, int8_t type);
-STATIC_INLINE void          bruter_push_int(BruterList *list, BruterInt value, const char* key);
-STATIC_INLINE void          bruter_push_uint(BruterList *list, BruterUInt value, const char* key);
-STATIC_INLINE void          bruter_push_float(BruterList *list, BruterFloat value, const char* key);
-STATIC_INLINE void          bruter_push_pointer(BruterList *list, void *value, const char* key);
-STATIC_INLINE void          bruter_push_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key);
+STATIC_INLINE void          bruter_push_int(BruterList *list, BruterInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_push_uint(BruterList *list, BruterUInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_push_float(BruterList *list, BruterFloat value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_push_pointer(BruterList *list, void *value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_push_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type);
 // unshift a value to the start of the list
 STATIC_INLINE void          bruter_unshift(BruterList *list, BruterValue value, const char* key, int8_t type);
-STATIC_INLINE void          bruter_unshift_int(BruterList *list, BruterInt value, const char* key);
-STATIC_INLINE void          bruter_unshift_uint(BruterList *list, BruterUInt value, const char* key);
-STATIC_INLINE void          bruter_unshift_float(BruterList *list, BruterFloat value, const char* key);
-STATIC_INLINE void          bruter_unshift_pointer(BruterList *list, void *value, const char* key);
-STATIC_INLINE void          bruter_unshift_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key);
+STATIC_INLINE void          bruter_unshift_int(BruterList *list, BruterInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_unshift_uint(BruterList *list, BruterUInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_unshift_float(BruterList *list, BruterFloat value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_unshift_pointer(BruterList *list, void *value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_unshift_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type);
 // insert a value at index i in the list
 STATIC_INLINE void          bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type);
-STATIC_INLINE void          bruter_insert_int(BruterList *list, BruterInt i, BruterInt value, const char* key);
-STATIC_INLINE void          bruter_insert_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key);
-STATIC_INLINE void          bruter_insert_float(BruterList *list, BruterInt i, BruterFloat value, const char* key);
-STATIC_INLINE void          bruter_insert_pointer(BruterList *list, BruterInt i, void *value, const char* key);
-STATIC_INLINE void          bruter_insert_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key);
+STATIC_INLINE void          bruter_insert_int(BruterList *list, BruterInt i, BruterInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_insert_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_insert_float(BruterList *list, BruterInt i, BruterFloat value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_insert_pointer(BruterList *list, BruterInt i, void *value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_insert_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type);
 // pop a value from the end of the list
 STATIC_INLINE BruterValue   bruter_pop(BruterList *list);
 STATIC_INLINE BruterInt     bruter_pop_int(BruterList *list);
@@ -231,11 +221,11 @@ STATIC_INLINE void*         bruter_get_pointer(const BruterList *list, BruterInt
 STATIC_INLINE BruterInt   (*bruter_get_function(const BruterList *list, BruterInt i))(BruterList *context, BruterList *args);
 // set a value at index i in the list, if index is out of range, it will print an error and exit
 STATIC_INLINE void          bruter_set(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type);
-STATIC_INLINE void          bruter_set_int(BruterList *list, BruterInt i, BruterInt value, const char* key);
-STATIC_INLINE void          bruter_set_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key);
-STATIC_INLINE void          bruter_set_float(BruterList *list, BruterInt i, BruterFloat value, const char* key);
-STATIC_INLINE void          bruter_set_pointer(BruterList *list, BruterInt i, void *value, const char* key);
-STATIC_INLINE void          bruter_set_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key);
+STATIC_INLINE void          bruter_set_int(BruterList *list, BruterInt i, BruterInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_set_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_set_float(BruterList *list, BruterInt i, BruterFloat value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_set_pointer(BruterList *list, BruterInt i, void *value, const char* key, int8_t type);
+STATIC_INLINE void          bruter_set_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type);
 // get a key at index i in the list, returns NULL if index is out of range or if the list is not a table
 STATIC_INLINE char*         bruter_get_key(const BruterList *list, BruterInt i);
 // set a key at index i in the list, if index is out of range, it will print an error and exit
@@ -458,29 +448,29 @@ STATIC_INLINE void bruter_push(BruterList *list, BruterValue value, const char* 
     list->size++;
 }
 
-STATIC_INLINE void bruter_push_int(BruterList *list, BruterInt value, const char* key)
+STATIC_INLINE void bruter_push_int(BruterList *list, BruterInt value, const char* key, int8_t type)
 {
-    bruter_push(list, (BruterValue){.i = value}, key, BRUTER_TYPE_INT);
+    bruter_push(list, (BruterValue){.i = value}, key, type);
 }
 
-STATIC_INLINE void bruter_push_uint(BruterList *list, BruterUInt value, const char* key)
+STATIC_INLINE void bruter_push_uint(BruterList *list, BruterUInt value, const char* key, int8_t type)
 {
-    bruter_push(list, (BruterValue){.u = value}, key, BRUTER_TYPE_UINT);
+    bruter_push(list, (BruterValue){.u = value}, key, type);
 }
 
-STATIC_INLINE void bruter_push_float(BruterList *list, BruterFloat value, const char* key)
+STATIC_INLINE void bruter_push_float(BruterList *list, BruterFloat value, const char* key, int8_t type)
 {
-    bruter_push(list, (BruterValue){.f = value}, key, BRUTER_TYPE_FLOAT);
+    bruter_push(list, (BruterValue){.f = value}, key, type);
 }
 
-STATIC_INLINE void bruter_push_pointer(BruterList *list, void *value, const char* key)
+STATIC_INLINE void bruter_push_pointer(BruterList *list, void *value, const char* key, int8_t type)
 {
-    bruter_push(list, (BruterValue){.p = value}, key, BRUTER_TYPE_POINTER);
+    bruter_push(list, (BruterValue){.p = value}, key, type);
 }
 
-STATIC_INLINE void bruter_push_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key)
+STATIC_INLINE void bruter_push_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type)
 {
-    bruter_push(list, (BruterValue){.fn = func}, key, BRUTER_TYPE_FUNCTION);
+    bruter_push(list, (BruterValue){.fn = func}, key, type);
 }
 
 STATIC_INLINE void bruter_unshift(BruterList *list, BruterValue value, const char* key, int8_t type)
@@ -516,29 +506,29 @@ STATIC_INLINE void bruter_unshift(BruterList *list, BruterValue value, const cha
     list->size++;
 }
 
-STATIC_INLINE void bruter_unshift_int(BruterList *list, BruterInt value, const char* key)
+STATIC_INLINE void bruter_unshift_int(BruterList *list, BruterInt value, const char* key, int8_t type)
 {
-    bruter_unshift(list, (BruterValue){.i = value}, key, BRUTER_TYPE_INT);
+    bruter_unshift(list, (BruterValue){.i = value}, key, type);
 }
 
-STATIC_INLINE void bruter_unshift_uint(BruterList *list, BruterUInt value, const char* key)
+STATIC_INLINE void bruter_unshift_uint(BruterList *list, BruterUInt value, const char* key, int8_t type)
 {
-    bruter_unshift(list, (BruterValue){.u = value}, key, BRUTER_TYPE_UINT);
+    bruter_unshift(list, (BruterValue){.u = value}, key, type);
 }
 
-STATIC_INLINE void bruter_unshift_float(BruterList *list, BruterFloat value, const char* key)
+STATIC_INLINE void bruter_unshift_float(BruterList *list, BruterFloat value, const char* key, int8_t type)
 {
-    bruter_unshift(list, (BruterValue){.f = value}, key, BRUTER_TYPE_FLOAT);
+    bruter_unshift(list, (BruterValue){.f = value}, key, type);
 }
 
-STATIC_INLINE void bruter_unshift_pointer(BruterList *list, void *value, const char* key)
+STATIC_INLINE void bruter_unshift_pointer(BruterList *list, void *value, const char* key, int8_t type)
 {
-    bruter_unshift(list, (BruterValue){.p = value}, key, BRUTER_TYPE_POINTER);
+    bruter_unshift(list, (BruterValue){.p = value}, key, type);
 }
 
-STATIC_INLINE void bruter_unshift_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key)
+STATIC_INLINE void bruter_unshift_function(BruterList *list, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type)
 {
-    bruter_unshift(list, (BruterValue){.fn = func}, key, BRUTER_TYPE_FUNCTION);
+    bruter_unshift(list, (BruterValue){.fn = func}, key, type);
 }
 
 STATIC_INLINE void bruter_insert(BruterList *list, BruterInt i, BruterValue value, const char* key, int8_t type)
@@ -582,29 +572,29 @@ STATIC_INLINE void bruter_insert(BruterList *list, BruterInt i, BruterValue valu
     }
 }
 
-STATIC_INLINE void bruter_insert_int(BruterList *list, BruterInt i, BruterInt value, const char* key)
+STATIC_INLINE void bruter_insert_int(BruterList *list, BruterInt i, BruterInt value, const char* key, int8_t type)
 {
-    bruter_insert(list, i, (BruterValue){.i = value}, key, BRUTER_TYPE_INT);
+    bruter_insert(list, i, (BruterValue){.i = value}, key, type);
 }
 
-STATIC_INLINE void bruter_insert_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key)
+STATIC_INLINE void bruter_insert_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key, int8_t type)
 {
-    bruter_insert(list, i, (BruterValue){.u = value}, key, BRUTER_TYPE_UINT);
+    bruter_insert(list, i, (BruterValue){.u = value}, key, type);
 }
 
-STATIC_INLINE void bruter_insert_float(BruterList *list, BruterInt i, BruterFloat value, const char* key)
+STATIC_INLINE void bruter_insert_float(BruterList *list, BruterInt i, BruterFloat value, const char* key, int8_t type)
 {
-    bruter_insert(list, i, (BruterValue){.f = value}, key, BRUTER_TYPE_FLOAT);
+    bruter_insert(list, i, (BruterValue){.f = value}, key, type);
 }
 
-STATIC_INLINE void bruter_insert_pointer(BruterList *list, BruterInt i, void *value, const char* key)
+STATIC_INLINE void bruter_insert_pointer(BruterList *list, BruterInt i, void *value, const char* key, int8_t type)
 {
-    bruter_insert(list, i, (BruterValue){.p = value}, key, BRUTER_TYPE_POINTER);
+    bruter_insert(list, i, (BruterValue){.p = value}, key, type);
 }
 
-STATIC_INLINE void bruter_insert_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key)
+STATIC_INLINE void bruter_insert_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type)
 {
-    bruter_insert(list, i, (BruterValue){.fn = func}, key, BRUTER_TYPE_FUNCTION);
+    bruter_insert(list, i, (BruterValue){.fn = func}, key, type);
 }
 
 #define BRUTER_FUNCTION_CONTENT_POP() \
@@ -1150,29 +1140,29 @@ STATIC_INLINE void bruter_set(BruterList *list, BruterInt i, BruterValue value, 
     }
 }
 
-STATIC_INLINE void bruter_set_int(BruterList *list, BruterInt i, BruterInt value, const char* key)
+STATIC_INLINE void bruter_set_int(BruterList *list, BruterInt i, BruterInt value, const char* key, int8_t type)
 {
-    bruter_set(list, i, (BruterValue){.i = value}, key, BRUTER_TYPE_INT);
+    bruter_set(list, i, (BruterValue){.i = value}, key, type);
 }
 
-STATIC_INLINE void bruter_set_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key)
+STATIC_INLINE void bruter_set_uint(BruterList *list, BruterInt i, BruterUInt value, const char* key, int8_t type)
 {
-    bruter_set(list, i, (BruterValue){.u = value}, key, BRUTER_TYPE_UINT);
+    bruter_set(list, i, (BruterValue){.u = value}, key, type);
 }
 
-STATIC_INLINE void bruter_set_float(BruterList *list, BruterInt i, BruterFloat value, const char* key)
+STATIC_INLINE void bruter_set_float(BruterList *list, BruterInt i, BruterFloat value, const char* key, int8_t type)
 {
-    bruter_set(list, i, (BruterValue){.f = value}, key, BRUTER_TYPE_FLOAT);
+    bruter_set(list, i, (BruterValue){.f = value}, key, type);
 }
 
-STATIC_INLINE void bruter_set_pointer(BruterList *list, BruterInt i, void *value, const char* key)
+STATIC_INLINE void bruter_set_pointer(BruterList *list, BruterInt i, void *value, const char* key, int8_t type)
 {
-    bruter_set(list, i, (BruterValue){.p = value}, key, BRUTER_TYPE_POINTER);
+    bruter_set(list, i, (BruterValue){.p = value}, key, type);
 }
 
-STATIC_INLINE void bruter_set_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key)
+STATIC_INLINE void bruter_set_function(BruterList *list, BruterInt i, BruterInt (*func)(BruterList *context, BruterList *args), const char* key, int8_t type)
 {
-    bruter_set(list, i, (BruterValue){.fn = func}, key, BRUTER_TYPE_FUNCTION);
+    bruter_set(list, i, (BruterValue){.fn = func}, key, type);
 }
 
 STATIC_INLINE char* bruter_get_key(const BruterList *list, BruterInt i)
@@ -1262,34 +1252,177 @@ STATIC_INLINE const char* bruter_get_version(void)
     return BRUTER_VERSION;
 }
 
-// generics were only introduced in C11, so we need to check if the compiler supports it, because bruter is meant to be C99 compatible
-// if you have generics it will probably detect it, but if you have the _Generic but it hasnt been autodetected, you can define BRUTER_USE_GENERIC manually
-#ifndef BRUTER_USE_GENERIC
-    #if defined(__TINYC__) || defined(__TCC__)
-        #define BRUTER_USE_GENERIC 1
-    #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-        #define BRUTER_USE_GENERIC 1
-    #elif defined(__has_feature)
-        #if __has_feature(c_generic_selections)
-            #define BRUTER_USE_GENERIC 1
-        #else
-            #define BRUTER_USE_GENERIC 0
-        #endif
-    #elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))
-        #define BRUTER_USE_GENERIC 1
-    #elif defined(__clang__)
-        #define BRUTER_USE_GENERIC 1
-    #elif defined(_MSC_VER) && _MSC_VER >= 1900  
-        #define BRUTER_USE_GENERIC 1
-    #else
-        #define BRUTER_USE_GENERIC 0
-    #endif
-#endif
-
 // dont expect this to work on restricted compilers and environments, but ofc if can work if has the _Generic feature
 // if you wanna mantain maximum compatibility and portability avoid this
-// these macros are not meant to be much portable, i have not tested them on restricted compilers and environments
-#if BRUTER_USE_GENERIC
+// this require either
+// a C11 standard and a gcc-compatible compiler
+// OR
+// a C23 compiler, which standardized the typeof and some __VA_ARGS__ behaviors which were only available as gcc extensions
+
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
+#define MACRO_BRUTER 1
+
+#if MACRO_BRUTER
+
+    // how we do optional arguments
+    #if __STDC_VERSION__ >= 202311L  // C23 
+        #define BRUTER_COMMA(...) __VA_OPT__(,)
+        #define BRUTER_ARGS(...) 0 __VA_OPT__(,) __VA_ARGS__
+    #else // gcc extension
+        #define BRUTER_COMMA(...) ,
+        #define BRUTER_ARGS(...) 0, ##__VA_ARGS__
+    #endif
+
+    // bnew
+    // bnew
+    // ???N
+    // abc3210
+    // List bnew(opt int capacity, opt bool istable, opt bool istyped)
+    #define bnew_impl_0(dummy, ...) bruter_new(sizeof(BruterValue), false, false)
+    #define bnew_impl_1(dummy, capacity, ...) bruter_new(capacity, false, false)
+    #define bnew_impl_2(dummy, capacity, istable, ...) bruter_new(capacity, istable, false)
+    #define bnew_impl_3(dummy, capacity, keys, istyped, ...) bruter_new(capacity, istable, istyped)
+    #define bnew_impl(dummy, _3, _2, _1, N, ...) N 
+    #define bnew(...) bnew_impl(BRUTER_ARGS(__VA_ARGS__), bnew_impl_3, bnew_impl_2, bnew_impl_1, bnew_impl_0)(BRUTER_ARGS(__VA_ARGS__))
+
+
+    // bpush
+    // bpush
+    // ..??N
+    // ..ab432
+    // void bpush(List list, Value value, opt char* key, opt int8_t type)
+    #define bpush_base(list, value, key, type) \
+    _Generic((value), \
+        uint8_t: bruter_push_uint, \
+        uint16_t: bruter_push_uint, \
+        uint32_t: bruter_push_uint, \
+        uint64_t: bruter_push_uint, \
+        float: bruter_push_float, \
+        double: bruter_push_float, \
+        void*: bruter_push_pointer, \
+        char*: bruter_push_pointer, \
+        BruterValue: bruter_push, \
+        default: bruter_push_int \
+    )(list, value, key, type)
+    #define bpush_impl_2(dummy, list, value, ...) bpush_base(list, value, NULL, 0)
+    #define bpush_impl_3(dummy, list, value, key, ...) bpush_base(list, value, key, 0)
+    #define bpush_impl_4(dummy, list, value, key, type, ...) bpush_base(list, value, key, type)
+    #define bpush_impl(dummy, _4, _3, N, ...) N 
+    #define bpush(...) bpush_impl(BRUTER_ARGS(__VA_ARGS__), bpush_impl_4, bpush_impl_3, bpush_impl_2)(0, __VA_ARGS__)
+    
+
+    // bunshift
+    // bunshift
+    // ..??N
+    // ..ab432
+    // void bunshift(List list, Value value, opt char* key, opt int8_t type)
+    #define bunshift_base(list, value, key, type) \
+    _Generic((value), \
+        uint8_t: bruter_unshift_uint, \
+        uint16_t: bruter_unshift_uint, \
+        uint32_t: bruter_unshift_uint, \
+        uint64_t: bruter_unshift_uint, \
+        float: bruter_unshift_float, \
+        double: bruter_unshift_float, \
+        void*: bruter_unshift_pointer, \
+        char*: bruter_unshift_pointer, \
+        BruterValue: bruter_unshift, \
+        default: bruter_unshift_int \
+    )(list, value, key, type)
+    #define bunshift_impl_2(dummy, list, value, ...) bunshift_base(list, value, NULL, 0)
+    #define bunshift_impl_3(dummy, list, value, key, ...) bunshift_base(list, value, key, 0)
+    #define bunshift_impl_4(dummy, list, value, key, type, ...) bunshift_base(list, value, key, type)
+    #define bunshift_impl(dummy, _4, _3, N, ...) N 
+    #define bunshift(...) bunshift_impl(BRUTER_ARGS(__VA_ARGS__), bunshift_impl_4, bunshift_impl_3, bunshift_impl_2)(0, __VA_ARGS__)
+
+    // binsert
+    // binsert
+    // ...??N
+    // ...ab432
+    // void binsert(List list, Int index, Value value, opt char* key, opt int8_t type)
+    #define binsert_base(list, index, value, key, type) \
+    _Generic((value), \
+        uint8_t: bruter_insert_uint, \
+        uint16_t: bruter_insert_uint, \
+        uint32_t: bruter_insert_uint, \
+        uint64_t: bruter_insert_uint, \
+        float: bruter_insert_float, \
+        double: bruter_insert_float, \
+        void*: bruter_insert_pointer, \
+        char*: bruter_insert_pointer, \
+        BruterValue: bruter_insert, \
+        default: bruter_insert_int \
+    )(list, index, value, key, type)
+    #define binsert_impl_3(dummy, list, index, value, ...) binsert_base(list, index, value, NULL, 0)
+    #define binsert_impl_4(dummy, list, index, value, key, ...) binsert_base(list, index, value, key, 0)
+    #define binsert_impl_5(dummy, list, index, value, key, type, ...) binsert_base(list, index, value, key, type)
+    #define binsert_impl(dummy, _5, _4, N, ...) N 
+    #define binsert(...) binsert_impl(BRUTER_ARGS(__VA_ARGS__), binsert_impl_5, binsert_impl_4, binsert_impl_3)(0, __VA_ARGS__)
+    
+    // bset
+    // bset
+    // ...??N
+    // ...ab432
+    // void bset(List list, Int index, Value value, opt char* key, opt int8_t type)
+    #define bset_base(list, index, value, key, type) \
+    _Generic((value), \
+        uint8_t: bruter_set_uint, \
+        uint16_t: bruter_set_uint, \
+        uint32_t: bruter_set_uint, \
+        uint64_t: bruter_set_uint, \
+        float: bruter_set_float, \
+        double: bruter_set_float, \
+        void*: bruter_set_pointer, \
+        char*: bruter_set_pointer, \
+        BruterValue: bruter_set, \
+        default: bruter_set_int \
+    )(list, index, value, key, type)
+    #define bset_impl_3(dummy, list, index, value, ...) bset_base(list, index, value, NULL, 0)
+    #define bset_impl_4(dummy, list, index, value, key, ...) bset_base(list, index, value, key, 0)
+    #define bset_impl_5(dummy, list, index, value, key, type, ...) bset_base(list, index, value, key, type)
+    #define bset_impl(dummy, _5, _4, N, ...) N 
+    #define bset(...) bset_impl(BRUTER_ARGS(__VA_ARGS__), bset_impl_5, bset_impl_4, bset_impl_3)(0, __VA_ARGS__)
+
+    // macros bellow doesnt have any optional args
+    #define bfree bruter_free
+    #define bdouble bruter_double
+    #define bhalf bruter_half
+    #define bpop bruter_pop
+    #define bshift bruter_shift
+    #define bremove bruter_remove
+    #define bfast_remove bruter_fast_remove
+    #define bswap bruter_swap
+    #define bfind_key bruter_find_key
+    #define breverse bruter_reverse
+    #define bcopy bruter_copy
+    #define bconcat bruter_concat
+    #define bcall bruter_call
+    #define bget bruter_get
+    #define bget_key bruter_get_key
+    #define bset_key bruter_set_key
+    #define bget_type bruter_get_type
+    #define bset_type bruter_set_type
+    #define bfind(list, value) \
+    _Generic((value), \
+        uint8_t: bruter_find_uint, \
+        uint16_t: bruter_find_uint, \
+        uint32_t: bruter_find_uint, \
+        uint64_t: bruter_find_uint, \
+        float: bruter_find_float, \
+        double: bruter_find_float, \
+        void*: bruter_find_pointer, \
+        char*: bruter_find_pointer, \
+        default: bruter_find_int \
+    )(list, value)
     // this generate aggregate return warning
     #define bvalue(a) \
     _Generic((a), \
@@ -1304,88 +1437,30 @@ STATIC_INLINE const char* bruter_get_version(void)
         default: bruter_value_int \
     )(a)
 
-    // most are simply the same function
-    #define bnew bruter_new
-    #define bfree bruter_free
-    #define bdouble bruter_double
-    #define bhalf bruter_half
-    #define bpush(list, value, key) \
-    _Generic((value), \
-        uint8_t: bruter_push_uint, \
-        uint16_t: bruter_push_uint, \
-        uint32_t: bruter_push_uint, \
-        uint64_t: bruter_push_uint, \
-        float: bruter_push_float, \
-        double: bruter_push_float, \
-        void*: bruter_push_pointer, \
-        char*: bruter_push_pointer, \
-        BruterValue: bruter_push, \
-        default: bruter_push_int \
-    )(list, value, key)
-    #define bunshift(list, value, key) \
-    _Generic((value), \
-        uint8_t: bruter_unshift_uint, \
-        uint16_t: bruter_unshift_uint, \
-        uint32_t: bruter_unshift_uint, \
-        uint64_t: bruter_unshift_uint, \
-        float: bruter_unshift_float, \
-        double: bruter_unshift_float, \
-        void*: bruter_unshift_pointer, \
-        char*: bruter_unshift_pointer, \
-        default: bruter_unshift_int \
-    )(list, value, key)
-    #define binsert(list, i, value, key) \
-    _Generic((value), \
-        uint8_t: bruter_insert_uint, \
-        uint16_t: bruter_insert_uint, \
-        uint32_t: bruter_insert_uint, \
-        uint64_t: bruter_insert_uint, \
-        float: bruter_insert_float, \
-        double: bruter_insert_float, \
-        void*: bruter_insert_pointer, \
-        char*: bruter_insert_pointer, \
-        default: bruter_insert_int \
-    )(list, i, value, key)
-    #define bpop bruter_pop
-    #define bshift bruter_shift
-    #define bremove bruter_remove
-    #define bfast_remove bruter_fast_remove
-    #define bswap bruter_swap
-    #define bfind(list, value) \
-    _Generic((value), \
-        uint8_t: bruter_find_uint, \
-        uint16_t: bruter_find_uint, \
-        uint32_t: bruter_find_uint, \
-        uint64_t: bruter_find_uint, \
-        float: bruter_find_float, \
-        double: bruter_find_float, \
-        void*: bruter_find_pointer, \
-        char*: bruter_find_pointer, \
-        default: bruter_find_int \
-    )(list, value)
-    #define bfind_key bruter_find_key
-    #define breverse bruter_reverse
-    #define bcopy bruter_copy
-    #define bconcat bruter_concat
-    #define bcall bruter_call
-    #define brun bruter_run
-    #define bget bruter_get
-    #define bset(list, i, value) \
-    _Generic((value), \
-        uint8_t: bruter_set_uint, \
-        uint16_t: bruter_set_uint, \
-        uint32_t: bruter_set_uint, \
-        uint64_t: bruter_set_uint, \
-        float: bruter_set_float, \
-        double: bruter_set_float, \
-        void*: bruter_set_pointer, \
-        char*: bruter_set_pointer, \
-        default: bruter_set_int \
-    )(list, i, value)
-    #define bget_key bruter_get_key
-    #define bset_key bruter_set_key
-    #define bget_type bruter_get_type
-    #define bset_type bruter_set_type
+    // supress unused macro warnings
+    #if defined(BRUTER_AS_LIB)    
+        #if defined(bnew)
+            #if defined(bpush) && defined(bunshift) && defined(binsert) && defined(bset) && defined(bfree) && defined(bdouble) && defined(bhalf) && defined(bpop) && defined(bshift) && defined(bremove) && defined(bfast_remove) && defined(bswap) && defined(bfind_key) && defined(breverse) && defined(bcopy) && defined(bconcat) && defined(bcall) && defined(bget) && defined(bget_key) && defined(bset_key) && defined(bget_type) && defined(bset_type)
+                #if defined(bfind) && defined(bvalue)
+                    #if defined(binsert_base) && defined(bset_base) && defined(bpush_base) && defined(bunshift_base)
+                        #if defined(bnew_impl) && defined(bpush_impl) && defined(bunshift_impl) && defined(binsert_impl) && defined(bset_impl)
+                            #if defined(bnew_impl_0) && defined(bpush_impl_2) && defined(bunshift_impl_2) && defined(binsert_impl_3) && defined(bset_impl_3)
+                                #if defined(bpush_impl_3) && defined(bunshift_impl_3) && defined(binsert_impl_4) && defined(bset_impl_4)
+                                    #if defined(bnew_impl_1) && defined(bnew_impl_2) && defined(bnew_impl_3)
+                                        #if defined(bpush_impl_4) && defined(bunshift_impl_4) && defined(binsert_impl_5) && defined(bset_impl_5)
+                                            #if defined(BRUTER_COMMA) && defined(BRUTER_ARGS)
+                                                // just to avoid warnings about unused macros
+                                            #endif
+                                        #endif
+                                    #endif
+                                #endif
+                            #endif
+                        #endif
+                    #endif
+                #endif
+            #endif
+        #endif
+    #endif
 #endif
 
 #if defined(BRUTER_AS_LIB)

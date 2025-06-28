@@ -1,8 +1,9 @@
+#define MACRO_BRUTER 1 // we need to activate macro bruter to use variadic calls
 #include <bruter.h>
 
 int main(void)
 {
-    BruterList *list = bnew(8, false, false);
+    BruterList *list = bnew();
     BruterInt i = 42;
     bpush(list, i, NULL);
     bunshift(list, 3.14f, NULL);
