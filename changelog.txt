@@ -1,7 +1,10 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(??/06/2025) - version 0.9.0a
+(28/06/2025) - version 0.9.1
 
+- belive or not, i added optional C++ support;
+- optional C++ wrapper class, it will automatically detect if C++, but you can force it by defining BRUTER_CPP 1 or if you want to force disable it, define BRUTER_CPP 0;
+- if on C++ BruterValue have some conversion operators;
 - BRUTER_USE_GENERIC removed.
 - new macro BRUTER_NO_IMPLEMENTATION, it will make bruter.h not define any function, just declare them;
 - BRUTER_TYPES removed, each push, insert, unshift and set functions now have a type parameter;
