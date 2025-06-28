@@ -27,9 +27,12 @@ typedef uintptr_t BruterUInt;
     typedef float BruterFloat;
 #endif
 
+// uncomment the next line to disable manual GCC specific optimizations
+// #define BRUTER_NO_GCC_OPTIMIZATIONS 1
+
 // you can build bruter as lib, just define BRUTER_AS_SOURCE before including this header, it will act like a source.c file
 #if defined(BRUTER_AS_SOURCE) 
-    #if defined(__GNUC__) || defined(__clang__)
+    #if (defined(__GNUC__) || defined(__clang__)) && !defined(BRUTER_NO_GCC_OPTIMIZATIONS)
         // we want it to be visible in the shared library, so we can use it in other files
         #define STATIC_INLINE __attribute__((visibility("default"))) __attribute__((used))
     #else 
@@ -42,7 +45,7 @@ typedef uintptr_t BruterUInt;
 
 // sometimes we need to allow aggregate return, so we define a macro to supress the warning where we need it
 // this is useful for functions that return a union type, like bruter_get
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__) && !defined(BRUTER_NO_GCC_OPTIMIZATIONS)
     #define BRUTER_ALLOW_AGGREGATE_RETURN() \
         _Pragma("GCC diagnostic push") \
         _Pragma("GCC diagnostic ignored \"-Waggregate-return\"")
@@ -55,7 +58,8 @@ typedef uintptr_t BruterUInt;
 
 // sometimes we need to allow non-literal format strings, so we define a macro to supress the gcc warning where we need it
 // this is useful for functions that take a format string as an argument, like printf or snprintf
-#if defined(__GNUC__) || defined(__clang__)
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(BRUTER_NO_GCC_OPTIMIZATIONS)
+    // dont expect this to work on other compilers, those pragmas are gcc/clang specific features;
     #define BRUTER_ALLOW_NON_LITERAL_FORMAT() \
         _Pragma("GCC diagnostic push") \
         _Pragma("GCC diagnostic ignored \"-Wformat-nonliteral\"")
@@ -66,12 +70,10 @@ typedef uintptr_t BruterUInt;
     #define BRUTER_FORBID_NON_LITERAL_FORMAT()
 #endif
 
-// branch prediction macros, only defined for using under gcc or clang, but you can force it defining BRUTER_FORCE_EXPECT
+// branch prediction macros, only defined for using under gcc or clang
 // likely and unlikely are the only macros that arent UPPERCASED, all other macros are standardized to UPPERCASE;
-#if defined(BRUTER_NO_EXPECT)
-    #define likely(x)   (x)
-    #define unlikely(x) (x)
-#elif defined(__GNUC__) || defined(__clang__) || defined(BRUTER_FORCE_EXPECT)
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(BRUTER_NO_GCC_OPTIMIZATIONS)
+    // dont expect it to work on other compilers, __builtin_expect is a gcc/clang specific feature;
     #define likely(x)   __builtin_expect(!!(x), 1)
     #define unlikely(x) __builtin_expect(!!(x), 0)
 #else
@@ -86,7 +88,12 @@ typedef uintptr_t BruterUInt;
     // if we are compiling with a C++ compiler, we automatically define BRUTER_CPP
     // if the user is on C++ mode 
     #if defined(__cplusplus)
+        // note this is the only check in the entire file
+        // if BRUTER_CPP is define we assume the user is using C++ and we will use C++ features
         #define BRUTER_CPP 1
+    #else 
+        // if we are not compiling with a C++ compiler, we just define BRUTER_CPP to 0
+        #define BRUTER_CPP 0
     #endif
 #endif
 
@@ -130,34 +137,46 @@ union BruterValue
     BruterInt (*fn)(struct BruterList *context, struct BruterList *args);
 
     // C++ stuff
-    #if defined(BRUTER_CPP)
+    #if BRUTER_CPP
         // C++ conversion operators, so you can use BruterValue as a normal value
+        // operator overloads for C++ to convert BruterValue to the primitive types
+        /* example:
+            BruterValue value = bruter_value_int(42);
+            BruterInt i = value; // this will call the conversion operator to BruterInt
+            BruterFloat f = value; // this will call the conversion operator to BruterFloat
+            BruterUInt u = value; // this will call the conversion operator to BruterUInt
+            void* p = value; // this will call the conversion operator to void*
+            BruterFunction fn = value; // this will call the conversion operator to BruterFunction
+        */
+        // int conversion operator
         operator BruterInt() const 
         {
             return i;
         }
 
+        // float conversion operator
         operator BruterFloat() const 
         {
             return f;
         }
 
+        // uint conversion operator
         operator BruterUInt() const 
         {
             return u;
         }
 
+        // pointer conversion operator
         operator void*() const 
         {
             return p;
         }
 
+        // function conversion operator
         operator BruterFunction() const 
         {
             return fn;
         }
-
-
     #endif
 };
 #endif
@@ -1459,6 +1478,7 @@ STATIC_INLINE const char* bruter_get_version(void)
         double: bruter_find_float, \
         void*: bruter_find_pointer, \
         char*: bruter_find_pointer, \
+        BruterValue: bruter_find, \
         default: bruter_find_int \
     )(list, value)
     // this generate aggregate return warning
@@ -1476,16 +1496,26 @@ STATIC_INLINE const char* bruter_get_version(void)
     )(a)
 
     // supress unused macro warnings
-    #if defined(BRUTER_AS_SOURCE)    
+    #if defined(BRUTER_AS_SOURCE)
         #if defined(bnew)
-            #if defined(bpush) && defined(bunshift) && defined(binsert) && defined(bset) && defined(bfree) && defined(bdouble) && defined(bhalf) && defined(bpop) && defined(bshift) && defined(bremove) && defined(bfast_remove) && defined(bswap) && defined(bfind_key) && defined(breverse) && defined(bcopy) && defined(bconcat) && defined(bcall) && defined(bget) && defined(bget_key) && defined(bset_key) && defined(bget_type) && defined(bset_type)
+            #if defined(bpush) && defined(bunshift) && defined(binsert) && defined(bset) && \
+                defined(bfree) && defined(bdouble) && defined(bhalf) && defined(bpop) && \
+                defined(bshift) && defined(bremove) && defined(bfast_remove) && defined(bswap) && \
+                defined(bfind_key) && defined(breverse) && defined(bcopy) && defined(bconcat) && \
+                defined(bcall) && defined(bget) && defined(bget_key) && defined(bset_key) && \
+                defined(bget_type) && defined(bset_type)
                 #if defined(bfind) && defined(bvalue)
-                    #if defined(binsert_base) && defined(bset_base) && defined(bpush_base) && defined(bunshift_base)
-                        #if defined(bnew_impl) && defined(bpush_impl) && defined(bunshift_impl) && defined(binsert_impl) && defined(bset_impl)
-                            #if defined(bnew_impl_0) && defined(bpush_impl_2) && defined(bunshift_impl_2) && defined(binsert_impl_3) && defined(bset_impl_3)
-                                #if defined(bpush_impl_3) && defined(bunshift_impl_3) && defined(binsert_impl_4) && defined(bset_impl_4)
+                    #if defined(binsert_base) && defined(bset_base) && \
+                        defined(bpush_base) && defined(bunshift_base)
+                        #if defined(bnew_impl) && defined(bpush_impl) && \
+                            defined(bunshift_impl) && defined(binsert_impl) && defined(bset_impl)
+                            #if defined(bnew_impl_0) && defined(bpush_impl_2) && \
+                                defined(bunshift_impl_2) && defined(binsert_impl_3) && defined(bset_impl_3)
+                                #if defined(bpush_impl_3) && defined(bunshift_impl_3) && \
+                                    defined(binsert_impl_4) && defined(bset_impl_4)
                                     #if defined(bnew_impl_1) && defined(bnew_impl_2) && defined(bnew_impl_3)
-                                        #if defined(bpush_impl_4) && defined(bunshift_impl_4) && defined(binsert_impl_5) && defined(bset_impl_5)
+                                        #if defined(bpush_impl_4) && defined(bunshift_impl_4) && \
+                                            defined(binsert_impl_5) && defined(bset_impl_5)
                                             #if defined(BRUTER_COMMA) && defined(BRUTER_ARGS)
                                                 // just to avoid warnings about unused macros
                                             #endif
@@ -1510,29 +1540,36 @@ STATIC_INLINE const char* bruter_get_version(void)
 // C++ wrapper for BruterList
 // This is only compiled if BRUTER_CPP is defined, which is usually done automatically
 // you can also define it manually
-// C++ wrapper is not garanteed to meet 100% of C++11 standards
-// C++ code might not be as clean and readable as C code
+// the wrapper is not garanteed to meet any C++ standard, i know little to nothing about C++ standard
+// might not be as fast as C code, idk about C++ optimization either
+// might not be as clean and readable as C code, bcause C++ can be very messy sometimes
+// i only focused on making it easy to use, comprehensible and somewhat readable;
 #if BRUTER_CPP
-#include <type_traits>
 
 // typedef is redundant but we use it just to standardize like in C code
 typedef class Bruter 
 {
     private:
         BruterList* list;
-    
     public:
-        // Bruter::VERSION
+        // Bruter::VERSION, just accessible as a class member(not an object member)
         static constexpr const char* VERSION = BRUTER_VERSION;
         
         // index operator to access and modify elements
         BruterValue& operator[](BruterInt i) 
         {
-            if (unlikely(i < 0 || i >= list->size)) 
+            if (unlikely(i < 0 || i >= list->size))
             {
                 printf("BRUTER_ERROR: index %" PRIdPTR " out of range in list of size %" PRIdPTR " \n", i, list->size);
                 exit(EXIT_FAILURE);
             }
+
+            // return the reference to the value at index i
+            // this allows us to use the index operator to access and modify elements
+            // e.g. list[i] = value;
+            // or value = list[i];
+            // or even list[i].i = 42; to modify the int value directly
+            // this is fun, C++ can be fun sometimes
             return list->data[i];
         }
 
@@ -1784,61 +1821,91 @@ typedef class Bruter
         }
 
         // get key
+        // same as get_key in C
         const char* get_key(BruterInt i) const 
         {
             return bruter_get_key(list, i);
         }
 
         // set key
+        // same as set_key in C
         void set_key(BruterInt i, const char* key) 
         {
             bruter_set_key(list, i, key);
         }
 
         // get type
+        // same as get_type in C
         int8_t get_type(BruterInt i) const 
         {
             return bruter_get_type(list, i);
         }
 
         // set type
+        // same as set_type in C
         void set_type(BruterInt i, int8_t type) 
         {
             bruter_set_type(list, i, type);
         }
 
         // c++ specific methods
+        // returns the size of the list
+        // just because list is private
         BruterInt size() const 
         {
             return list->size;
         }
 
-        bool empty() const 
-        {
-            return list->size == 0;
-        }
-
+        // free the list
+        // then recreate it with the same capacity and keyless/typeless options
         void clear() 
         {
+            bool is_table = list->keys != NULL;
+            bool is_typed = list->types != NULL;
             bruter_free(list);
-            list = bruter_new(list->capacity, list->keys != NULL, list->types != NULL);
+            list = bruter_new(list->capacity, is_table, is_typed);
         }
 
+        // returns the capacity of the list
+        // just because list is private
+        // it is the maximum number of elements that can be stored in the list without reallocating
+        // it is not the same as size, which is the number of elements currently stored in the list
+        // capacity is always a power of 2, and it is doubled when the list is full
+        // it is used to optimize memory allocation and avoid fragmentation
         BruterInt capacity() const 
         {
             return list->capacity;
         }
 
+        // returns true if the list is a table (has keys)
+        // just because list is private
+        // a table is a list that has keys associated with each element
+        // it is used to store key-value pairs, like a dictionary or a map
         bool is_table() const 
         {
             return list->keys != NULL;
         }
 
+        // returns true if the list is typed (has types)
+        // just because list is private
+        // a typed list is a list that has types associated with each element
+        // it is used to store elements of different types in a union called BruterValue
+        // types arent automatically checked or anything like that, no bruter function will check types
+        // it is up to the user to check types if needed
+        // use it as pure metadata
         bool is_typed() const 
         {
             return list->types != NULL;
         }
 
+        // returns the internal list pointer
+        // just because list is private
+        // this is useful if you want to use the list with other functions that expect a BruterList*
+        // it is not recommended to use this pointer directly(in C++, if you want so, just stick to bruter)
+        // it is better to use the methods provided by this class
+        // i mean, if you using this wrapper then you probably want something safer, easier and higher level than regular C bruter
+        // if you want to use it that low level, then just use the C API directly
+        // i mean, just use this method when you really need it
         BruterList* get_list() const 
         {
             return list;

@@ -15,6 +15,7 @@
 - TODO: add BruterValue overload to the MACRO_BRUTER _Generics;
 - new macro BRUTER_AS_HEADER, it will disable all implementation in bruter.h, only declaration and macros will be left;
 - BRUTER_AS_LIB is now BRUTER_AS_SOURCE;
+- new macro BRUTER_NO_GCC_OPTIMIZATIONS, it will force bruter to not use(manually) any GCC specific optimizations like __builtin_expect;
 
 (27/06/2025) - version 0.9.0
 
