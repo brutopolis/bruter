@@ -241,6 +241,7 @@ STATIC_INLINE const char*   bruter_get_version(void);
 // functions implementations
 // functions implementations
 // functions implementations
+#ifndef BRUTER_NO_IMPLEMENTATION // you can define this to not include the implementations
 BRUTER_ALLOW_AGGREGATE_RETURN()
 STATIC_INLINE BruterValue bruter_value_int(BruterInt value)
 {
@@ -1252,25 +1253,14 @@ STATIC_INLINE const char* bruter_get_version(void)
     return BRUTER_VERSION;
 }
 
+#endif // BRUTER_NO_IMPLEMENTATION
+
 // dont expect this to work on restricted compilers and environments, but ofc if can work if has the _Generic feature
 // if you wanna mantain maximum compatibility and portability avoid this
 // this require either
 // a C11 standard and a gcc-compatible compiler
 // OR
 // a C23 compiler, which standardized the typeof and some __VA_ARGS__ behaviors which were only available as gcc extensions
-
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-// IMPORANTE APAGAR ESSE COMENTARIO E A LINHA A SEGUIR ANTES DE COMMITAR
-#define MACRO_BRUTER 1
-
 #if MACRO_BRUTER
 
     // how we do optional arguments
