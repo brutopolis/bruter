@@ -5,17 +5,9 @@
 
   BRUTER is meant to be 100% C99 compliant;
 
-  BRUTER can **optionally** use _Generics(C11), typeof(GCC or C23) and \__VA_OPT__ (C23, but there is a fallback for GCC), with the optional features turned on it can be compiled with any C23 compliant compiler, or any GCC version that supports _Generics;
-
-  BRUTER can **optionally** use a C++ wrapper, C++ code is not 100% compliant to any C++ standard, so, i can only guarantee that it will work with GCC and Clang, any other C++ compiler that might compile it for sure 100% luck 0% planned;
-
 # Library
 
   BRUTER is a single header file `bruter.h`, just include and ready to go, there are some macros to manage the implementation, you can define them before including the header file to change the behavior of the library.
-
-# C++ Wrapper
-
-  BRUTER automatically detects if you are compiling with a C++ compiler, also, you can force it using the `BRUTER_CPP` macro, it will implement a `Bruter` class that have almost every function from the C API, i dont know much about C++ standards, so its not 100% compliant to anything, maybe the latest C++ standard, but i really dont know, it also might use some GCC extensions;
 
 # Usage
 

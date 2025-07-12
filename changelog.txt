@@ -1,21 +1,11 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(28/06/2025) - version 0.9.1
+(12/07/2025) - version 0.9.0a
 
-- belive or not, i added optional C++ support;
-- optional C++ wrapper class, it will automatically detect if C++, but you can force it by defining BRUTER_CPP 1 or if you want to force disable it, define BRUTER_CPP 0;
-- if on C++ BruterValue have some conversion operators;
 - BRUTER_USE_GENERIC removed.
-- new macro BRUTER_NO_IMPLEMENTATION, it will make bruter.h not define any function, just declare them;
 - BRUTER_TYPES removed, each push, insert, unshift and set functions now have a type parameter;
-- new macro MACRO_BRUTER, a optional flexible layer to use bruter, requires C11 and GCC/Clang(or C23);
-- MACRO_BRUTER use _Generic and such, so it is not compatible with C99, but it is compatible with C11(+gcc) and C23(pure);
-- MACRO_BRUTER implements the following macro: bnew, bfree, bpush, bunshift, binsert, bset, bfree, bdouble, bhalf, bpop, bshift, bremove, bfast_remove, bswap, bfind_key, breverse, bcopy, bconcat, bcall, bget, bget_key, bset_key, bget_type, bset_type, bfind and bvalue;
-- most are just a macro to the default function, but some of them have optional args and overloaded versions;
-- TODO: add BruterValue overload to the MACRO_BRUTER _Generics;
 - new macro BRUTER_AS_HEADER, it will disable all implementation in bruter.h, only declaration and macros will be left;
 - BRUTER_AS_LIB is now BRUTER_AS_SOURCE;
-- new macro BRUTER_NO_GCC_OPTIMIZATIONS, it will force bruter to not use(manually) any GCC specific optimizations like __builtin_expect;
 
 (27/06/2025) - version 0.9.0
 
