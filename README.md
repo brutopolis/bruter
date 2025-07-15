@@ -3,9 +3,7 @@
 
   BRUTER is a C header-only library to deal with lists of variables, it is designed to be simple and fast while extremely easy to use and understand.
 
-  BRUTER is meant to be 100% C99 compliant(while it can use _Generics and some GCC specifics macros optionally), while BRUTER is meant to be extremely *minimal*, it is also meant to be easy, and somewhat complete, so it have a type system and a key system.
-
-  You can check https://github.com/brutopolis/cruder for a macro-based bruter-like really minimal library, thats how bruter used to be, it not as mantainable, portable and readable as BRUTER, while having same functions, being faster and somewhat "portable"(gcc-compatible compilers only), it have different purposes and doesnt care about any standardization.
+  BRUTER is meant to be 100% C99 compliant;
 
 # Library
 

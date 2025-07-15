@@ -1,5 +1,12 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(12/07/2025) - version 0.9.0a
+
+- BRUTER_USE_GENERIC removed.
+- BRUTER_TYPES removed, each push, insert, unshift and set functions now have a type parameter;
+- new macro BRUTER_AS_HEADER, it will disable all implementation in bruter.h, only declaration and macros will be left;
+- BRUTER_AS_LIB is now BRUTER_AS_SOURCE;
+
 (27/06/2025) - version 0.9.0
 
 - BRUTER is now 100% C99 compliant;
