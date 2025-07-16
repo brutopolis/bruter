@@ -1,5 +1,11 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(14/07/2025) - version 0.9.0b
+
+- Value has no more a fn member;
+- BRUTER_MANUAL_UNION is no more available;
+- new functions *_meta, they work with a struct that contains all the meta along the value;
+
 (12/07/2025) - version 0.9.0a
 
 - BRUTER_USE_GENERIC removed.
@@ -18,7 +24,7 @@
 - bruter added optional support for _Generic, which is a C11 feature, thats why it is optional;
 - the optional support is enabled by default, it will try to detect which compiler you are running, but you can force it by defining BRUTER_USE_GENERIC;
 - every function that receive BruterValue now have some wrappers;
-- new shortcuts (only avaliable when BRUTER_USE_GENERIC is defined): bnew, bfree, bduplicate, bset, bget, bvalue, bpush and so on;
+- new shortcuts (only available when BRUTER_USE_GENERIC is defined): bnew, bfree, bduplicate, bset, bget, bvalue, bpush and so on;
 - bpush, bunshift, binsert, bfind and bset are overloaded, they will detect whatever (primitive)type you are passing and will create the value accordingly;
 - bruter_find has been splited into bruter_find and bruter_find_key;
 - bruter_value_i renamed to bruter_value_int;
@@ -233,7 +239,7 @@
 - : is list: again;
 - (: ) operator removed;
 - interpreter is not replaceable anymore;
-- repl is no more part of bruterlib, neither is a function anymor, it is only avaliable in the main.c now;
+- repl is no more part of bruterlib, neither is a function anymor, it is only available in the main.c now;
 - lots of fixes;
 - a lot of cleanup;
 - some optimizations;
@@ -387,7 +393,7 @@
 - list functions now deal also with strings and global scope also;
 - add, sub, mul, div, mod, incr, decr renamed to +, -, *, /, %, ++, --;
 - no more group function use :sub instead;
-- new function scan, it always return a string, only avaliable in os;
+- new function scan, it always return a string, only available in os;
 - removed mem.swap, mem.push, mem.unshift, mem.shift, mem.pop, mem.insert, mem.remove, mem.set and mem.get, use :push, :unshift, :shift, :pop, :insert, :remove, :set and :get instead;
 - "fn" is now "function";
 - removed "each";
@@ -436,7 +442,7 @@
 - experimental WASI support, set $WASI to wasi path when calling build.sh, it will create the file build/bruter.wasm;
 - every build/prepare script have been merged into build.sh, use $INO and $DEBUG;
 - src is now copied to build/ instead copying it contents to include/
-- build instructions are now avaliable at README.md;
+- build instructions are now available at README.md;
 
 (28/12/2024) - version 0.7.1a
 
@@ -463,7 +469,7 @@
 - no more @: operator;
 - new operators @+, @-, @> and @<;
 - no more (//) delimiter, use // instead;
-- dycc.c removed, it will be a avaliable in a separated repository soon;
+- dycc.c removed, it will be a available in a separated repository soon;
 - register_* functions removed;
 - spawn_* functions renamed to register_*;
 - arduino code in main.c completely updated;
