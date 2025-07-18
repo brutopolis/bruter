@@ -155,9 +155,6 @@ STATIC_INLINE void          bruter_reverse(BruterList *list);
 STATIC_INLINE BruterList*   bruter_copy(const BruterList *list);
 // concatenate two lists, appending src to dest, resizing dest if necessary
 STATIC_INLINE void          bruter_concat(BruterList *dest, const BruterList *src);
-// receive a context and a list of indexes relative to the context, and call it as a stack
-// the function pointer must have the same type as bruter_call BruterInt(*)(BruterList*, BruterList*);
-STATIC_INLINE BruterInt     bruter_call(BruterList *context, BruterList *list);
 // get a value at index i in the list, returns a value with i set to -1 if index is out of range
 STATIC_INLINE BruterValue     bruter_get(const BruterList *list, BruterInt i);
 STATIC_INLINE BruterInt       bruter_get_int(const BruterList *list, BruterInt i);
@@ -1133,21 +1130,6 @@ STATIC_INLINE void bruter_concat(BruterList *dest, const BruterList *src)
     }
 
     dest->size += src->size;
-}
-
-// contextual call
-STATIC_INLINE BruterInt bruter_call(BruterList *context, BruterList *list)
-{
-    BruterInt(*func)(BruterList*, BruterList*);
-
-    if (list->size == 0)
-    {
-        printf("BRUTER_ERROR: cannot call an empty list\n");
-        exit(EXIT_FAILURE);
-    }
-
-    func = context->data[list->data[0].i].p;
-    return func(context, list);
 }
 
 STATIC_INLINE BruterValue bruter_get(const BruterList *list, BruterInt i)
