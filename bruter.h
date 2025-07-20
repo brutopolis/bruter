@@ -39,7 +39,10 @@ typedef uintptr_t BruterUInt;
 // note you'll need everything below to be defined before including this header too
 typedef union  BruterValue BruterValue;
 typedef struct BruterMetaValue BruterMetaValue;
+typedef struct BruterGeneric BruterGeneric;
+typedef struct BruterArena BruterArena;
 typedef struct BruterList BruterList;
+typedef union  Bruter Bruter;
 
 // if you are under a pure C99 eviroment, beware of the use of the union,
 // C99 defines that the used type is always the last it was defined to
@@ -61,6 +64,24 @@ struct BruterMetaValue
     int8_t type; // the type of the value, if it is typed
 };
 
+struct BruterGeneric
+{
+    BruterInt a;
+    BruterInt b;
+    void *c;
+    void *d;
+    void *e;
+};
+
+struct BruterArena
+{
+    BruterInt capacity;
+    BruterInt offset;
+    void *nothing;
+    void *nothing2;
+    void *data;
+};
+
 struct BruterList
 {
     // the real size
@@ -73,6 +94,13 @@ struct BruterList
     int8_t *types;
     // the data, it is a pointer to a BruterValue array
     BruterValue *data;
+};
+
+union Bruter
+{
+    BruterGeneric generic;
+    BruterArena arena;
+    BruterList list;
 };
 
 STATIC_INLINE BruterValue bruter_value_int(BruterInt value);
