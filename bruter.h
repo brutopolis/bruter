@@ -64,15 +64,6 @@ struct BruterMetaValue
     int8_t type; // the type of the value, if it is typed
 };
 
-struct BruterGeneric
-{
-    BruterInt a;
-    BruterInt b;
-    void *c;
-    void *d;
-    void *e;
-};
-
 struct BruterArena
 {
     BruterInt capacity;
@@ -98,10 +89,11 @@ struct BruterList
 
 union Bruter
 {
-    BruterGeneric generic;
     BruterArena arena;
     BruterList list;
 };
+
+STATIC_INLINE void* bruter_alloc(BruterArena* arena, size_t size);
 
 STATIC_INLINE BruterValue bruter_value_int(BruterInt value);
 STATIC_INLINE BruterValue bruter_value_uint(BruterUInt value);
@@ -214,6 +206,66 @@ STATIC_INLINE const char*   bruter_get_version(void);
 // functions implementations
 #ifndef BRUTER_AS_HEADER // you can define this to not include the implementations
 
+// pass NULL to arena to use the saved arena, if it has one
+// pass NULL to arena AND size to clear the saved arena
+// pass arena and 0 to just set the arena without allocating memory
+STATIC_INLINE void* bruter_alloc(BruterArena* arena, size_t size)
+{
+    static BruterArena *current_arena = NULL;
+    if (arena != NULL && size == 0)
+    {
+        current_arena = arena; // set the current arena to the one passed
+    }
+
+    if (arena == NULL)
+    {
+        if (size == 0)
+        {
+            // lets set arena to NULL and return NULL
+            current_arena = NULL;
+            return NULL;
+        }
+        else
+        {
+            arena = current_arena; // use the current arena if no arena is passed
+        }
+    }
+
+    // if we have an arena, we need to allocate memory from it
+    if (size > 0)
+    {
+        if (arena != NULL)
+        {
+            // lets align the size to sizeof(void*)
+            size_t aligned_size = (size + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
+    
+            if (arena->offset + aligned_size > arena->capacity)
+            {
+                bruter_double((BruterList*)arena);
+            }
+            void *ptr = arena->data + arena->offset;
+            arena->offset += aligned_size;
+            return ptr;
+        }
+        else
+        {
+            // if we have no arena and size is greater than 0, we just malloc
+            void *ptr = malloc(size);
+            if (ptr == NULL)
+            {
+                printf("BRUTER_ERROR: failed to allocate memory\n");
+                exit(EXIT_FAILURE);
+            }
+            return ptr;
+        }
+    }
+    else
+    {
+        // if size is 0, we return NULL
+        return NULL;
+    }
+}
+
 STATIC_INLINE BruterValue bruter_value_int(BruterInt value)
 {
     return (BruterValue){.i = value};
@@ -236,7 +288,7 @@ STATIC_INLINE BruterValue bruter_value_pointer(void *value)
 
 STATIC_INLINE BruterList *bruter_new(BruterInt size, bool is_table, bool is_typed)
 {
-    BruterList *list = (BruterList*)malloc(sizeof(BruterList));
+    BruterList *list = (BruterList*)bruter_alloc(NULL, sizeof(BruterList));
     
     if (list == NULL)
     {
@@ -244,7 +296,7 @@ STATIC_INLINE BruterList *bruter_new(BruterInt size, bool is_table, bool is_type
         exit(EXIT_FAILURE);
     }
     
-    list->data = (size == 0) ? NULL : (BruterValue*)malloc((size_t)size * sizeof(BruterValue));
+    list->data = (size == 0) ? NULL : (BruterValue*)bruter_alloc(NULL, (size_t)size * sizeof(BruterValue));
     
     if (size > 0 && list->data == NULL)
     {
@@ -398,7 +450,7 @@ STATIC_INLINE void bruter_push(BruterList *list, BruterValue value, const char* 
         if (key != NULL)
         {
             size_t len = strlen(key);
-            list->keys[list->size] = (char*)malloc(len + 1);
+            list->keys[list->size] = (char*)bruter_alloc(NULL, len + 1);
             strcpy(list->keys[list->size], key);
         }
         else 
@@ -476,7 +528,7 @@ STATIC_INLINE void bruter_unshift(BruterList *list, BruterValue value, const cha
         if (key != NULL)
         {
             size_t len = strlen(key);
-            list->keys[0] = (char*)malloc(len + 1);
+            list->keys[0] = (char*)bruter_alloc(NULL, len + 1);
             strcpy(list->keys[0], key);
         }
         else 
@@ -529,7 +581,7 @@ STATIC_INLINE void bruter_unshift_meta(BruterList *list, BruterMetaValue value)
         if (value.key != NULL)
         {
             size_t len = strlen(value.key);
-            list->keys[0] = (char*)malloc(len + 1);
+            list->keys[0] = (char*)bruter_alloc(NULL, len + 1);
             strcpy(list->keys[0], value.key);
         }
         else 
@@ -569,7 +621,7 @@ STATIC_INLINE void bruter_insert(BruterList *list, BruterInt i, BruterValue valu
             if (key != NULL)
             {
                 size_t len = strlen(key);
-                list->keys[i] = (char*)malloc(len + 1);
+                list->keys[i] = (char*)bruter_alloc(NULL, len + 1);
                 strcpy(list->keys[i], key);
             }
             else 
@@ -630,7 +682,7 @@ STATIC_INLINE void bruter_insert_meta(BruterList *list, BruterInt i, BruterMetaV
             if (value.key != NULL)
             {
                 size_t len = strlen(value.key);
-                list->keys[i] = (char*)malloc(len + 1);
+                list->keys[i] = (char*)bruter_alloc(NULL, len + 1);
                 strcpy(list->keys[i], value.key);
             }
             else 
@@ -1077,7 +1129,7 @@ STATIC_INLINE BruterList* bruter_copy(const BruterList *list)
             if (list->keys[i] != NULL)
             {
                 size_t len = strlen(list->keys[i]);
-                copy->keys[i] = (char*)malloc(len + 1);
+                copy->keys[i] = (char*)bruter_alloc(NULL, len + 1);
                 strcpy(copy->keys[i], list->keys[i]);
             }
             else
@@ -1093,7 +1145,7 @@ STATIC_INLINE BruterList* bruter_copy(const BruterList *list)
     
     if (list->types != NULL)
     {
-        copy->types = (int8_t*)malloc((size_t)copy->capacity * sizeof(int8_t));
+        copy->types = (int8_t*)bruter_alloc(NULL, (size_t)copy->capacity * sizeof(int8_t));
         if (copy->types == NULL)
         {
             printf("BRUTER_ERROR: failed to allocate memory for BruterList types copy\n");
@@ -1132,7 +1184,7 @@ STATIC_INLINE void bruter_concat(BruterList *dest, const BruterList *src)
             if (src->keys[i] != NULL)
             {
                 size_t len = strlen(src->keys[i]);
-                dest->keys[dest->size + i] = (char*)malloc(len + 1);
+                dest->keys[dest->size + i] = (char*)bruter_alloc(NULL, len + 1);
                 strcpy(dest->keys[dest->size + i], src->keys[i]);
             }
             else 
@@ -1253,7 +1305,7 @@ STATIC_INLINE void bruter_set(BruterList *list, BruterInt i, BruterValue value, 
             {
                 free(list->keys[i]);
             }
-            list->keys[i] = (char*)malloc(len + 1);
+            list->keys[i] = (char*)bruter_alloc(NULL, len + 1);
             strcpy(list->keys[i], key);
         }
         else 
@@ -1309,7 +1361,7 @@ STATIC_INLINE void bruter_set_meta(BruterList *list, BruterInt i, BruterMetaValu
             {
                 free(list->keys[i]);
             }
-            list->keys[i] = (char*)malloc(len + 1);
+            list->keys[i] = (char*)bruter_alloc(NULL, len + 1);
             strcpy(list->keys[i], value.key);
         }
         else 
@@ -1367,7 +1419,7 @@ STATIC_INLINE void bruter_set_key(const BruterList *list, BruterInt i, const cha
     if (key != NULL)
     {
         size_t len = strlen(key);
-        list->keys[i] = (char*)malloc(len + 1);
+        list->keys[i] = (char*)bruter_alloc(NULL, len + 1);
         strcpy(list->keys[i], key);
     }
     else 
@@ -1414,5 +1466,5 @@ STATIC_INLINE const char* bruter_get_version(void)
 {
     return BRUTER_VERSION;
 }
-#endif // BRUTER_AS_HEADER macro
-#endif // BRUTER_H macro
+#endif // ifndef BRUTER_AS_HEADER macro
+#endif // ifndef BRUTER_H macro

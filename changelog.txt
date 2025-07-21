@@ -1,5 +1,11 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(21/07/2025) - version 0.9.1
+
+- new struct BruterArena;
+- new union Bruter;
+- new function bruter_alloc;
+
 (18/07/2025) - version 0.9.0b
 
 - Value has no more a fn member;
