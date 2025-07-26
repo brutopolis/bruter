@@ -691,6 +691,7 @@ STATIC_INLINE BruterMetaValue bruter_pop_meta(BruterList *list)
     if (list->types != NULL)
     {
         ret.type = list->types[list->size - 1];
+        list->types[list->size - 1] = 0; // reset type to 0
     }
     else
     {
@@ -785,6 +786,7 @@ STATIC_INLINE BruterMetaValue bruter_shift_meta(BruterList *list)
     if (list->types != NULL)
     {
         ret.type = list->types[0];
+        list->types[0] = 0; // reset type to 0
     }
     else
     {
@@ -878,6 +880,7 @@ STATIC_INLINE BruterMetaValue bruter_remove_meta(BruterList *list, BruterInt i)
     if (list->types != NULL)
     {
         ret.type = list->types[i];
+        list->types[i] = 0; // reset type to 0
     }
     else
     {
