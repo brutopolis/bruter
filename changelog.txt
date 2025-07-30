@@ -1,8 +1,8 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(29/07/2025) - version 0.9.1
+(30/07/2025) - version 0.9.1
 
-- *_register and *_unregister are now a thing, they work as insert and remove, but are key oriented instead of index oriented;
+- *_define and *_undefine are now a thing, they work as insert and remove, but are key oriented instead of index oriented;
 - new function bruter_alloc, a kind of arena;
 - Value has no more a fn member;
 - BRUTER_MANUAL_UNION is no more available;

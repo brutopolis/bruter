@@ -110,13 +110,13 @@ STATIC_INLINE void               bruter_insert_uint(BruterList *list, BruterInt 
 STATIC_INLINE void               bruter_insert_float(BruterList *list, BruterInt i, BruterFloat value, const char* key, int8_t type);
 STATIC_INLINE void               bruter_insert_pointer(BruterList *list, BruterInt i, void *value, const char* key, int8_t type);
 STATIC_INLINE void               bruter_insert_meta(BruterList *list, BruterInt i, BruterMetaValue value);
-// register, search for a key in the list, if it exists, update it, if not, add it
-STATIC_INLINE void               bruter_register(BruterList *list, BruterValue value, const char* key, int8_t type);
-STATIC_INLINE void               bruter_register_int(BruterList *list, BruterInt value, const char* key, int8_t type);
-STATIC_INLINE void               bruter_register_uint(BruterList *list, BruterUInt value, const char* key, int8_t type);
-STATIC_INLINE void               bruter_register_float(BruterList *list, BruterFloat value, const char* key, int8_t type);
-STATIC_INLINE void               bruter_register_pointer(BruterList *list, void *value, const char* key, int8_t type);
-STATIC_INLINE void               bruter_register_meta(BruterList *list, BruterMetaValue value);
+// define, search for a key in the list, if it exists, update it, if not, add it
+STATIC_INLINE void               bruter_define(BruterList *list, BruterValue value, const char* key, int8_t type);
+STATIC_INLINE void               bruter_define_int(BruterList *list, BruterInt value, const char* key, int8_t type);
+STATIC_INLINE void               bruter_define_uint(BruterList *list, BruterUInt value, const char* key, int8_t type);
+STATIC_INLINE void               bruter_define_float(BruterList *list, BruterFloat value, const char* key, int8_t type);
+STATIC_INLINE void               bruter_define_pointer(BruterList *list, void *value, const char* key, int8_t type);
+STATIC_INLINE void               bruter_define_meta(BruterList *list, BruterMetaValue value);
 // pop a value from the end of the list
 STATIC_INLINE BruterValue        bruter_pop(BruterList *list);
 STATIC_INLINE BruterInt          bruter_pop_int(BruterList *list);
@@ -145,13 +145,13 @@ STATIC_INLINE BruterUInt         bruter_fast_remove_uint(BruterList *list, Brute
 STATIC_INLINE BruterFloat        bruter_fast_remove_float(BruterList *list, BruterInt i);
 STATIC_INLINE void*              bruter_fast_remove_pointer(BruterList *list, BruterInt i);
 STATIC_INLINE BruterMetaValue    bruter_fast_remove_meta(BruterList *list, BruterInt i);
-// unregister, search for a key in the list, if it exists, remove it
-STATIC_INLINE BruterValue        bruter_unregister(BruterList *list, const char* key);
-STATIC_INLINE BruterInt          bruter_unregister_int(BruterList *list, const char* key);
-STATIC_INLINE BruterUInt         bruter_unregister_uint(BruterList *list, const char* key);
-STATIC_INLINE BruterFloat        bruter_unregister_float(BruterList *list, const char* key);
-STATIC_INLINE void*              bruter_unregister_pointer(BruterList *list, const char* key);
-STATIC_INLINE BruterMetaValue    bruter_unregister_meta(BruterList *list, const char* key);
+// undefine, search for a key in the list, if it exists, remove it
+STATIC_INLINE BruterValue        bruter_undefine(BruterList *list, const char* key);
+STATIC_INLINE BruterInt          bruter_undefine_int(BruterList *list, const char* key);
+STATIC_INLINE BruterUInt         bruter_undefine_uint(BruterList *list, const char* key);
+STATIC_INLINE BruterFloat        bruter_undefine_float(BruterList *list, const char* key);
+STATIC_INLINE void*              bruter_undefine_pointer(BruterList *list, const char* key);
+STATIC_INLINE BruterMetaValue    bruter_undefine_meta(BruterList *list, const char* key);
 // swap two values in the list at indices i1 and i2
 STATIC_INLINE void               bruter_swap(BruterList *list, BruterInt i1, BruterInt i2);
 // find the index of a key in the list, returns -1 if not found
@@ -631,7 +631,7 @@ STATIC_INLINE void bruter_insert_meta(BruterList *list, BruterInt i, BruterMetaV
     }
 }
 
-STATIC_INLINE void bruter_register(BruterList *list, BruterValue value, const char* key, int8_t type)
+STATIC_INLINE void bruter_define(BruterList *list, BruterValue value, const char* key, int8_t type)
 {
     BruterInt index = bruter_find_key(list, key);
     if (index >= 0)
@@ -648,27 +648,27 @@ STATIC_INLINE void bruter_register(BruterList *list, BruterValue value, const ch
     }
 }
 
-STATIC_INLINE void bruter_register_int(BruterList *list, BruterInt value, const char* key, int8_t type)
+STATIC_INLINE void bruter_define_int(BruterList *list, BruterInt value, const char* key, int8_t type)
 {
-    bruter_register(list, (BruterValue){.i = value}, key, type);
+    bruter_define(list, (BruterValue){.i = value}, key, type);
 }
 
-STATIC_INLINE void bruter_register_uint(BruterList *list, BruterUInt value, const char* key, int8_t type)
+STATIC_INLINE void bruter_define_uint(BruterList *list, BruterUInt value, const char* key, int8_t type)
 {
-    bruter_register(list, (BruterValue){.u = value}, key, type);
+    bruter_define(list, (BruterValue){.u = value}, key, type);
 }
 
-STATIC_INLINE void bruter_register_float(BruterList *list, BruterFloat value, const char* key, int8_t type)
+STATIC_INLINE void bruter_define_float(BruterList *list, BruterFloat value, const char* key, int8_t type)
 {
-    bruter_register(list, (BruterValue){.f = value}, key, type);
+    bruter_define(list, (BruterValue){.f = value}, key, type);
 }
 
-STATIC_INLINE void bruter_register_pointer(BruterList *list, void *value, const char* key, int8_t type)
+STATIC_INLINE void bruter_define_pointer(BruterList *list, void *value, const char* key, int8_t type)
 {
-    bruter_register(list, (BruterValue){.p = value}, key, type);
+    bruter_define(list, (BruterValue){.p = value}, key, type);
 }
 
-STATIC_INLINE void bruter_register_meta(BruterList *list, BruterMetaValue value)
+STATIC_INLINE void bruter_define_meta(BruterList *list, BruterMetaValue value)
 {
     BruterInt index = bruter_find_key(list, value.key);
     if (index >= 0)
@@ -994,62 +994,62 @@ STATIC_INLINE BruterMetaValue bruter_fast_remove_meta(BruterList *list, BruterIn
     return bruter_pop_meta(list);
 }
 
-STATIC_INLINE BruterValue bruter_unregister(BruterList *list, const char* key)
+STATIC_INLINE BruterValue bruter_undefine(BruterList *list, const char* key)
 {
     BruterInt index = bruter_find_key(list, key);
     if (index < 0)
     {
-        printf("BRUTER_WARNING: bruter_unregister called with key '%s' not found in list\n", key);
+        printf("BRUTER_WARNING: bruter_undefine called with key '%s' not found in list\n", key);
     }
     return bruter_remove(list, index);
 }
 
-STATIC_INLINE BruterInt bruter_unregister_int(BruterList *list, const char* key)
+STATIC_INLINE BruterInt bruter_undefine_int(BruterList *list, const char* key)
 {
     BruterInt index = bruter_find_key(list, key);
     if (index < 0)
     {
-        printf("BRUTER_WARNING: bruter_unregister_int called with key '%s' not found in list\n", key);
+        printf("BRUTER_WARNING: bruter_undefine_int called with key '%s' not found in list\n", key);
     }
     return bruter_remove_int(list, index);
 }
 
-STATIC_INLINE BruterUInt bruter_unregister_uint(BruterList *list, const char* key)
+STATIC_INLINE BruterUInt bruter_undefine_uint(BruterList *list, const char* key)
 {
     BruterInt index = bruter_find_key(list, key);
     if (index < 0)
     {
-        printf("BRUTER_WARNING: bruter_unregister_uint called with key '%s' not found in list\n", key);
+        printf("BRUTER_WARNING: bruter_undefine_uint called with key '%s' not found in list\n", key);
     }
     return bruter_remove_uint(list, index);
 }
 
-STATIC_INLINE BruterFloat bruter_unregister_float(BruterList *list, const char* key)
+STATIC_INLINE BruterFloat bruter_undefine_float(BruterList *list, const char* key)
 {
     BruterInt index = bruter_find_key(list, key);
     if (index < 0)
     {
-        printf("BRUTER_WARNING: bruter_unregister_float called with key '%s' not found in list\n", key);
+        printf("BRUTER_WARNING: bruter_undefine_float called with key '%s' not found in list\n", key);
     }
     return bruter_remove_float(list, index);
 }
 
-STATIC_INLINE void* bruter_unregister_pointer(BruterList *list, const char* key)
+STATIC_INLINE void* bruter_undefine_pointer(BruterList *list, const char* key)
 {
     BruterInt index = bruter_find_key(list, key);
     if (index < 0)
     {
-        printf("BRUTER_WARNING: bruter_unregister_pointer called with key '%s' not found in list\n", key);
+        printf("BRUTER_WARNING: bruter_undefine_pointer called with key '%s' not found in list\n", key);
     }
     return bruter_remove_pointer(list, index);
 }
 
-STATIC_INLINE BruterMetaValue bruter_unregister_meta(BruterList *list, const char* key)
+STATIC_INLINE BruterMetaValue bruter_undefine_meta(BruterList *list, const char* key)
 {
     BruterInt index = bruter_find_key(list, key);
     if (index < 0)
     {
-        printf("BRUTER_WARNING: bruter_unregister_meta called with key '%s' not found in list\n", key);
+        printf("BRUTER_WARNING: bruter_undefine_meta called with key '%s' not found in list\n", key);
     }
     return bruter_remove_meta(list, index);
 }
