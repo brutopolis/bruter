@@ -6,8 +6,8 @@
 - new function bruter_alloc, a kind of arena;
 - Value has no more a fn member;
 - BRUTER_MANUAL_UNION is no more available;
-- new functions *_meta, they work with a struct that contains all the meta along the value;
-- bruter_call is no more, check br_call on bruter-representation;
+- new functions *_meta, they work with a struct that contains all the meta along the value called BruterMeta;
+- bruter_call is no more, check br_call on bruter-representation(which is also deprecated);
 - BRUTER_USE_GENERIC removed.
 - BRUTER_TYPES removed, each push, insert, unshift and set functions now have a type parameter;
 - new macro BRUTER_AS_HEADER, it will disable all implementation in bruter.h, only declaration and macros will be left;
