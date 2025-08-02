@@ -1560,68 +1560,89 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
         char* token = bruter_get_pointer(splited, i);
         //if (token == NULL || token[0] == '\0') continue; // Skip empty tokens
         
-        if (token[0] == '!') // call stack
+        switch(token[0])
         {
-            Function func = bruter_pop_pointer(stack);
-            func(stack);
-        }
-        else if (token[0] == '&') // stack
-        {
-            bruter_push_pointer(stack, stack, NULL, BRUTER_TYPE_LIST);
-        }
-        else if (token[0] == '@') // context
-        {
-            bruter_push_pointer(stack, context, NULL, BRUTER_TYPE_LIST);
-        }
-        else if (token[0] == '?') // ifgo, the only control operator
-        {
-            BruterInt condition = bruter_pop_int(stack);
-            BruterInt iftrue_position = bruter_pop_int(stack);
-            if (condition)
+            case '!': // call stack
             {
-                i = iftrue_position - 1;
+                Function func = bruter_pop_pointer(stack);
+                func(stack);
             }
-        }
-        else if (isdigit(token[0]) || (token[0] == '-' && isdigit(token[1]))) // number
-        {
-            if (strchr(token, '.')) // float
+            break;
+            case '&': // stack
             {
-                bruter_push_float(stack, strtof(token, NULL), NULL, BRUTER_TYPE_FLOAT);
+                bruter_push_pointer(stack, stack, NULL, BRUTER_TYPE_LIST);
             }
-            else // int
+            break;
+            case '@': // context
             {
-                bruter_push_int(stack, strtol(token, NULL, 10), NULL, BRUTER_TYPE_ANY);
+                bruter_push_pointer(stack, context, NULL, BRUTER_TYPE_LIST);
             }
-        }
-        else if (token[0] == '#') // string
-        {
-            char* str = strdup(token + 1);
-            for (char* p = str; *p; p++) 
+            break;
+            case '?':
             {
-                if (*p == '\x14') *p = '\n'; // Replace ASCII 20 with newline
-                else if (*p == '\x15') *p = '\r'; // Replace ASCII 21 with carriage return
-                else if (*p == '\x16') *p = '\t'; // Replace ASCII 22 with tab
-                else if (*p == '\x17') *p = ' '; // Replace ASCII 23 with space
-                else if (*p == '\x18') *p = ':'; // Replace ASCII 24 with colon
+                BruterInt condition = bruter_pop_int(stack);
+                BruterInt iftrue_position = bruter_pop_int(stack);
+                if (condition)
+                {
+                    i = iftrue_position - 1;
+                }
             }
-            bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
-        }
-        else // find variable
-        {
-            BruterInt found = bruter_find_key(context, token);
-            if (found != -1)
+            break;
+            case '.': 
+            case '-':
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9': // number
             {
-                BruterMeta meta = bruter_get_meta(context, found);
-                meta.key = NULL; // we don't need the key here
-                bruter_push_meta(stack, meta);
+                if (strchr(token, '.')) // float
+                {
+                    bruter_push_float(stack, strtof(token, NULL), NULL, BRUTER_TYPE_FLOAT);
+                }
+                else // int
+                {
+                    bruter_push_int(stack, strtol(token, NULL, 10), NULL, BRUTER_TYPE_ANY);
+                }
             }
-            else
+            break;
+            case '#': //string
             {
-                // If not found
-                printf("WARNING: Variable '%s' not found in context\n", token);
-                // We can still push a null value to the stack
-                bruter_push_int(stack, 0, NULL, BRUTER_TYPE_NULL);
+                char* str = strdup(token + 1);
+                for (char* p = str; *p; p++) 
+                {
+                    if (*p == '\x14') *p = '\n'; // Replace ASCII 20 with newline
+                    else if (*p == '\x15') *p = '\r'; // Replace ASCII 21 with carriage return
+                    else if (*p == '\x16') *p = '\t'; // Replace ASCII 22 with tab
+                    else if (*p == '\x17') *p = ' '; // Replace ASCII 23 with space
+                    else if (*p == '\x18') *p = ':'; // Replace ASCII 24 with colon
+                }
+                bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
             }
+            break;
+            default:
+            {
+                BruterInt found = bruter_find_key(context, token);
+                if (found != -1)
+                {
+                    BruterMeta meta = bruter_get_meta(context, found);
+                    meta.key = NULL; // we don't need the key here
+                    bruter_push_meta(stack, meta);
+                }
+                else
+                {
+                    // If not found
+                    printf("WARNING: Variable '%s' not found in context\n", token);
+                    // We can still push a null value to the stack
+                    bruter_push_int(stack, 0, NULL, BRUTER_TYPE_NULL);
+                }
+            }
+            break;
         }
     }
     bruter_free(splited); // Free the temporary list
