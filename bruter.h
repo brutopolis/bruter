@@ -1565,15 +1565,13 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             Function func = bruter_pop_pointer(stack);
             func(stack);
         }
-        else if (token[0] == '&' && token[1] == '\0') // stack
+        else if (token[0] == '&') // stack
         {
             bruter_push_pointer(stack, stack, NULL, BRUTER_TYPE_LIST);
-            continue;
         }
-        else if (token[0] == '@' && token[1] == '\0') // context
+        else if (token[0] == '@') // context
         {
             bruter_push_pointer(stack, context, NULL, BRUTER_TYPE_LIST);
-            continue;
         }
         else if (token[0] == '?') // ifgo, the only control operator
         {
