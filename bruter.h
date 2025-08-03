@@ -1603,7 +1603,14 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             {
                 if (strchr(token, '.')) // float
                 {
-                    bruter_push_float(stack, strtof(token, NULL), NULL, BRUTER_TYPE_FLOAT);
+                    if (sizeof(void*) == 8) // double precision
+                    {
+                        bruter_push_float(stack, strtod(token, NULL), NULL, BRUTER_TYPE_FLOAT);
+                    }
+                    else // single precision
+                    {
+                        bruter_push_float(stack, strtof(token, NULL), NULL, BRUTER_TYPE_FLOAT);
+                    }
                 }
                 else // int
                 {
