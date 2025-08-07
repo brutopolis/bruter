@@ -1620,16 +1620,7 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             break;
             case '#': //string
             {
-                char* str = strdup(token + 1);
-                for (char* p = str; *p; p++) 
-                {
-                    if (*p == '\x13') *p = '#'; // Replace ASCII 19 with #
-                    else if (*p == '\x14') *p = '\n'; // Replace ASCII 20 with newline
-                    else if (*p == '\x15') *p = '\r'; // Replace ASCII 21 with carriage return
-                    else if (*p == '\x16') *p = '\t'; // Replace ASCII 22 with tab
-                    else if (*p == '\x17') *p = ' '; // Replace ASCII 23 with space
-                    else if (*p == '\x18') *p = ':'; // Replace ASCII 24 with colon
-                }
+                char* str = token + 1;
                 bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
             }
             break;
