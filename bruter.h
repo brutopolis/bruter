@@ -1618,8 +1618,30 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                 }
             }
             break;
-            case '#': //string
+            case ',': // uncorrected string
             {
+                char* str = token + 1;
+                // correct the string by replacing ASCII 18-24 with their actual characters
+                for (int j = 0; str[j] != '\0'; j++)
+                {
+                    printf("DEBUG: Correcting character '%c' (ASCII %d)\n", str[j], str[j]);
+                    if (str[j] == 130) str[j] = ',';
+                    else if (str[j] == 132) str[j] = ';';
+                    else if (str[j] == 31) str[j] = '\n';
+                    else if (str[j] == 30) str[j] = '\r';
+                    else if (str[j] == 29) str[j] = '\t';
+                    else if (str[j] == 160) str[j] = ' ';
+                    else if (str[j] == 28) str[j] = ':';
+                    printf("DEBUG: Corrected character '%c' (ASCII %d)\n", str[j], str[j]);
+                }
+                
+                str[-1] = ';'; // change the leading comma to a semicolon
+                bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
+            }
+            break;
+            case ';': // corrected string
+            {
+                // it is already corrected lets just use it
                 char* str = token + 1;
                 bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
             }
