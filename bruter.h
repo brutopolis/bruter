@@ -1545,7 +1545,7 @@ STATIC_INLINE void* bruter_alloc(BruterList* arena, size_t size)
 
 STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_str)
 {
-    BruterList *stack = bruter_new(8, true, true);
+    BruterList *stack = bruter_new(8, false, true);
     BruterList *splited = bruter_new(8, false, false);
     char* original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
     char* token = strtok(original_str, "\n\t\r ");
