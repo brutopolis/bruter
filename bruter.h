@@ -1621,16 +1621,15 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             case ',': // uncorrected string
             {
                 char* str = token + 1;
-                // correct the string by replacing ASCII 18-24 with their actual characters
                 for (int j = 0; str[j] != '\0'; j++)
                 {
-                    if (str[j] == 130) str[j] = ',';
-                    else if (str[j] == 132) str[j] = ';';
-                    else if (str[j] == 31) str[j] = '\n';
-                    else if (str[j] == 30) str[j] = '\r';
+                    if (str[j] == 24) str[j] = ',';
+                    else if (str[j] == 25) str[j] = ';';
+                    else if (str[j] == 26) str[j] = '\n';
+                    else if (str[j] == 28) str[j] = '\r';
                     else if (str[j] == 29) str[j] = '\t';
-                    else if (str[j] == 160) str[j] = ' ';
-                    else if (str[j] == 28) str[j] = ':';
+                    else if (str[j] == 30) str[j] = ' ';
+                    else if (str[j] == 31) str[j] = ':';
                 }
                 
                 str[-1] = ';'; // change the leading comma to a semicolon
