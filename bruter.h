@@ -1557,14 +1557,14 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
 
     for (BruterInt i = 0; i < splited->size; i++)
     {
-        char* token = bruter_get_pointer(splited, i);
+        char* token = (char*)bruter_get_pointer(splited, i);
         //if (token == NULL || token[0] == '\0') continue; // Skip empty tokens
         
         switch(token[0])
         {
             case '!': // call stack
             {
-                Function func = bruter_pop_pointer(stack);
+                Function func = (Function)bruter_pop_pointer(stack);
                 func(stack);
             }
             break;

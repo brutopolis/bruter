@@ -3,7 +3,7 @@
 # usage function
 usage() 
 {
-    echo "[=°-°=]: usage: $0 [install|install-from|compile|transpile|run] [args...]"
+    echo "[=°-°=]: usage: $0 [install|install-from] [package...]"
     echo "[=°~°=]: install: install a package from the repository"
     echo "[=°~°=]: install-from: install a package from a custom repository"
 }
