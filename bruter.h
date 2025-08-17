@@ -1630,6 +1630,26 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                     else if (str[j] == 29) str[j] = '\t';
                     else if (str[j] == 30) str[j] = ' ';
                     else if (str[j] == 31) str[j] = ':';
+
+                    // deal with escaped characters
+                    else if (str[j] == '\\' && str[j + 1] != '\0')
+                    {
+                        memmove(&str[j], &str[j + 1], strlen(str) - j); // remove the backslash
+                        switch (str[j])
+                        {
+                            case 'n': str[j] = '\n'; break;
+                            case 'r': str[j] = '\r'; break;
+                            case 't': str[j] = '\t'; break;
+                            case 'b': str[j] = '\b'; break;
+                            case 'f': str[j] = '\f'; break;
+                            case 'v': str[j] = '\v'; break;
+                            case '\\': str[j] = '\\'; break; // keep the backslash
+                            case '\'': str[j] = '\''; break; // keep the single quote
+                            case '\"': str[j] = '\"'; break; // keep the double quote
+                            default: // any other character after backslash is treated as normal character
+                                break;
+                        }
+                    }
                 }
                 
                 str[-1] = ';'; // change the leading comma to a semicolon
