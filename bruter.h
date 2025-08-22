@@ -15,7 +15,7 @@
 #include <ctype.h>
 
 // version
-#define BRUTER_VERSION "0.9.1"
+#define BRUTER_VERSION "0.9.2"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -1546,19 +1546,27 @@ STATIC_INLINE void* bruter_alloc(BruterList* arena, size_t size)
 STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_str)
 {
     BruterList *stack = bruter_new(8, false, true);
-    BruterList *splited = bruter_new(8, false, false);
+    BruterList *splited = bruter_new(8, false, true);
     char* original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
     char* token = strtok(original_str, "\n\t\r ");
     while (token != NULL)
     {
-        bruter_push_pointer(splited, token, NULL, 0);
+        bruter_push_pointer(splited, token, NULL, BRUTER_TYPE_NULL);
         token = strtok(NULL, "\n\t\r ");
     }
 
     for (BruterInt i = 0; i < splited->size; i++)
     {
-        char* token = (char*)bruter_get_pointer(splited, i);
-        //if (token == NULL || token[0] == '\0') continue; // Skip empty tokens
+        char* token = (char*)splited->data[i].p;
+        uint8_t token_type = splited->types[i];
+
+        // we assume its already processed if its type is not BRUTER_TYPE_NULL
+        if (token_type != BRUTER_TYPE_NULL)
+        {
+            bruter_push_meta(stack, (BruterMeta){.value = splited->data[i], .key = NULL, .type = token_type});
+            continue;
+        }
+        else if (token == NULL || token[0] == '\0') continue; // Skip empty tokens
         
         switch(token[0])
         {
@@ -1576,6 +1584,11 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             case '@': // context
             {
                 bruter_push_pointer(stack, context, NULL, BRUTER_TYPE_LIST);
+            }
+            break;
+            case '$': // the code itself, the splited string
+            {
+                bruter_push_pointer(stack, splited, NULL, BRUTER_TYPE_LIST);
             }
             break;
             case '?':
@@ -1603,18 +1616,26 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             {
                 if (strchr(token, '.')) // float
                 {
+                    BruterFloat value;
                     if (sizeof(void*) == 8) // double precision
                     {
-                        bruter_push_float(stack, strtod(token, NULL), NULL, BRUTER_TYPE_FLOAT);
+                        value = strtod(token, NULL);
                     }
                     else // single precision
                     {
-                        bruter_push_float(stack, strtof(token, NULL), NULL, BRUTER_TYPE_FLOAT);
+                        value = strtof(token, NULL);
                     }
+                    bruter_push_float(stack, value, NULL, BRUTER_TYPE_FLOAT);
+                    splited->data[i].f = value; // store the value as float
+                    splited->types[i] = BRUTER_TYPE_FLOAT; // change the type to float
                 }
                 else // int
                 {
-                    bruter_push_int(stack, strtol(token, NULL, 10), NULL, BRUTER_TYPE_ANY);
+                    unsigned long value = strtoul(token, NULL, 10);
+                
+                    bruter_push_int(stack, value, NULL, BRUTER_TYPE_ANY);
+                    splited->data[i].u = value; // store the value as uint
+                    splited->types[i] = BRUTER_TYPE_ANY; // change the type to int
                 }
             }
             break;
@@ -1652,20 +1673,52 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                     }
                 }
                 
-                str[-1] = ';'; // change the leading comma to a semicolon
+                splited->data[i].p = str;
+                splited->types[i] = BRUTER_TYPE_BUFFER;
+
                 bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
             }
             break;
-            case ';': // corrected string
+            case ':': // runtime label 
             {
-                // it is already corrected lets just use it
-                char* str = token + 1;
-                bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
+                BruterInt label_position = i;
+                // we remove the label from the stack
+                char* label_str = (char*)bruter_remove_pointer(splited, i);
+                bruter_push_int(context, label_position, label_str + 1, BRUTER_TYPE_ANY);
+                i--;
             }
             break;
             default:
             {
-                BruterInt found = bruter_find_key(context, token);
+                BruterInt found = -1;
+                if (token[0] == '#') // static values are not re-evaluated when encountered again
+                {
+                    if (isdigit(token[1]))
+                    {
+                        found = (BruterInt)strtol(token + 1, NULL, 10);
+                        if (found < 0)
+                        {
+                            found += (BruterInt)context->size;
+                        }
+                        splited->data[i].u = context->data[found].u;
+                        splited->types[i] = context->types[found];
+                    }
+                    else
+                    {
+                        found = bruter_find_key(context, token);
+                        if (found >= -1)
+                        {
+                            splited->data[i] = context->data[found];
+                            splited->types[i] = context->types[found];
+                        }
+                        else
+                        {
+                            printf("WARNING: Variable '%s' not found in context\n", token);
+                        }
+                    }
+                }
+
+                found = bruter_find_key(context, token);
                 if (found != -1)
                 {
                     BruterMeta meta = bruter_get_meta(context, found);
