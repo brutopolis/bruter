@@ -1578,16 +1578,27 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             break;
             case '&': // stack
             {
+                // lets store the stack in the code, so we dont need to come here again and again
+                splited->data[i].p = stack; // store the stack in splited
+                splited->types[i] = BRUTER_TYPE_LIST; // change the type to list
+
                 bruter_push_pointer(stack, stack, NULL, BRUTER_TYPE_LIST);
             }
             break;
             case '@': // context
             {
+                // lets store the context in the code, so we dont need to come here again and again
+                splited->data[i].p = context; // store the context in splited
+                splited->types[i] = BRUTER_TYPE_LIST; // change the type to list
+
                 bruter_push_pointer(stack, context, NULL, BRUTER_TYPE_LIST);
             }
             break;
             case '$': // the code itself, the splited string
             {
+                // lets store the splited in the code, so we dont need to come here again and again
+                splited->data[i].p = splited; // store the splited in splited
+                splited->types[i] = BRUTER_TYPE_LIST; // change the type to list
                 bruter_push_pointer(stack, splited, NULL, BRUTER_TYPE_LIST);
             }
             break;
@@ -1639,7 +1650,7 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                 }
             }
             break;
-            case ',': // uncorrected string
+            case ',': // string
             {
                 char* str = token + 1;
                 for (int j = 0; str[j] != '\0'; j++)
@@ -1705,10 +1716,10 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                     }
                     else
                     {
-                        found = bruter_find_key(context, token);
-                        if (found >= -1)
+                        found = bruter_find_key(context, token + 1);
+                        if (found >= 0)
                         {
-                            splited->data[i] = context->data[found];
+                            splited->data[i].u = context->data[found].u;
                             splited->types[i] = context->types[found];
                         }
                         else
@@ -1716,6 +1727,9 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                             printf("WARNING: Variable '%s' not found in context\n", token);
                         }
                     }
+                    bruter_push_meta(stack, bruter_get_meta(context, found));
+
+                    continue; // skip pushing to stack again
                 }
 
                 found = bruter_find_key(context, token);
