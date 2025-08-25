@@ -214,7 +214,7 @@ STATIC_INLINE const char*        bruter_get_version(void);
 // arena   
 STATIC_INLINE void*              bruter_alloc(BruterList *arena, size_t size);
 // bruter representation
-STATIC_INLINE BruterList*        bruter_parse(BruterList *context, const char* input_str);
+STATIC_INLINE BruterList*        bruter_parse(BruterList *context, const char* input_str, BruterList* pre_splited);
 
 // functions implementations
 // functions implementations
@@ -1543,16 +1543,25 @@ STATIC_INLINE void* bruter_alloc(BruterList* arena, size_t size)
     return ptr;
 }
 
-STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_str)
+STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_str, BruterList* pre_splited)
 {
+    BruterList *splited;
+    char* original_str = NULL;
     BruterList *stack = bruter_new(8, false, true);
-    BruterList *splited = bruter_new(8, false, true);
-    char* original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
-    char* token = strtok(original_str, "\n\t\r ");
-    while (token != NULL)
+    if (pre_splited == NULL)
     {
-        bruter_push_pointer(splited, token, NULL, BRUTER_TYPE_NULL);
-        token = strtok(NULL, "\n\t\r ");
+        splited = bruter_new(8, false, true);
+        original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
+        char* token = strtok(original_str, "\n\t\r ");
+        while (token != NULL)
+        {
+            bruter_push_pointer(splited, token, NULL, BRUTER_TYPE_NULL);
+            token = strtok(NULL, "\n\t\r ");
+        }
+    }
+    else
+    {
+        splited = pre_splited;
     }
 
     for (BruterInt i = 0; i < splited->size; i++)
@@ -1572,8 +1581,45 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
         {
             case '!': // call stack
             {
-                Function func = (Function)bruter_pop_pointer(stack);
-                func(stack);
+                switch (stack->types[stack->size - 1])
+                {
+                    case BRUTER_TYPE_FUNCTION:
+                        Function func = (Function)bruter_pop_pointer(stack);
+                        func(stack);
+                        break;
+                    case BRUTER_TYPE_LIST:
+                    {
+                        BruterInt arg_count = 0;
+                        BruterList* func_list = (BruterList*)bruter_copy(bruter_pop_pointer(stack));
+                        for (BruterInt j = 0; j < func_list->size; j++)
+                        {
+                            if (((char*)func_list->data[j].p)[0] == '$')
+                            {
+                                BruterInt index = strtol(((char*)func_list->data[j].p) + 1, NULL, 10);
+                                if (index >= arg_count)
+                                {
+                                    arg_count = index + 1;
+                                }
+                                bruter_set_meta(func_list, j, bruter_get_meta(stack, stack->size - index - 1));
+                            }
+                        }
+                        for (BruterInt j = 0; j < arg_count; j++)
+                        {
+                            bruter_pop(stack); // remove used arguments from stack
+                        }
+                        BruterList* result = bruter_parse(context, NULL, func_list);
+                        // push all results to stack
+                        for (BruterInt j = 0; j < result->size; j++)
+                        {
+                            bruter_push_meta(stack, (BruterMeta){.value = result->data[j], .key = NULL, .type = result->types[j]});
+                        }
+                        //bruter_free(func_list);
+                        break;
+                    }
+                    default:
+                        printf("BRUTER_ERROR: trying to call a non-function value from stack\n");
+                        exit(EXIT_FAILURE);
+                }
             }
             break;
             case '&': // stack
@@ -1594,7 +1640,7 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                 bruter_push_pointer(stack, context, NULL, BRUTER_TYPE_LIST);
             }
             break;
-            case '$': // the code itself, the splited string
+            case '%': // the code itself, the splited string
             {
                 // lets store the splited in the code, so we dont need to come here again and again
                 splited->data[i].p = splited; // store the splited in splited
@@ -1655,13 +1701,10 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                 char* str = token + 1;
                 for (int j = 0; str[j] != '\0'; j++)
                 {
-                    if (str[j] == 24) str[j] = ',';
-                    else if (str[j] == 25) str[j] = ';';
-                    else if (str[j] == 26) str[j] = '\n';
+                    if (str[j] == 26) str[j] = '\n';
                     else if (str[j] == 28) str[j] = '\r';
                     else if (str[j] == 29) str[j] = '\t';
                     else if (str[j] == 30) str[j] = ' ';
-                    else if (str[j] == 31) str[j] = ':';
 
                     // deal with escaped characters
                     else if (str[j] == '\\' && str[j + 1] != '\0')
@@ -1697,6 +1740,22 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                 char* label_str = (char*)bruter_remove_pointer(splited, i);
                 bruter_push_int(context, label_position, label_str + 1, BRUTER_TYPE_ANY);
                 i--;
+            }
+            break;
+            case '$': // runtime function arg
+            {
+                BruterInt arg_index = (BruterInt)strtol(token + 1, NULL, 10);
+                if (arg_index < 0)
+                {
+                    arg_index += (BruterInt)stack->size;
+                }
+                if (arg_index < 0 || arg_index >= stack->size)
+                {
+                    printf("BRUTER_ERROR: argument index %" PRIdPTR " out of range in stack of size %" PRIdPTR " \n", arg_index, stack->size);
+                    exit(EXIT_FAILURE);
+                }
+                
+                bruter_push_int(stack, arg_index, NULL, BRUTER_TYPE_NULL);
             }
             break;
             default:
