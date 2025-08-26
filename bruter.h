@@ -214,7 +214,7 @@ STATIC_INLINE const char*        bruter_get_version(void);
 // arena   
 STATIC_INLINE void*              bruter_alloc(BruterList *arena, size_t size);
 // bruter representation
-STATIC_INLINE BruterList*        bruter_parse(BruterList *context, const char* input_str, BruterList* pre_splited);
+STATIC_INLINE BruterList*        bruter_interpret(BruterList *context, const char* input_str, BruterList* pre_splited);
 
 // functions implementations
 // functions implementations
@@ -1193,7 +1193,6 @@ STATIC_INLINE BruterList* bruter_copy(const BruterList *list)
             if (list->keys[i] != NULL)
             {
                 size_t len = strlen(list->keys[i]);
-                copy->keys[i] = (char*)malloc(len + 1);
                 strcpy(copy->keys[i], list->keys[i]);
             }
             else
@@ -1209,7 +1208,6 @@ STATIC_INLINE BruterList* bruter_copy(const BruterList *list)
     
     if (list->types != NULL)
     {
-        copy->types = (int8_t*)malloc((size_t)copy->capacity * sizeof(int8_t));
         if (copy->types == NULL)
         {
             printf("BRUTER_ERROR: failed to allocate memory for BruterList types copy\n");
@@ -1543,7 +1541,7 @@ STATIC_INLINE void* bruter_alloc(BruterList* arena, size_t size)
     return ptr;
 }
 
-STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_str, BruterList* pre_splited)
+STATIC_INLINE BruterList* bruter_interpret(BruterList *context, const char* input_str, BruterList* pre_splited)
 {
     BruterList *splited;
     char* original_str = NULL;
@@ -1607,13 +1605,14 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
                         {
                             bruter_pop(stack); // remove used arguments from stack
                         }
-                        BruterList* result = bruter_parse(context, NULL, func_list);
+                        BruterList* result = bruter_interpret(context, NULL, func_list);
                         // push all results to stack
                         for (BruterInt j = 0; j < result->size; j++)
                         {
-                            bruter_push_meta(stack, (BruterMeta){.value = result->data[j], .key = NULL, .type = result->types[j]});
+                            bruter_push_meta(stack, bruter_pop_meta(result));
                         }
-                        //bruter_free(func_list);
+                        bruter_free(func_list);
+                        bruter_free(result);
                         break;
                     }
                     default:
@@ -1736,7 +1735,7 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             case ':': // runtime label 
             {
                 BruterInt label_position = i;
-                // we remove the label from the stack
+                // we remove the label from the program
                 char* label_str = (char*)bruter_remove_pointer(splited, i);
                 bruter_push_int(context, label_position, label_str + 1, BRUTER_TYPE_ANY);
                 i--;
@@ -1811,7 +1810,7 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
     }
     if (pre_splited == NULL)
     {
-        bruter_free(splited); // Free the temporary list
+        bruter_free(splited);
     }
     free(original_str); // free the original string
     return stack;
