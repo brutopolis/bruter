@@ -1809,7 +1809,10 @@ STATIC_INLINE BruterList* bruter_parse(BruterList *context, const char* input_st
             break;
         }
     }
-    bruter_free(splited); // Free the temporary list
+    if (pre_splited == NULL)
+    {
+        bruter_free(splited); // Free the temporary list
+    }
     free(original_str); // free the original string
     return stack;
 }
