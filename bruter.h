@@ -214,7 +214,7 @@ STATIC_INLINE const char*        bruter_get_version(void);
 // arena   
 STATIC_INLINE void*              bruter_alloc(BruterList *arena, size_t size);
 // bruter representation
-STATIC_INLINE BruterList*        bruter_interpret(BruterList *context, const char* input_str, BruterList* pre_splited);
+STATIC_INLINE void               bruter_interpret(BruterList *context, const char* input_str, BruterList* splited, BruterList* stack);
 
 // functions implementations
 // functions implementations
@@ -1541,12 +1541,14 @@ STATIC_INLINE void* bruter_alloc(BruterList* arena, size_t size)
     return ptr;
 }
 
-STATIC_INLINE BruterList* bruter_interpret(BruterList *context, const char* input_str, BruterList* pre_splited)
+// if you want to return something, pass a stack, values will be there
+// if you do not provide a stack, a new one will be created and freed at the end
+STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, BruterList* _splited, BruterList* _stack)
 {
     BruterList *splited;
+    BruterList *stack;
     char* original_str = NULL;
-    BruterList *stack = bruter_new(8, false, true);
-    if (pre_splited == NULL)
+    if (_splited == NULL)
     {
         splited = bruter_new(8, false, true);
         original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
@@ -1559,7 +1561,16 @@ STATIC_INLINE BruterList* bruter_interpret(BruterList *context, const char* inpu
     }
     else
     {
-        splited = pre_splited;
+        splited = _splited;
+    }
+
+    if (_stack == NULL)
+    {
+        stack = bruter_new(8, false, true);
+    }
+    else
+    {
+        stack = _stack;
     }
 
     for (BruterInt i = 0; i < splited->size; i++)
@@ -1587,8 +1598,8 @@ STATIC_INLINE BruterList* bruter_interpret(BruterList *context, const char* inpu
                         break;
                     case BRUTER_TYPE_LIST:
                     {
-                        BruterInt arg_count = 0;
                         BruterList* func_list = (BruterList*)bruter_copy(bruter_pop_pointer(stack));
+                        BruterInt arg_count = stack->size;
                         for (BruterInt j = 0; j < func_list->size; j++)
                         {
                             if (((char*)func_list->data[j].p)[0] == '$')
@@ -1605,14 +1616,8 @@ STATIC_INLINE BruterList* bruter_interpret(BruterList *context, const char* inpu
                         {
                             bruter_pop(stack); // remove used arguments from stack
                         }
-                        BruterList* result = bruter_interpret(context, NULL, func_list);
-                        // push all results to stack
-                        for (BruterInt j = 0; j < result->size; j++)
-                        {
-                            bruter_push_meta(stack, bruter_pop_meta(result));
-                        }
+                        bruter_interpret(context, NULL, func_list, stack);
                         bruter_free(func_list);
-                        bruter_free(result);
                         break;
                     }
                     default:
@@ -1808,10 +1813,11 @@ STATIC_INLINE BruterList* bruter_interpret(BruterList *context, const char* inpu
             break;
         }
     }
-    if (pre_splited == NULL)
-    {
-        bruter_free(splited);
-    }
+    if (_splited == NULL) 
+        bruter_free(splited); // free splited only if it was created here
+    if (_stack == NULL) 
+        bruter_free(stack); // free stack only if it was created here
+
     free(original_str); // free the original string
     return stack;
 }
