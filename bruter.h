@@ -35,6 +35,11 @@ typedef uintptr_t BruterUInt;
     #define STATIC_INLINE static inline
 #endif
 
+#ifndef BRUTER_DEFAULT_SIZE
+    #define BRUTER_DEFAULT_SIZE 0
+#endif
+
+
 // well, we need to declare the types before, so we can use them in the union
 // this is not defined if BRUTER_MANUAL_UNION is defined, so you can define your own types BEFORE including this header
 // note you'll need everything below to be defined before including this header too
@@ -185,8 +190,6 @@ STATIC_INLINE BruterInt          bruter_find_meta(const BruterList *list, Bruter
 STATIC_INLINE void               bruter_reverse(BruterList *list);
 // create a copy of the list, with the same capacity and size, but new data array
 STATIC_INLINE BruterList*        bruter_copy(const BruterList *list);
-// concatenate two lists, appending src to dest, resizing dest if necessary
-STATIC_INLINE void               bruter_concat(BruterList *dest, const BruterList *src);
 // get a value at index i in the list, returns a value with i set to -1 if index is out of range
 STATIC_INLINE BruterValue        bruter_get(const BruterList *list, BruterInt i);
 STATIC_INLINE BruterInt          bruter_get_int(const BruterList *list, BruterInt i);
@@ -1226,53 +1229,6 @@ STATIC_INLINE BruterList* bruter_copy(const BruterList *list)
     return copy;
 }
 
-STATIC_INLINE void bruter_concat(BruterList *dest, const BruterList *src)
-{
-    if (dest->size + src->size > dest->capacity)
-    {
-        while (dest->size + src->size > dest->capacity)
-        {
-            bruter_double(dest);
-        }
-    }
-    
-    memcpy(&(dest->data[dest->size]), src->data, (size_t)src->size * sizeof(BruterValue));
-
-    if (dest->keys != NULL && src->keys != NULL)
-    {
-        for (BruterInt i = 0; i < src->size; i++)
-        {
-            if (src->keys[i] != NULL)
-            {
-                size_t len = strlen(src->keys[i]);
-                dest->keys[dest->size + i] = (char*)malloc(len + 1);
-                strcpy(dest->keys[dest->size + i], src->keys[i]);
-            }
-            else 
-            {
-                dest->keys[dest->size + i] = NULL;
-            }
-        }
-    }
-    else if (dest->keys != NULL)
-    {
-        for (BruterInt i = 0; i < src->size; i++)
-        {
-            dest->keys[dest->size + i] = NULL; // fill with NULL if keys are not present in src
-        }
-    }
-    if (dest->types != NULL && src->types != NULL)
-    {
-        memcpy(&(dest->types[dest->size]), src->types, (size_t)src->size * sizeof(int8_t));
-    }
-    else if (dest->types != NULL)
-    {
-        memset(&(dest->types[dest->size]), 0, (size_t)src->size * sizeof(int8_t)); // fill with 0 if types are not present in src
-    }
-
-    dest->size += src->size;
-}
-
 STATIC_INLINE BruterValue bruter_get(const BruterList *list, BruterInt i)
 {
     if (i < 0 || i >= list->size)
@@ -1550,7 +1506,7 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
     char* original_str = NULL;
     if (_splited == NULL)
     {
-        splited = bruter_new(8, false, true);
+        splited = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
         original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
         char* token = strtok(original_str, "\n\t\r ");
         while (token != NULL)
@@ -1566,7 +1522,7 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
 
     if (_stack == NULL)
     {
-        stack = bruter_new(8, false, true);
+        stack = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
     }
     else
     {
