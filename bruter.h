@@ -1508,11 +1508,11 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
     {
         splited = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
         original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
-        char* token = strtok(original_str, "\n\t\r ");
+        char* token = strtok(original_str, "\n\t");
         while (token != NULL)
         {
-            bruter_push_pointer(splited, token, NULL, BRUTER_TYPE_NULL);
-            token = strtok(NULL, "\n\t\r ");
+            bruter_push_pointer(splited, token, NULL, BRUTER_TYPE_BUFFER);
+            token = strtok(NULL, "\n\t");
         }
     }
     else
@@ -1532,93 +1532,58 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
     for (BruterInt i = 0; i < splited->size; i++)
     {
         char* token = (char*)splited->data[i].p;
-        uint8_t token_type = splited->types[i];
+        int8_t token_type = splited->types[i];
 
-        // we assume its already processed if its type is not BRUTER_TYPE_NULL
-        if (token_type != BRUTER_TYPE_NULL)
+        // we assume its already processed if its type is not BRUTER_TYPE_BUFFER
+        if (token_type != BRUTER_TYPE_BUFFER)
         {
             bruter_push_meta(stack, (BruterMeta){.value = splited->data[i], .key = NULL, .type = token_type});
             continue;
         }
-        else if (token == NULL || token[0] == '\0') continue; // Skip empty tokens
+        else if (token == NULL || token[0] == '\0') 
+            continue; // Skip empty tokens
         
         switch(token[0])
         {
             case '!': // call stack
             {
-                switch (stack->types[stack->size - 1])
-                {
-                    case BRUTER_TYPE_FUNCTION:
-                        Function func = (Function)bruter_pop_pointer(stack);
-                        func(stack);
-                        break;
-                    case BRUTER_TYPE_LIST:
-                    {
-                        BruterList* func_list = (BruterList*)bruter_copy(bruter_pop_pointer(stack));
-                        BruterInt arg_count = stack->size;
-                        for (BruterInt j = 0; j < func_list->size; j++)
-                        {
-                            if (((char*)func_list->data[j].p)[0] == '$')
-                            {
-                                BruterInt index = strtol(((char*)func_list->data[j].p) + 1, NULL, 10);
-                                if (index >= arg_count)
-                                {
-                                    arg_count = index + 1;
-                                }
-                                bruter_set_meta(func_list, j, bruter_get_meta(stack, stack->size - index - 1));
-                            }
-                        }
-                        for (BruterInt j = 0; j < arg_count; j++)
-                        {
-                            bruter_pop(stack); // remove used arguments from stack
-                        }
-                        bruter_interpret(context, NULL, func_list, stack);
-                        bruter_free(func_list);
-                        break;
-                    }
-                    default:
-                        printf("BRUTER_ERROR: trying to call a non-function value from stack\n");
-                        exit(EXIT_FAILURE);
-                }
+                Function func = (Function)bruter_pop_pointer(stack);
+                func(stack);
             }
             break;
             case '&': // stack
-            {
-                // lets store the stack in the code, so we dont need to come here again and again
-                splited->data[i].p = stack; // store the stack in splited
-                splited->types[i] = BRUTER_TYPE_LIST; // change the type to list
-
-                bruter_push_pointer(stack, stack, NULL, BRUTER_TYPE_LIST);
-            }
-            break;
             case '@': // context
+            case '%': // program
             {
-                // lets store the context in the code, so we dont need to come here again and again
-                splited->data[i].p = context; // store the context in splited
+                BruterList* list = NULL;
+                if(token[0] == '&')
+                {
+                    list = stack;
+                }
+                else if (token[0] == '@')
+                {
+                    list = context;
+                }
+                else if (token[0] == '%')
+                {
+                    list = splited;
+                }
+                
+                splited->data[i].p = list; // store the context in splited
                 splited->types[i] = BRUTER_TYPE_LIST; // change the type to list
-
-                bruter_push_pointer(stack, context, NULL, BRUTER_TYPE_LIST);
-            }
-            break;
-            case '%': // the code itself, the splited string
-            {
-                // lets store the splited in the code, so we dont need to come here again and again
-                splited->data[i].p = splited; // store the splited in splited
-                splited->types[i] = BRUTER_TYPE_LIST; // change the type to list
-                bruter_push_pointer(stack, splited, NULL, BRUTER_TYPE_LIST);
+                bruter_push_pointer(stack, list, NULL, BRUTER_TYPE_LIST);
             }
             break;
             case '?':
             {
                 BruterInt condition = bruter_pop_int(stack);
-                BruterInt iftrue_position = bruter_pop_int(stack);
+                BruterInt position = bruter_pop_int(stack);
                 if (condition)
                 {
-                    i = iftrue_position - 1;
+                    i = position - 1;
                 }
             }
             break;
-            case '.': 
             case '-':
             case '0':
             case '1':
@@ -1631,86 +1596,25 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
             case '8':
             case '9': // number
             {
-                if (strchr(token, '.')) // float
-                {
-                    BruterFloat value;
-                    if (sizeof(void*) == 8) // double precision
-                    {
-                        value = strtod(token, NULL);
-                    }
-                    else // single precision
-                    {
-                        value = strtof(token, NULL);
-                    }
-                    bruter_push_float(stack, value, NULL, BRUTER_TYPE_FLOAT);
-                    splited->data[i].f = value; // store the value as float
-                    splited->types[i] = BRUTER_TYPE_FLOAT; // change the type to float
-                }
-                else // int
-                {
-                    unsigned long value = strtoul(token, NULL, 10);
-                
-                    bruter_push_int(stack, value, NULL, BRUTER_TYPE_ANY);
-                    splited->data[i].u = value; // store the value as uint
-                    splited->types[i] = BRUTER_TYPE_ANY; // change the type to int
-                }
+                unsigned long value = strtoul(token, NULL, 10);
+                bruter_push_int(stack, value, NULL, BRUTER_TYPE_ANY);
+                splited->data[i].u = value; // store the value as uint
+                splited->types[i] = BRUTER_TYPE_ANY; // change the type to int
             }
             break;
             case ',': // string
             {
-                char* str = token + 1;
-                for (int j = 0; str[j] != '\0'; j++)
-                {
-                    if (str[j] == 26) str[j] = '\n';
-                    else if (str[j] == 29) str[j] = '\t';
-                    else if (str[j] == 30) str[j] = ' ';
-
-                    // deal with escaped characters
-                    else if (str[j] == '\\' && str[j + 1] != '\0')
-                    {
-                        memmove(&str[j], &str[j + 1], strlen(str) - j); // remove the backslash
-                        switch (str[j])
-                        {
-                            case 'n': str[j] = '\n'; break;
-                            case 't': str[j] = '\t'; break;
-                            case '\\': str[j] = '\\'; break; // keep the backslash
-                            case '\'': str[j] = '\''; break; // keep the single quote
-                            case '\"': str[j] = '\"'; break; // keep the double quote
-                            default: // any other character after backslash is treated as normal character
-                                break;
-                        }
-                    }
-                }
-                
-                splited->data[i].p = str;
-                splited->types[i] = BRUTER_TYPE_BUFFER;
-
+                char* str = token + 1; // skip the first character
+                // we push the string without the first character
                 bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
             }
             break;
             case ':': // runtime label 
             {
-                BruterInt label_position = i;
                 // we remove the label from the program
                 char* label_str = (char*)bruter_remove_pointer(splited, i);
-                bruter_push_int(context, label_position, label_str + 1, BRUTER_TYPE_ANY);
+                bruter_push_int(context, i, label_str + 1, BRUTER_TYPE_ANY);
                 i--;
-            }
-            break;
-            case '$': // runtime function arg
-            {
-                BruterInt arg_index = (BruterInt)strtol(token + 1, NULL, 10);
-                if (arg_index < 0)
-                {
-                    arg_index += (BruterInt)stack->size;
-                }
-                if (arg_index < 0 || arg_index >= stack->size)
-                {
-                    printf("BRUTER_ERROR: argument index %" PRIdPTR " out of range in stack of size %" PRIdPTR " \n", arg_index, stack->size);
-                    exit(EXIT_FAILURE);
-                }
-                
-                bruter_push_int(stack, arg_index, NULL, BRUTER_TYPE_NULL);
             }
             break;
             default:
@@ -1721,10 +1625,6 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
                     if (isdigit(token[1]))
                     {
                         found = (BruterInt)strtol(token + 1, NULL, 10);
-                        if (found < 0)
-                        {
-                            found += (BruterInt)context->size;
-                        }
                         splited->data[i].u = context->data[found].u;
                         splited->types[i] = context->types[found];
                     }
@@ -1770,7 +1670,6 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
         bruter_free(stack); // free stack only if it was created here
 
     free(original_str); // free the original string
-    return stack;
 }
 
 #endif // ifndef BRUTER_AS_HEADER macro
