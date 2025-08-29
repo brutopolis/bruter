@@ -1662,7 +1662,6 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
                 for (int j = 0; str[j] != '\0'; j++)
                 {
                     if (str[j] == 26) str[j] = '\n';
-                    else if (str[j] == 28) str[j] = '\r';
                     else if (str[j] == 29) str[j] = '\t';
                     else if (str[j] == 30) str[j] = ' ';
 
@@ -1673,11 +1672,7 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
                         switch (str[j])
                         {
                             case 'n': str[j] = '\n'; break;
-                            case 'r': str[j] = '\r'; break;
                             case 't': str[j] = '\t'; break;
-                            case 'b': str[j] = '\b'; break;
-                            case 'f': str[j] = '\f'; break;
-                            case 'v': str[j] = '\v'; break;
                             case '\\': str[j] = '\\'; break; // keep the backslash
                             case '\'': str[j] = '\''; break; // keep the single quote
                             case '\"': str[j] = '\"'; break; // keep the double quote
