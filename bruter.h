@@ -1508,11 +1508,11 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
     {
         splited = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
         original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
-        char* token = strtok(original_str, "\n\t");
+        char* token = strtok(original_str, "\n\t \r");
         while (token != NULL)
         {
             bruter_push_pointer(splited, token, NULL, BRUTER_TYPE_BUFFER);
-            token = strtok(NULL, "\n\t");
+            token = strtok(NULL, "\n\t \r");
         }
     }
     else
@@ -1605,6 +1605,49 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
             case ',': // string
             {
                 char* str = token + 1; // skip the first character
+
+                // lets replace all occurrences of \n, \t, \r, \\ and \s
+                // using memmove
+                char* dst = str;
+                char* src = str;
+                while (*src)
+                {
+                    if (src[0] == '\\' && src[1] != '\0')
+                    {
+                        switch (src[1])
+                        {
+                            case 'n':
+                                *dst++ = '\n';
+                                src += 2;
+                                break;
+                            case 't':
+                                *dst++ = '\t';
+                                src += 2;
+                                break;
+                            case 'r':
+                                *dst++ = '\r';
+                                src += 2;
+                                break;
+                            case '\\':
+                                *dst++ = '\\';
+                                src += 2;
+                                break;
+                            case 's':
+                                *dst++ = ' ';
+                                src += 2;
+                                break;
+                            default:
+                                *dst++ = *src++;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        *dst++ = *src++;
+                    }
+                }
+                *dst = '\0'; // null terminate the string
+
                 // we push the string without the first character
                 bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
             }
