@@ -1547,8 +1547,33 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
         {
             case '!': // call stack
             {
-                Function func = (Function)bruter_pop_pointer(stack);
-                func(stack);
+                BruterMeta meta = bruter_pop_meta(stack);
+                switch (meta.type)
+                {
+                    case BRUTER_TYPE_FUNCTION:
+                    {
+                        Function func = (Function)meta.value.p;
+                        func(stack);
+                    }
+                    break;
+
+                    case BRUTER_TYPE_BUFFER:
+                    {
+                        char* script = (char*)meta.value.p;
+                        bruter_interpret(context, script, NULL, stack);
+                    }
+                    break;
+
+                    case BRUTER_TYPE_LIST:
+                    {
+                        BruterList *list = (BruterList*)meta.value.p;
+                        bruter_interpret(context, NULL, list, stack);
+                    }
+                    break;
+                
+                    default:
+                        break;
+                }
             }
             break;
             case '&': // stack
@@ -1596,10 +1621,26 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
             case '8':
             case '9': // number
             {
-                unsigned long value = strtoul(token, NULL, 10);
-                bruter_push_int(stack, value, NULL, BRUTER_TYPE_ANY);
-                splited->data[i].u = value; // store the value as uint
-                splited->types[i] = BRUTER_TYPE_ANY; // change the type to int
+                if (strchr(token, '.') != NULL) // float
+                {
+                    BruterFloat value = strtof(token, NULL);
+                    bruter_push_float(stack, value, NULL, BRUTER_TYPE_FLOAT);
+
+                    // update the program
+                    splited->data[i].f = value; // store the value as float
+                    splited->types[i] = BRUTER_TYPE_ANY; // change the type to float
+                    break;
+                }
+                else 
+                {
+                    unsigned long value = strtoul(token, NULL, 10);
+                    bruter_push_int(stack, value, NULL, BRUTER_TYPE_ANY);
+
+                    // update the program
+                    splited->data[i].u = value; // store the value as uint
+                    splited->types[i] = BRUTER_TYPE_ANY; // change the type to int
+                    break;
+                }
             }
             break;
             case ',': // string
