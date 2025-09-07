@@ -217,7 +217,7 @@ STATIC_INLINE const char*        bruter_get_version(void);
 // arena   
 STATIC_INLINE void*              bruter_alloc(BruterList *arena, size_t size);
 // bruter representation
-STATIC_INLINE void               bruter_interpret(BruterList *context, const char* input_str, BruterList* splited, BruterList* stack);
+STATIC_INLINE void               bruter_interpret(BruterList *context, const char* input_str, BruterList* program, BruterList* stack);
 
 // functions implementations
 // functions implementations
@@ -1499,25 +1499,25 @@ STATIC_INLINE void* bruter_alloc(BruterList* arena, size_t size)
 
 // if you want to return something, pass a stack, values will be there
 // if you do not provide a stack, a new one will be created and freed at the end
-STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, BruterList* _splited, BruterList* _stack)
+STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, BruterList* _program, BruterList* _stack)
 {
-    BruterList *splited;
+    BruterList *program;
     BruterList *stack;
     char* original_str = NULL;
-    if (_splited == NULL)
+    if (_program == NULL)
     {
-        splited = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
+        program = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
         original_str = strdup(input_str); // Duplicate the input string to avoid modifying the original
         char* token = strtok(original_str, "\n\t \r");
         while (token != NULL)
         {
-            bruter_push_pointer(splited, token, NULL, BRUTER_TYPE_BUFFER);
+            bruter_push_pointer(program, token, NULL, BRUTER_TYPE_BUFFER);
             token = strtok(NULL, "\n\t \r");
         }
     }
     else
     {
-        splited = _splited;
+        program = _program;
     }
 
     if (_stack == NULL)
@@ -1529,15 +1529,15 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
         stack = _stack;
     }
 
-    for (BruterInt i = 0; i < splited->size; i++)
+    for (BruterInt i = 0; i < program->size; i++)
     {
-        char* token = (char*)splited->data[i].p;
-        int8_t token_type = splited->types[i];
+        char* token = (char*)program->data[i].p;
+        int8_t token_type = program->types[i];
 
         // we assume its already processed if its type is not BRUTER_TYPE_BUFFER
         if (token_type != BRUTER_TYPE_BUFFER)
         {
-            bruter_push_meta(stack, (BruterMeta){.value = splited->data[i], .key = NULL, .type = token_type});
+            bruter_push_meta(stack, (BruterMeta){.value = program->data[i], .key = NULL, .type = token_type});
             continue;
         }
         else if (token == NULL || token[0] == '\0') 
@@ -1591,11 +1591,11 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
                 }
                 else if (token[0] == '%')
                 {
-                    list = splited;
+                    list = program;
                 }
                 
-                splited->data[i].p = list; // store the context in splited
-                splited->types[i] = BRUTER_TYPE_LIST; // change the type to list
+                program->data[i].p = list; // store the context in program
+                program->types[i] = BRUTER_TYPE_LIST; // change the type to list
                 bruter_push_pointer(stack, list, NULL, BRUTER_TYPE_LIST);
             }
             break;
@@ -1627,8 +1627,8 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
                     bruter_push_float(stack, value, NULL, BRUTER_TYPE_FLOAT);
 
                     // update the program
-                    splited->data[i].f = value; // store the value as float
-                    splited->types[i] = BRUTER_TYPE_ANY; // change the type to float
+                    program->data[i].f = value; // store the value as float
+                    program->types[i] = BRUTER_TYPE_ANY; // change the type to float
                     break;
                 }
                 else 
@@ -1637,8 +1637,8 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
                     bruter_push_int(stack, value, NULL, BRUTER_TYPE_ANY);
 
                     // update the program
-                    splited->data[i].u = value; // store the value as uint
-                    splited->types[i] = BRUTER_TYPE_ANY; // change the type to int
+                    program->data[i].u = value; // store the value as uint
+                    program->types[i] = BRUTER_TYPE_ANY; // change the type to int
                     break;
                 }
             }
@@ -1696,7 +1696,7 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
             case ':': // runtime label 
             {
                 // we remove the label from the program
-                char* label_str = (char*)bruter_remove_pointer(splited, i);
+                char* label_str = (char*)bruter_remove_pointer(program, i);
                 bruter_push_int(context, i, label_str + 1, BRUTER_TYPE_ANY);
                 i--;
             }
@@ -1709,16 +1709,16 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
                     if (isdigit(token[1]))
                     {
                         found = (BruterInt)strtol(token + 1, NULL, 10);
-                        splited->data[i].u = context->data[found].u;
-                        splited->types[i] = context->types[found];
+                        program->data[i].u = context->data[found].u;
+                        program->types[i] = context->types[found];
                     }
                     else
                     {
                         found = bruter_find_key(context, token + 1);
                         if (found >= 0)
                         {
-                            splited->data[i].u = context->data[found].u;
-                            splited->types[i] = context->types[found];
+                            program->data[i].u = context->data[found].u;
+                            program->types[i] = context->types[found];
                         }
                         else
                         {
@@ -1748,8 +1748,8 @@ STATIC_INLINE void bruter_interpret(BruterList *context, const char* input_str, 
             break;
         }
     }
-    if (_splited == NULL) 
-        bruter_free(splited); // free splited only if it was created here
+    if (_program == NULL) 
+        bruter_free(program); // free program only if it was created here
     if (_stack == NULL) 
         bruter_free(stack); // free stack only if it was created here
 
