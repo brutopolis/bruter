@@ -10,6 +10,10 @@
 - bruter_concat removed;
 - bruter_find_* now search from the end to the start, to make sure we always find the most recent ocurrence;
 - program and _program are now code and _code respectively, which is more appropriate;
+- bruter option to compile as a lib has been removed;
+- STATIC_INLINE removed, all functions are static inline again;
+- function and init macros removed;
+- added back the .b to the Value union, for byte manipulation;
 
 (02/08/2025) - version 0.9.1
 
