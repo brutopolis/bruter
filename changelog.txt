@@ -1,5 +1,20 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(13/09/2025) - version 0.9.2
+
+- bruter_parse has now runtime labels support, use :label to define a label;
+- bruter_parse has now a operator to get the tokenized code as list;
+- bruter_parse has now a operator to get a variable as static from context;
+- fixed a bug in bruter_copy which leaked memory when copying a list with keys and/or types;
+- bruter_parse renamed to bruter_interpret, it is more appropriate;
+- bruter_concat removed;
+- bruter_find_* now search from the end to the start, to make sure we always find the most recent ocurrence;
+- program and _program are now code and _code respectively, which is more appropriate;
+- bruter option to compile as a lib has been removed;
+- STATIC_INLINE removed, all functions are static inline again;
+- function and init macros removed;
+- added back the .b to the Value union, for byte manipulation;
+
 (02/08/2025) - version 0.9.1
 
 - *_define and *_undefine are now a thing, they work as insert and remove, but are key oriented instead of index oriented;
