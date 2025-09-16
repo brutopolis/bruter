@@ -1490,6 +1490,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
 {
     BruterList *code;
     BruterList *stack;
+    BruterInt i = 0;
     char* original_str = NULL;
     if (_code == NULL)
     {
@@ -1498,8 +1499,20 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
         char* token = strtok(original_str, "\n\t \r");
         while (token != NULL)
         {
-            bruter_push_pointer(code, token, NULL, BRUTER_TYPE_BUFFER);
+            // we will also process the labels here, but dont worry, they are also processed in after this just in case
+            if (token[0] == ':') // label
+            {
+                // we remove the label from the token
+                char* label = token + 1; // skip the first character
+                // we push the label as an integer (its position in the code)
+                bruter_push_int(context, i - 1, label, BRUTER_TYPE_ANY);
+            }
+            else 
+            {
+                bruter_push_pointer(code, token, NULL, BRUTER_TYPE_BUFFER);
+            }
             token = strtok(NULL, "\n\t \r");
+            i++;
         }
     }
     else
@@ -1516,7 +1529,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
         stack = _stack;
     }
 
-    for (BruterInt i = 0; i < code->size; i++)
+    for (i = 0; i < code->size; i++)
     {
         char* token = (char*)code->data[i].p;
         int8_t token_type = code->types[i];
@@ -1630,7 +1643,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                 }
             }
             break;
-            case ',': // string
+            case ';': // string
             {
                 char* str = token + 1; // skip the first character
 
@@ -1678,14 +1691,6 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
 
                 // we push the string without the first character
                 bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
-            }
-            break;
-            case ':': // runtime label 
-            {
-                // we remove the label from the code
-                char* label_str = (char*)bruter_remove_pointer(code, i);
-                bruter_push_int(context, i, label_str + 1, BRUTER_TYPE_ANY);
-                i--;
             }
             break;
             default:
