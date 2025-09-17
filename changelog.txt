@@ -1,9 +1,11 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(16/09/2025) - version 0.9.2a
+(17/09/2025) - version 0.9.3
 
 - labels are now processed at the tokenization;
 - strings now start with ; instead of ,;
+- code is now ~ instead of %;
+- static operator is now % instead of #;
 
 (13/09/2025) - version 0.9.2
 

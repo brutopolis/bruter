@@ -15,7 +15,7 @@
 #include <ctype.h>
 
 // version
-#define BRUTER_VERSION "0.9.2"
+#define BRUTER_VERSION "0.9.3"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -1578,7 +1578,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
             break;
             case '&': // stack
             case '@': // context
-            case '%': // code
+            case '~': // code
             {
                 BruterList* list = NULL;
                 if(token[0] == '&')
@@ -1589,7 +1589,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                 {
                     list = context;
                 }
-                else if (token[0] == '%')
+                else if (token[0] == '~')
                 {
                     list = code;
                 }
@@ -1696,7 +1696,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
             default:
             {
                 BruterInt found = -1;
-                if (token[0] == '#') // static values are not re-evaluated when encountered again
+                if (token[0] == '%') // static values are not re-evaluated when encountered again
                 {
                     if (isdigit(token[1]))
                     {
