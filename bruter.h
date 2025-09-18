@@ -1492,7 +1492,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
     BruterList *stack;
     BruterInt i = 0;
     char* original_str = NULL;
-    
+
     // this will increment every label
     int difference = 0;
     if (_code == NULL)
@@ -1537,7 +1537,6 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
     {
         char* token = (char*)code->data[i].p;
         int8_t token_type = code->types[i];
-        printf("DEBUG: executing token '%s' of type %d at position %" PRIdPTR "\n", token, token_type, i);
         // we assume its already processed if its type is not BRUTER_TYPE_BUFFER
         if (token_type != BRUTER_TYPE_BUFFER)
         {
