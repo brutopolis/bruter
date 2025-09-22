@@ -1699,7 +1699,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
             default:
             {
                 BruterInt found = -1;
-                if (token[0] == '#') // static values are not re-evaluated when encountered again
+                if (token[0] == '$') // static values are not re-evaluated when encountered again
                 {
                     if (isdigit(token[1]))
                     {
