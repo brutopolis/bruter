@@ -3,7 +3,7 @@
 (22/09/2025) - version 0.9.2a
 
 - labels are now processed at the tokenization, so we have a "lookahead" now;
-- strings now start with ; instead of ,;
+- strings now start with \ instead of , for convenience, as we already use \ a lot in strings for spaces and escapes;
 
 (13/09/2025) - version 0.9.2
 

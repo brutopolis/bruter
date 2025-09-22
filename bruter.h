@@ -1646,7 +1646,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                 }
             }
             break;
-            case ';': // string
+            case '\\': // string
             {
                 char* str = token + 1; // skip the first character
 
