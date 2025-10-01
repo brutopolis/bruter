@@ -1,0 +1,35 @@
+
+#include "bruter-lazy.h"
+
+// this is a literal string, a pointer to the code itself
+define(\str, \hello\sworld!)
+
+set(str, 0, 72) // str is now "Hello world!"
+set(str, 6, 87) // str is now "Hello World!"
+
+define(\str2, strdup(str)) // str2 is now a allocated copy of str
+println(str2) // prints "Hello World!"
+free(str2) // free the allocated string
+
+// this is a list
+define(\list, list(0)) // create a new empty list
+set(list, 20, \item\sat\sindex\s20) // set the literal to index 20, will auto create all the previous indexes
+drop(list) // remove the last item
+push(list, \new\sitem) // add a new item to the end of the list
+// lists can also act as objects
+set(list, \key, \value) // set the key "key" to "value"
+println(get(list, \key)) // prints "value"
+
+
+// a raw loop, just for demonstration, but strongly unrecommended
+// prefer the while and for macros from feraw.h
+label(loopstart)
+println(pop(list)) // print and remove the last item from the list
+define(\condition, equals(length(list), 0)) // condition is true if list length is
+ifgo(condition, end) // if condition is true go to end label
+goto(loopstart) // unconditional jump to loopstart
+label(end)
+
+ls(stack)
+
+free(list) // free the list and all its contents

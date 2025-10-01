@@ -15,7 +15,7 @@
 #include <ctype.h>
 
 // version
-#define BRUTER_VERSION "0.9.2a"
+#define BRUTER_VERSION "0.9.3"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -1537,6 +1537,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
     {
         char* token = (char*)code->data[i].p;
         int8_t token_type = code->types[i];
+
         // we assume its already processed if its type is not BRUTER_TYPE_BUFFER
         if (token_type != BRUTER_TYPE_BUFFER)
         {
@@ -1544,7 +1545,9 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
             continue;
         }
         else if (token == NULL || token[0] == '\0') 
+        {
             continue; // Skip empty tokens
+        }
         
         switch(token[0])
         {
@@ -1577,6 +1580,24 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                     default:
                         break;
                 }
+            }
+            break;
+            case '.': // recurse
+            {
+                BruterList* list = (BruterList*)bruter_pop_pointer(stack);
+                char* index_string = token + 1;
+                BruterInt found_index;
+
+                if (index_string[0] >= '0' && index_string[0] <= '9')
+                {
+                    found_index = atol(index_string);
+                }
+                else
+                {
+                    found_index = bruter_find_key(list, index_string);
+                }
+                
+                bruter_push_meta(stack, bruter_get_meta(list, found_index));
             }
             break;
             case '&': // stack

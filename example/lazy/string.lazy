@@ -1,0 +1,20 @@
+#include "bruter-lazy.h"
+
+// every string that is not created by strdup is a literal string
+// literals here are mutable, but you cant change the length
+// literal contents are essentially a entry of the code splited, so they are a delocated pointer
+// you dont need to worry about freeing them, they are freed when the code is freed
+define(\str, \abcdefghijklmnopqrstuvwxyz)
+
+println(str)
+println(get(context, \str, 1))
+set(str, 1, 66) // B
+println(str)
+set(str, 2, 67) // C
+println(str)
+set(str, 3, 68) // D
+println(str)
+set(str, 4, 69) // E
+println(str)
+println(get(context, \str, 4))
+free(str)

@@ -1,0 +1,3 @@
+#include "bruter-lazy.h"
+
+println(\hello\sworld!)

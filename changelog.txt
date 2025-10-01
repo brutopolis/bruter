@@ -1,5 +1,15 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
+(01/10/2025) - version 0.9.3
+
+- we implemented recurse with dot: "a .b .c";
+- former feraw utils are now part of bruter officially as bruter-build and bruter-lazy.h;
+- stdlib is now part of bruter, but still 100% optional;
+- bruter-lazy is the former feraw language;
+- for a long time i used feraw repo as my bruter playground, but now its time to implement everything that has proven itself useful and solid;
+- feraw features merge add no new dependencies or such, bruter.h still 100% standalone, as always been;
+- bruter-lazy.h just depends on the stdlib and any c preprocessor;
+
 (22/09/2025) - version 0.9.2a
 
 - labels are now processed at the tokenization, so we have a "lookahead" now;

@@ -9,3 +9,5 @@ arduino/
 *.so
 *.o
 .bruter
+*.debug.c
+*.lazy.br
