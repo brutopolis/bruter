@@ -1,4 +1,4 @@
-#include <bruter.h>
+#include "../bruter.h"
 
 int main(void)
 {

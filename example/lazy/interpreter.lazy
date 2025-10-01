@@ -1,0 +1,5 @@
+#include "bruter-lazy.h"
+ls(args)
+define(\filecontent, read_file(get(args,1)))
+eval(context, filecontent, 0, stack)
+label(outside)

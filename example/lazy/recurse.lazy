@@ -1,0 +1,10 @@
+#include "bruter-lazy.h"
+
+set(context, \a, list(0))
+set(a, \b, list(0))
+set(a .b, \c, list(0))
+set(a .b .c, \d, \hello\sworld!)
+
+print(\a.b.c.d\s=\s)
+
+println(a .b .c .d)

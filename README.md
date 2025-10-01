@@ -7,7 +7,7 @@
 
 # Library
 
-  BRUTER is a single header file `bruter.h`, just include and ready to go, there are some macros to manage the implementation, you can define them before including the header file to change the behavior of the library.
+  BRUTER is a single header file `bruter.h`, just include and ready to go.
 
 # Usage
 

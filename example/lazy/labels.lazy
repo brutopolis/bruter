@@ -1,0 +1,10 @@
+#include "bruter-lazy.h"
+goto(afterall)
+define(\a, 1)
+println(a)
+define(a, add(a, 1))
+if(less(a, 20), goto(start))
+print(\start\slabel\s=\s)
+println(start)
+label(afterall)
+println(\skipped\severything!)

@@ -1,0 +1,46 @@
+
+#include "bruter-lazy.h"
+define(\_code, \0\sprintln\s!\s1\sprintln\s!\s2\sprintln\s!)
+println(\Code\sbefore\seval)
+println(5.123)
+
+// we havent defined the _code in feraw, so you cannot use it directly
+// under the hood the regular calls are translated to this as well
+call(_code)
+
+// function definition
+define(\fn, list(0))
+set(fn, \a, 0)
+retype(fn, \a, 0)
+set(fn, \b, 0)
+retype(fn, \b, 0)
+set(fn, 2, add)
+set(fn, 3, \!)
+set(fn, 4, println)
+set(fn, 5, \!)
+
+// function usage
+// first we define the function parameters
+set(fn, \a, 10)
+set(fn, \b, 20)
+ls(fn)
+// then we call the function
+call(fn)
+
+// we can also create a macro for it as well, 
+// its the same way the std functions are defined
+#define fn() call(fn)
+
+// we can also create a macro for this
+// this way we can cleanup the parameters easily too
+println(\teste:)
+
+// yeah... we use C preprocessor everywhere
+#define fn_macro(a, b) \
+    set(fn, \a, a) \
+    set(fn, \b, b) \
+    fn() \
+    set(fn, \a, 0) \
+    set(fn, \b, 0)
+
+fn_macro(30, 40)

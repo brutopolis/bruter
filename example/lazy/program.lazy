@@ -1,0 +1,9 @@
+#include "bruter-lazy.h"
+ls(code)
+for (define(\i, 0), less(i, length(code)), define(\i, add(i, 1)),
+    print(\program[)
+    print(i)
+    print(\]\s=\s)
+    print(get(code, i))
+    println(\)
+)

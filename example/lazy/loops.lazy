@@ -1,0 +1,14 @@
+
+#include "bruter-lazy.h"
+static(dup)(0)
+while($less($shift(stack), 100000), 
+      $println()
+      $dup($add(1))
+)
+
+/*or 
+while(static(less)(static(shift)(stack), 100000), 
+      static(println)()
+      static(dup)(static(add)(1))
+)
+*/

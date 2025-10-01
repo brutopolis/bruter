@@ -1,0 +1,12 @@
+#include "bruter-lazy.h"
+define(\content, read_file(args .1))
+if (not_equals(content, 0),
+    println(\File\content:\)
+    println(content)
+)
+if (equals(content, 0),
+    println(\ERROR:\scould\snot\sread\sfile.)
+    ifgo(1, end)
+)
+
+label(end)

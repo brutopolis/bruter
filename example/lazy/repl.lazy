@@ -1,0 +1,20 @@
+#include "bruter-lazy.h"
+
+// repl is not meant to be something really useful for bruter-code
+// bcause every command is evaluated is considered its own local scope
+// so you can't, for example, jump to a label defined in a previous command
+// that said, here is the repl implementation
+
+
+// to fix
+// not working properly
+while (1, 
+    print(\bruter>\s)
+    set(context, \line, scan())
+    // the program is interruped here or inside set for popping a empty list (?)
+    if(equals(strcmp(line, \exit), 0),
+        goto(outside)
+    )
+    eval(context, line)
+)
+label(outside)

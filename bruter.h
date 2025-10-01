@@ -15,7 +15,7 @@
 #include <ctype.h>
 
 // version
-#define BRUTER_VERSION "0.9.2"
+#define BRUTER_VERSION "0.9.3"
 
 typedef intptr_t BruterInt;
 typedef uintptr_t BruterUInt;
@@ -1490,7 +1490,11 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
 {
     BruterList *code;
     BruterList *stack;
+    BruterInt i = 0;
     char* original_str = NULL;
+
+    // this will increment every label
+    int difference = 0;
     if (_code == NULL)
     {
         code = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
@@ -1498,8 +1502,21 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
         char* token = strtok(original_str, "\n\t \r");
         while (token != NULL)
         {
-            bruter_push_pointer(code, token, NULL, BRUTER_TYPE_BUFFER);
+            // we will also process the labels here, but dont worry, they are also processed in after this just in case
+            if (token[0] == ':') // label
+            {
+                // we remove the label from the token
+                char* label = token + 1; // skip the first character
+                // we push the label as an integer (its position in the code)
+                bruter_push_int(context, i - difference, label, BRUTER_TYPE_ANY);
+                difference++;
+            }
+            else 
+            {
+                bruter_push_pointer(code, token, NULL, BRUTER_TYPE_BUFFER);
+            }
             token = strtok(NULL, "\n\t \r");
+            i++;
         }
     }
     else
@@ -1516,7 +1533,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
         stack = _stack;
     }
 
-    for (BruterInt i = 0; i < code->size; i++)
+    for (i = 0; i < code->size; i++)
     {
         char* token = (char*)code->data[i].p;
         int8_t token_type = code->types[i];
@@ -1528,7 +1545,9 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
             continue;
         }
         else if (token == NULL || token[0] == '\0') 
+        {
             continue; // Skip empty tokens
+        }
         
         switch(token[0])
         {
@@ -1561,6 +1580,24 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                     default:
                         break;
                 }
+            }
+            break;
+            case '.': // recurse
+            {
+                BruterList* list = (BruterList*)bruter_pop_pointer(stack);
+                char* index_string = token + 1;
+                BruterInt found_index;
+
+                if (index_string[0] >= '0' && index_string[0] <= '9')
+                {
+                    found_index = atol(index_string);
+                }
+                else
+                {
+                    found_index = bruter_find_key(list, index_string);
+                }
+                
+                bruter_push_meta(stack, bruter_get_meta(list, found_index));
             }
             break;
             case '&': // stack
@@ -1630,7 +1667,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                 }
             }
             break;
-            case ',': // string
+            case '\\': // string
             {
                 char* str = token + 1; // skip the first character
 
@@ -1680,18 +1717,10 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                 bruter_push_pointer(stack, str, NULL, BRUTER_TYPE_BUFFER);
             }
             break;
-            case ':': // runtime label 
-            {
-                // we remove the label from the code
-                char* label_str = (char*)bruter_remove_pointer(code, i);
-                bruter_push_int(context, i, label_str + 1, BRUTER_TYPE_ANY);
-                i--;
-            }
-            break;
             default:
             {
                 BruterInt found = -1;
-                if (token[0] == '#') // static values are not re-evaluated when encountered again
+                if (token[0] == '$') // static values are not re-evaluated when encountered again
                 {
                     if (isdigit(token[1]))
                     {
