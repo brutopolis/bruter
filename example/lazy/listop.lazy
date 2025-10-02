@@ -1,0 +1,35 @@
+#include "bruter-lazy.h"
+
+// list operators example
+
+// you can create a new list with all the stack contents
+1 2 3 4 5 6 7 8 9 >numeros
+print(\last\snum:)
+ls(context)
+println(pop(numeros))
+
+// you can also append all the stack content to a existing list
+1 1 1 1 1 1 1 1 1 11 1 1 1 1 >numeros
+ls(numeros)
+
+// unpack it
+<numeros 
+
+// repack it as numeros2
+>numeros2
+
+free(numeros)
+free(numeros2)
+
+// you can also create a keyless list in the stack
+1 2 3 >
+dup()
+pop()
+println()
+dup()
+
+// we unpack it
+<
+
+// we get the first value instead of relying on the functions pop
+free(shift(stack))

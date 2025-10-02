@@ -56,13 +56,6 @@ void feraw_or(BruterList* stack)
     bruter_push_int(stack, a || b ? 1 : 0, NULL, BRUTER_TYPE_ANY);
 }
 
-void feraw_includes(BruterList* stack)
-{
-    BruterInt a = bruter_pop_int(stack);
-    BruterInt b = bruter_pop_int(stack);
-    bruter_push_int(stack, a || b ? 1 : 0, NULL, BRUTER_TYPE_ANY);
-}
-
 void feraw_not(BruterList* stack)
 {
     BruterInt a = bruter_pop_int(stack);
