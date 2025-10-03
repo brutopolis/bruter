@@ -1,0 +1,25 @@
+#include "bruter-lazy.h"
+
+// we insert 10 on stack[5] and create all the other 5 values as 0
+10 stack ,5
+ls(stack)
+
+999 stack ,2
+ls(stack)
+
+// pack the stack content as a new list
+>new_list
+
+// lets create a member called "age" on it
+45 new_list ,age
+
+ls(new_list)
+println(\aaa)
+
+// now lets change the age to 99
+99 new_list ,age
+
+print(\age\sis:\s)
+println(new_list .age)
+
+free(new_list)

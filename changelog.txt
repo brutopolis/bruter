@@ -1,8 +1,9 @@
 # bruter changelog https://github.com/brutopolis/bruter
 
-(01/10/2025) - version 0.9.3
+(03/10/2025) - version 0.9.3
 
 - we implemented recurse with dot: "a .b .c";
+- we implemented assign operator with comma: "value list ,member_name"
 - former feraw utils are now part of bruter officially as bruter-build and bruter-lazy.h;
 - stdlib is now part of bruter, but still 100% optional;
 - bruter-lazy is the former feraw language;

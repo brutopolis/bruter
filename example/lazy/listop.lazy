@@ -31,5 +31,6 @@ dup()
 // we unpack it
 <
 
-// we get the first value instead of relying on the functions pop
-free(shift(stack))
+// we reorganize the stack using shift
+shift(stack)
+free()
