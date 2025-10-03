@@ -26,7 +26,7 @@ install()
 {
     sudo cp bruter.h /usr/local/include/
     sudo cp utils/bruter-lazy.h /usr/local/include/
-    sudo cp utils/bruter-build /usr/local/bin/
+    sudo cp utils/bruter-builder /usr/local/bin/
 }
 
 "$@"
