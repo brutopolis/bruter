@@ -1526,7 +1526,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
 
     if (_stack == NULL)
     {
-        stack = bruter_new(BRUTER_DEFAULT_SIZE, false, true);
+        stack = bruter_new(BRUTER_DEFAULT_SIZE, true, true);
     }
     else
     {
@@ -1573,7 +1573,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                     case BRUTER_TYPE_LIST:
                     {
                         BruterList *list = (BruterList*)meta.value.p;
-                        bruter_interpret(context, NULL, list, stack);
+                          bruter_interpret(context, NULL, list, stack);
                     }
                     break;
                 
@@ -1598,6 +1598,123 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                 }
                 
                 bruter_push_meta(stack, bruter_get_meta(list, found_index));
+            }
+            break;
+            case ',': // assign (experimental operator)
+            {
+                BruterList* list = (BruterList*)bruter_pop_pointer(stack);
+                BruterMeta value = bruter_pop_meta(stack);
+                char* index_string = token + 1;
+                BruterInt found_index;
+
+                if (index_string[0] >= '0' && index_string[0] <= '9')
+                {
+                    found_index = atol(index_string);
+                    if (found_index < list->size)
+                    {
+                        list->data[found_index].u = value.value.u;
+                        list->types[found_index] = value.type;
+                    }
+                    else 
+                    {
+                        // increase the size filling with zeroes
+                        while(list->size < found_index + 1)
+                        {
+                            bruter_push_uint(list, 0, NULL, 0);
+                        }
+                        list->data[found_index].u = value.value.u;
+                        list->types[found_index] = value.type;
+                    }
+                }
+                else
+                {
+                    found_index = bruter_find_key(list, index_string);
+                    if (found_index >= 0)
+                    {
+                        // we have this key already
+                        list->data[found_index].u = value.value.u;
+                        list->types[found_index] = value.type;
+                    }
+                    else
+                    {
+                        // this key doesnt exist on the list
+                        bruter_push(list, value.value, index_string, value.type);
+                    }
+                }
+            }
+            break;
+            case '>': // pack
+            {
+                // we create the new list
+                BruterList* new_list;
+                BruterInt found_in_context = -1;
+
+                // if labeled as something we take a dumber aproach
+                if (token[1] != 0 && (found_in_context = bruter_find_key(context, token + 1)) >= 0)
+                {
+                    char* list_name = token + 1;
+
+                    new_list = context->data[found_in_context].p;
+                    while(stack->size > 0)
+                    {
+                        bruter_push_meta(new_list, bruter_pop_meta(stack));
+                    }
+                }
+                else 
+                {
+                    new_list = bruter_new(BRUTER_DEFAULT_SIZE, true, true);
+
+                    // lets backup stack contents first
+                    int8_t* types_backup = stack->types;
+                    char** keys_backup = stack->keys;
+                    BruterValue* data_backup = stack->data;
+                    BruterInt capacity_backup = stack->capacity;
+                    BruterInt size_backup = stack->size;
+
+                    // put the just created list content on the stack
+                    stack->types = new_list->types;
+                    stack->keys = new_list->keys;
+                    stack->data = new_list->data;
+                    stack->capacity = new_list->capacity;
+                    stack->size = new_list->size;
+
+                    // put the content we backdup from stack earlier
+                    new_list->types = types_backup;
+                    new_list->keys = keys_backup;
+                    new_list->data = data_backup;
+                    new_list->capacity = capacity_backup;
+                    new_list->size = size_backup;
+
+                    if (token[1] != 0)
+                    {
+                        // 
+                        bruter_define_pointer(context, new_list, token + 1, BRUTER_TYPE_LIST);
+                    }
+                    else
+                    {
+                        // we only put it in the stack if no key has been provided at all
+                        bruter_push_pointer(stack, new_list, NULL, BRUTER_TYPE_LIST);
+                    }
+                }
+            }
+            break;
+            case '<': // unpack
+            {
+                BruterList* list = NULL;
+                if (token[1] == 0)
+                {
+                    list = bruter_pop_pointer(stack);
+                }
+                else
+                {
+                    BruterInt found_index = bruter_find_key(context, token + 1);
+                    list = context->data[found_index].p;
+                }
+
+                for(BruterInt i = 0; i < list->size; i++)
+                {
+                    bruter_push_meta(stack, bruter_get_meta(list, i));
+                }
             }
             break;
             case '&': // stack
@@ -1652,7 +1769,7 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
 
                     // update the code
                     code->data[i].f = value; // store the value as float
-                    code->types[i] = BRUTER_TYPE_ANY; // change the type to float
+                    code->types[i] = BRUTER_TYPE_FLOAT; // change the type to float
                     break;
                 }
                 else 
@@ -1672,7 +1789,6 @@ static inline void bruter_interpret(BruterList *context, const char* input_str, 
                 char* str = token + 1; // skip the first character
 
                 // lets replace all occurrences of \n, \t, \r, \\ and \s
-                // using memmove
                 char* dst = str;
                 char* src = str;
                 while (*src)

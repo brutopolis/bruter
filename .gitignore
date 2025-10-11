@@ -2,7 +2,7 @@ main
 *.exe
 *.appimage
 .vscode
-valgrind-out.txt
+valgrind*
 build/
 arduino/
 *.wasm
