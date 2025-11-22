@@ -5,6 +5,8 @@
 
   BRUTER is meant to be 100% C99 compliant;
 
+  BRUTER has been discontinued, but checkout its successor: https://github.com/jardimdanificado/urb
+
 # Library
 
   BRUTER is a single header file `bruter.h`, just include and ready to go.
